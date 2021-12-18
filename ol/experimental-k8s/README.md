@@ -4,12 +4,16 @@
 This is experimental setup to run 0L full node under kubernetes (k8s).
 Features:
 - Currently only Google cloud k8s provider is supported.
-- This setup only uses official 0L binaries from <https://github.com/OLSF/libra/releases/latest/download>.
+- This setup uses official 0L binaries from <https://github.com/OLSF/libra/releases/latest/download>.
 - It creates single node cluster usin e2-standard-4 instance.
 - To expose 3030 and 8080 ports it uses a load balancer with static ip.
 - For peer port 6179 it uses NodePort 30179.
 - Infrastructure to run validator node with this setup is put in place, however tower component is NYI.
-- This setup has been tested under Ubuntu 20.04 only
+- This setup has been tested under Ubuntu 20.04
+
+## Port Wiring Diagram
+
+![wiring](./pictures/wiring.png)
 
 ## Preparation
 Install
