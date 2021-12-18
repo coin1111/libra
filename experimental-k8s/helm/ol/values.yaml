@@ -1,0 +1,81 @@
+# Default values for ol.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: coin1111/olsf-libra 
+  pullPolicy: IfNotPresent
+  tag: "ff0d9d486deb"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+validator: false # if valiator
+debug: false # if in debug mode
+
+# passed from helm command line
+#loadBalancerIp: 104.197.3.222
+
+node:
+  command: '["bash", "/run-node.sh"]' 
+  args:
+    - "http://134.209.114.98:8080/" # upstream validator node for web monitor
+
+
+monitor:
+  command: '["bash","/run-monitor.sh"]'
+
+#Persistent volume claim size
+storage: "250Gi"
+#
+# Node peer communication service
+#
+peerService:
+  fullNodePort: 30179 # remap of 6179, this must be in the range 30000-32768 to be used with nodePort
+  validatorPort: 30180 # remap of 6180, this must be in the range 30000-32768 to be used with nodePort
+  monitorPort: 
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources:
+  limits:
+    memory: 8Gi
+    cpu: 2
+  requests:
+    memory: 1Gi
+    cpu: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

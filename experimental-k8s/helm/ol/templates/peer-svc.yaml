@@ -1,0 +1,23 @@
+#
+# Node peer communication service
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer-svc 
+  labels:
+    {{- include "ol.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  ports:
+  {{- if .Values.validator }}
+    - port: {{ .Values.peerService.validatorPort }}
+      nodePort: {{ .Values.peerService.validatorPort }} 
+      name: validator
+  {{- else }}
+    - port: {{ .Values.peerService.fullNodePort }}
+      nodePort: {{ .Values.peerService.fullNodePort }} 
+      name: full-node
+  {{- end }}
+  selector:
+    {{- include "ol.selectorLabels" . | nindent 4 }}

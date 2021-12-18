@@ -1,0 +1,298 @@
+set -e
+#set -x
+
+ol_namespace=ol
+values=values.yaml
+tag=ff0d9d486deb
+olsf_image=coin1111/olsf-libra:"$tag"
+load_balancer_ip_name="olsf-ip"
+
+echo "Using $values"
+
+function usage() {
+	echo "Usage:" 
+	echo -e "\tolk generate key"
+	echo -e "\t\tenerate new mnemonics"
+	echo -e "\tolk onboard validator"
+	echo -e "\t\tMine 0-proof, package assets into tar.gz"
+	echo -e "\tolk create cluster <cluster name> <gcloud project>"
+	echo -e "\t\tGenerates new gcloud cluster"
+	echo -e "\tolk delete cluster <cluster name>"
+	echo -e "\t\tDelete gcloud cluster"
+	echo -e "\tolk deploy node  <node-name>"
+	echo -e "\t\tExample: olk deploy node mynode"
+	echo -e "\tolk copy assets  <node-name> <assets>"
+	echo -e "\t\t<assets> - .0L directory packaged as tgz"
+	echo -e "\t\tExample: olk copy assets mynode ~/ol.tgz"
+	echo -e "\tolk delete node  <node-name>"
+}
+
+function check_namespace() {
+	set +e
+	kubectl get namespace "$1" >/dev/null
+	local err=$?
+	set -e
+	echo $err
+}
+
+function get_load_balancer_ip() {
+    set +e
+    local ip_str=$(gcloud compute addresses describe "$load_balancer_ip_name" --region us-central1 | grep address:)
+    if [ $? == 0 ]; then
+        local arr=(${ip_str//;/ }) 
+        load_balancer_ip=${arr[1]}
+    fi
+    set -e
+}
+
+function deploy_node() {
+	node_name="$1"
+
+	err=$(check_namespace "$ol_namespace")
+	if [ $err != 0 ]; then
+		kubectl create namespace "$ol_namespace"
+	fi
+
+    # get static ip if created previously
+    get_load_balancer_ip
+
+    if [ ! -z ${load_balancer_ip+x} ]; then 
+        helm_opts="$helm_opts --set-string loadBalancerIp=$load_balancer_ip"
+    fi
+
+    # deploy node
+	pushd helm/ol
+	helm install -n "$ol_namespace" "$node_name" . -f "$values" $helm_opts  --set-string nodename="$node_name"
+	popd
+    echo "*** run olk copy assets to copy assets into pod"
+}
+
+function copy_assets() {
+	node_name="$1"
+    ol_tgz="$2"
+
+	# check that ol_tgz exists
+    if [ ! -f "$ol_tgz" ]; then
+        echo "$ol_tgz doesn't exist."
+        exit 1
+    fi
+
+    # check that pod is running
+    set +e
+    kubectl get pods -n "$ol_namespace" | grep Running | grep "$node_name"
+	if [ $? != 0 ]; then
+        echo "Pod $node_name is not runing"
+        exit 1
+	fi
+    set -e
+
+    # prepare assets
+    tmp_dir=$(mktemp -d -t olsf-XXXXXXXXXX)
+    echo $tmp_dir
+    pushd "$tmp_dir"
+    tar xvf "$ol_tgz" -C .
+    pushd root/.0L
+
+    # copy assets into pod
+    kubectl exec  "$node_name"-0 -n "$ol_namespace" -- bash -c "mkdir -p /assets"
+    kubectl cp  . "$node_name"-0:/assets -n "$ol_namespace"
+	popd
+	popd
+    rm -rf "$tmp_dir"
+}
+
+function upgrade_node() {
+	node_name="$1"
+
+    # get static ip if created previously
+    get_load_balancer_ip
+
+    if [ ! -z ${load_balancer_ip+x} ]; then 
+        helm_opts="$helm_opts --set-string loadBalancerIp=$load_balancer_ip"
+    fi
+
+	pushd helm/ol
+	helm upgrade -n "$ol_namespace" "$node_name" . -f "$values" $helm_opts --set-string nodename="$node_name"
+	popd
+}
+
+function delete_node() {
+	node_name="$1"
+
+	pushd helm/ol
+	helm delete -n "$ol_namespace" "$node_name"
+	popd
+}
+
+function generate_key() {
+	docker run --rm "$olsf_image" /ol-bin/onboard keygen
+}
+
+function onboard_validator() {
+    tmp_dir=$(mktemp -d -t olsf-XXXXXXXXXX)
+    echo $tmp_dir
+	docker run --rm \
+        -v "$tmp_dir":/tmp/assets  \
+        -it "$olsf_image" bash -c "/onboard-val.sh"
+    echo "get validator asets in $tmp_dir"
+}
+
+function create_gcloud_cluster() {
+    cluster_name="$1"
+    gproj="$2"
+
+    # create cluster
+    gcloud config set project "$gproj"
+
+    gcloud beta container --project "$gproj" clusters create "$cluster_name" --zone "us-central1-c" --no-enable-basic-auth --cluster-version "1.21.5-gke.1302" --release-channel "regular" --machine-type "e2-standard-4" --image-type "COS_CONTAINERD" --disk-type "pd-standard" --disk-size "100" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/cloud-platform" --max-pods-per-node "110" --num-nodes "1" --enable-cloud-monitoring --enable-ip-alias --network "projects/$gproj/global/networks/default" --subnetwork "projects/$gproj/regions/us-central1/subnetworks/default" --no-enable-intra-node-visibility --default-max-pods-per-node "110" --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --enable-shielded-nodes --node-locations "us-central1-c"
+    # connect to cluster
+    gcloud container clusters get-credentials "$cluster_name" --zone us-central1-c --project "$gproj"
+
+    # open ports 
+    gcloud compute firewall-rules create olsf --allow tcp:30179,tcp:30180
+
+    # creat static ip
+    gcloud compute addresses create "$load_balancer_ip_name" --region us-central1
+    get_load_balancer_ip
+    echo "Create static ip address: $load_balancer_ip"
+}
+
+function delete_cloud_cluster() {
+    cluster_name="$1"
+    gcloud container clusters delete "$cluster_name"
+    gcloud compute addresses delete "$load_balancer_ip_name"
+}
+
+if [ $# == 0 ]; then
+	usage
+	exit 1
+fi
+
+
+PARAMS=""
+while (( "$#" )); do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      exit 1
+      ;;
+    *) # preserve positional arguments
+      PARAMS="$PARAMS $1"
+      shift
+      ;;
+  esac
+done
+
+# set positional arguments in their proper place
+eval set -- "$PARAMS"
+
+case "$1" in
+   copy)
+      if [ -n "$2" ]; then
+         app=$2
+         if [ "$app" == "assets" ]; then
+            copy_assets "$3" "$4"
+         else
+            echo "Error: Unsupported '$app'. Supported: 'assets'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   deploy)
+      if [ -n "$2" ]; then
+         app=$2
+         if [ "$app" == "node" ]; then
+            deploy_node "$3"
+         else
+            echo "Error: Unsupported '$app'. Supported: 'node'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   create)
+      if [ -n "$2" ]; then
+         op=$2
+         if [ "$op" == "cluster" ]; then
+            create_gcloud_cluster "$3" "$4"
+         else
+            echo "Error: Unsupported '$op'. Supported: 'cluster'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   upgrade)
+      if [ -n "$2" ]; then
+         app=$2
+         if [ "$app" == "node" ]; then
+            upgrade_node "$3"
+         else
+            echo "Error: Unsupported '$app'. Supported: 'node'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   delete)
+      if [ -n "$2" ]; then
+         op=$2
+         if [ "$op" == "node" ]; then
+            delete_node "$3"
+         elif [ "$op" == "cluster" ]; then
+            delete_cloud_cluster "$3"
+         else
+            echo "Error: Unsupported '$op'. Supported: 'node, cluster'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   generate)
+      if [ -n "$2" ]; then
+         op=$2
+         if [ "$op" == "key" ]; then
+            generate_key
+         else
+            echo "Error: Unsupported '$op'. Supported: 'key'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   onboard)
+      if [ -n "$2" ]; then
+         op=$2
+         if [ "$op" == "validator"  ]; then
+            onboard_validator
+         else
+            echo "Error: Unsupported '$op'. Supported: 'validator'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   *)
+      echo "Error: Unsupported command $1" >&2
+      exit 1
+   ;;
+esac

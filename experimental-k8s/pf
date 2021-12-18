@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+function usage() {
+    echo -e 'Usage: pf <service>'
+    echo -e '\tol\t- port forward for ol node'
+}
+
+if  [ $# == 0 ]; then
+    usage
+    exit 1
+fi
+
+ol_ns=ol
+
+if [ "$1" ==  "ol" ]; then
+    gcloud container clusters get-credentials cluster-2 --zone us-central1-c --project rasa-280223 \
+     && kubectl port-forward --namespace ol $(kubectl get pod --namespace ol --selector="app.kubernetes.io/instance=n1,app.kubernetes.io/name=ol" --output jsonpath='{.items[0].metadata.name}') 8080:3030
+    echo "Connect to ol using localhost:8080"
+else
+    echo "Invalid option. Allowed: ol"
+    exit 1
+fi
