@@ -53,7 +53,8 @@ function fix_ports() {
         if [ -f "$file" ]; then
             sed -Ei 's/listen_address: "(.+)6179"/listen_address: "\130179"/g' "$file"
             sed -Ei 's/listen_address: "(.+)6180"/listen_address: "\130180"/g' "$file"
-            sed -Ei 's/address: 127.0.0.1:8080/address: 0.0.0.0:8080/g' "$file"
+            #sed -Ei 's/address: 127.0.0.1:8080/address: 0.0.0.0:8080/g' "$file"
+            sed -Ei 's/127.0.0.1/0.0.0.0/g' "$file"
         fi
     done
 

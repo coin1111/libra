@@ -5,7 +5,7 @@
 image:
   repository: coin1111/olsf-libra 
   pullPolicy: IfNotPresent
-  tag: "ff0d9d486deb"
+  tag: "0b2eeaf0f057"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -20,7 +20,7 @@ debug: false # if in debug mode
 node:
   command: '["bash", "/run-node.sh"]' 
   args:
-    - "http://134.209.114.98:8080/" # upstream validator node for web monitor
+    - "http://35.225.89.52:8080/" # upstream full node for web monitor
 
 
 monitor:
