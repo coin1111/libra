@@ -70,8 +70,8 @@ function fix_ports() {
 function fix_upstream_ip() {
     pushd "$OL_HOME_DIR"
     # fix upstream node in 0L.toml
-    if [ "$upstream_validator_url" != "" ]; then
-        t="echo $upstream_validator_url | sed -E 's/\//\\\\\//g'"
+    if [ "$upstream_url" != "" ]; then
+        t="echo $upstream_url | sed -E 's/\//\\\\\//g'"
         et=$(eval $t)
         tt="sed -Ei 's/(upstream_nodes = )\[\"(.+)\"\]/\1\[\"$et\"\]/g' 0L.toml"
         eval $tt
@@ -82,7 +82,7 @@ function fix_upstream_ip() {
 # args
 is_validator="$1"
 is_debug="$2"
-upstream_validator_url="$3"
+upstream_url="$3"
 
 echo "validator: $is_validator, debug: $is_debug"
 

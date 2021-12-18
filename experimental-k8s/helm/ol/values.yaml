@@ -20,7 +20,7 @@ debug: false # if in debug mode
 node:
   command: '["bash", "/run-node.sh"]' 
   args:
-    - "http://35.225.89.52:8080/" # upstream full node for web monitor
+    - "http://35.225.89.52:8080/" # upstream ip for web monitor
 
 
 monitor:
