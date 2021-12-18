@@ -13,7 +13,7 @@ Features:
 
 ## Port Wiring Diagram
 
-![wiring](./pictures/wiring.png)
+![wiring](./diagrams/wiring.png)
 
 ## Preparation
 Install
