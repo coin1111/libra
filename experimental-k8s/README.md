@@ -27,6 +27,8 @@ Install
 # do not forget to save assets in tar.gz saved in temp dir
 # showed after script completion
 ./olk onboard validator
+# save assets
+cp /tmp-xxx/ol.tar.gz /safe-place
 ```
 If you have existing full node keys and proof steps 1,2 can be skipped. Instead, package ~/.0L directory under root folder into tar.gz. Unpacked files must have the following structure:
 ```
@@ -42,7 +44,11 @@ root/.0L/<full node files>
 ## Deploy Full Node
 ```
 ./olk deploy node n1
+
+# copy assets
+./olk copy assets n1 ~/ol.tar.gz
 ```
+
 
 ## Uprade Full Node
 ```

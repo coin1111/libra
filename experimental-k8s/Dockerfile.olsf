@@ -13,3 +13,4 @@ RUN bash -c "/get-olsf-bits.sh"
 
 COPY onboard-val.sh /
 COPY run-node.sh /
+COPY run-monitor.sh /

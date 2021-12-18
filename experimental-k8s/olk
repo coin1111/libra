@@ -3,7 +3,7 @@ set -e
 
 ol_namespace=ol
 values=values.yaml
-tag=ff0d9d486deb
+tag=ea15a384431a
 olsf_image=coin1111/olsf-libra:"$tag"
 load_balancer_ip_name="olsf-ip"
 
@@ -25,6 +25,8 @@ function usage() {
 	echo -e "\t\t<assets> - .0L directory packaged as tgz"
 	echo -e "\t\tExample: olk copy assets mynode ~/ol.tgz"
 	echo -e "\tolk delete node  <node-name>"
+	echo -e "\tolk template node  <node-name>"
+	echo -e "\t\tGenerate k8s spec without deploying"
 }
 
 function check_namespace() {
@@ -65,6 +67,21 @@ function deploy_node() {
 	helm install -n "$ol_namespace" "$node_name" . -f "$values" $helm_opts  --set-string nodename="$node_name"
 	popd
     echo "*** run olk copy assets to copy assets into pod"
+}
+
+function template_node() {
+	node_name="$1"
+
+    # get static ip if created previously
+    get_load_balancer_ip
+
+    if [ ! -z ${load_balancer_ip+x} ]; then 
+        helm_opts="$helm_opts --set-string loadBalancerIp=$load_balancer_ip"
+    fi
+
+	pushd helm/ol
+	helm template -n "$ol_namespace" "$node_name" . -f "$values" $helm_opts  --set-string nodename="$node_name"
+	popd
 }
 
 function copy_assets() {
@@ -210,6 +227,20 @@ case "$1" in
          app=$2
          if [ "$app" == "node" ]; then
             deploy_node "$3"
+         else
+            echo "Error: Unsupported '$app'. Supported: 'node'" >&2
+            exit 1  
+         fi
+      else
+         echo "Error: Argument for $1 is missing" >&2
+         exit 1
+      fi
+   ;;
+   template)
+      if [ -n "$2" ]; then
+         app=$2
+         if [ "$app" == "node" ]; then
+            template_node "$3"
          else
             echo "Error: Unsupported '$app'. Supported: 'node'" >&2
             exit 1  

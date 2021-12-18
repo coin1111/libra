@@ -148,7 +148,7 @@ fix_ports
 fix_upstream_ip
 
 "$OL_BIN"/diem-node --config "$OL_NODE_CFG_FILE" &
-sleep 1m
-"$OL_BIN"/ol serve -c &
+#sleep 1m
+#"$OL_BIN"/ol serve -c &
 wait
 

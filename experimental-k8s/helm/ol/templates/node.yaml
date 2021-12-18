@@ -55,6 +55,28 @@ spec:
           - containerPort: {{ .Values.peerService.fullNodePort }}
           {{- end }}
           - containerPort: 8080 
+        - name: monitor
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ .Values.monitor.command }}
+          {{- $args := list }}
+          {{- $args = .Values.validator  | append $args }}
+          {{- $args = .Values.debug  | append $args }}
+            {{- if .Values.monitor.args }}
+              {{- range $index, $v := .Values.monitor.args }}
+                {{- $args = $v  | append $args }}
+              {{- end }}
+            {{- end }}
+          {{- $vv :=  $args | join "\",\""}}
+          args:  ["{{ $vv }}"]
+          volumeMounts:
+            - name: nodevol
+              mountPath: /root/.0L
+          resources:
+            {{- toYaml .Values.resources_mon | nindent 12 }}
+          ports:
           - containerPort: 3030 
       {{- with .Values.nodeSelector }}
       nodeSelector:

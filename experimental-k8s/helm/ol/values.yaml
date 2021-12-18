@@ -5,7 +5,7 @@
 image:
   repository: coin1111/olsf-libra 
   pullPolicy: IfNotPresent
-  tag: "0b2eeaf0f057"
+  tag: "ea15a384431a"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -24,7 +24,7 @@ node:
 
 
 monitor:
-  command: '["bash","/run-monitor.sh"]'
+  command: '["bash", "/run-monitor.sh"]' 
 
 #Persistent volume claim size
 storage: "250Gi"
@@ -59,13 +59,23 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# resource for the node
 resources:
   limits:
-    memory: 8Gi
+    memory: 4Gi
     cpu: 2
   requests:
     memory: 1Gi
     cpu: 1
+
+# resources for web monitor
+resources_mon:
+  limits:
+    memory: 200Mi
+    cpu: 200m
+  requests:
+    memory: 50Mi
+    cpu: 100m
 
 autoscaling:
   enabled: false
