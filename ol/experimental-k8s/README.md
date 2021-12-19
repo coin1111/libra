@@ -61,7 +61,7 @@ root/.0L/<full node files>
 
 ## Appendix
 ### Build Docker Image from Official 0L Bits 
-This step is required if published image is obsolete or if you made changes to run-node.sh or Dockerfile.olsf. Create dockerhub account to publish your image. Update olk and helm/ol/vaues.yaml to use your repo and your ta. Search for "tag" in both files.
+This step is required if published image is obsolete or if you made changes to run-node.sh or Dockerfile.olsf. Create dockerhub account to publish your image. Update olk and helm/ol/vaues.yaml to use your repo and your tag. Search for "tag" in both files.
 ```
 docker login
 ./build-olsf-container.sh -p # -p publishes to dockerhub
