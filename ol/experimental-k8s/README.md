@@ -55,6 +55,7 @@ root/.0L/<full node files>
 
 
 ## Uprade Full Node
+After modifications to values.yaml or any other help templates, uprade setup by running.
 ```
 ./olk upgrade node n1
 ```
@@ -65,4 +66,16 @@ This step is required if published image is obsolete or if you made changes to r
 ```
 docker login
 ./build-olsf-container.sh -p # -p publishes to dockerhub
+```
+
+### Debug Mode
+To debug state of the node debug option can be used. It block launch of the node and monitor in infitite oop with sleep. In this state one can connect to the pod and manually launch the node or monitor, do db backup, restore, etc
+
+```
+# to enter debug mode
+# set debu: true in helm/ol/values.yaml
+./olk upgrade node n1
+
+# to disable debug mode
+# disable it back and run upgrade aain
 ```
