@@ -168,7 +168,7 @@ mod tests {
     //3 buckets with 5 tokens each and global limit 12
     // one cline tborrows tokens from the other
     #[test]
-    fn borrow_tokens() {
+    fn can_borrow_tokens() {
         let config = RpcRateLimiterConfig {
             initial_fill_rate_pct: 100,
             bucket_size: 5,
@@ -191,5 +191,29 @@ mod tests {
         rl.acquire_all_tokens("cc", 5).expect_err("Expected error");
         // but can borrow 1 remaining
         rl.acquire_all_tokens("c", 1).expect("Should be successful");
+    }
+
+    //3 buckets with 5 tokens each and global limit 10
+    // ensure that global limit is honored
+    #[test]
+    fn global_limit_preserved() {
+        let config = RpcRateLimiterConfig {
+            initial_fill_rate_pct: 100,
+            bucket_size: 5,
+            global_bucket_size: 10,
+        };
+        let mut rl = RpcRateLimiter::new(config);
+        // cannot borrow 6, since 6/12 <= 0.5
+        rl.acquire_all_tokens("aa", 5)
+            .expect("Should be successful");
+        rl.acquire_all_tokens("bb", 5)
+            .expect("Should be successful");
+        // c has no tickets
+        rl.acquire_all_tokens("cc", 1).expect_err("Expected error");
+
+        // wait for 1 seconds
+        thread::sleep(time::Duration::from_millis(1000));
+        rl.acquire_all_tokens("cc", 1)
+            .expect("Should be successful");
     }
 }
