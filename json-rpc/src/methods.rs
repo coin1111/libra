@@ -7,8 +7,8 @@ use crate::{
     errors::JsonRpcError,
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, TowerStateResourceView, OracleUpgradeStateView, StateProofView,
-        TransactionListView, TransactionView, TransactionsWithProofsView, WaypointView
+        MetadataView, OracleUpgradeStateView, StateProofView, TowerStateResourceView,
+        TransactionListView, TransactionView, TransactionsWithProofsView, WaypointView,
     },
 };
 use anyhow::Result;
@@ -16,14 +16,12 @@ use diem_config::config::RoleType;
 use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
     GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
-    GetMetadataParams, GetTowerStateParams, GetNetworkStatusParams, GetStateProofParams,
-    GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
-    SubmitParams,
+    GetMetadataParams, GetNetworkStatusParams, GetStateProofParams, GetTowerStateParams,
+    GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest, SubmitParams,
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
 use diem_types::{
-    chain_id::ChainId,
-    ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
+    chain_id::ChainId, ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
 use fail::fail_point;
@@ -31,6 +29,10 @@ use futures::{channel::oneshot, SinkExt};
 use serde_json::Value;
 use std::{borrow::Borrow, sync::Arc};
 use storage_interface::DbReader;
+
+/////0L////////
+use ol_ratelimiter::{RpcRateLimiter, RpcRateLimiterConfig};
+use std::sync::Mutex;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -40,6 +42,7 @@ pub(crate) struct JsonRpcService {
     chain_id: ChainId,
     batch_size_limit: u16,
     page_size_limit: u16,
+    pub rate_limiter: Arc<Mutex<RpcRateLimiter>>,
 }
 
 impl JsonRpcService {
@@ -51,6 +54,12 @@ impl JsonRpcService {
         batch_size_limit: u16,
         page_size_limit: u16,
     ) -> Self {
+        let config = RpcRateLimiterConfig {
+            initial_fill_rate_pct: 100,
+            bucket_size: 1,
+            global_bucket_size: 1,
+        };
+        let rate_limiter = Arc::new(Mutex::new(RpcRateLimiter::new(config)));
         Self {
             db,
             mempool_sender,
@@ -58,6 +67,7 @@ impl JsonRpcService {
             chain_id,
             batch_size_limit,
             page_size_limit,
+            rate_limiter,
         }
     }
 
@@ -84,7 +94,6 @@ impl JsonRpcService {
 
         self.db.get_latest_ledger_info()
     }
-
 
     pub fn chain_id(&self) -> ChainId {
         self.chain_id
@@ -190,9 +199,7 @@ impl<'a> Handler<'a> {
             MethodRequest::GetOracleUpgradeStateView() => {
                 serde_json::to_value(self.get_oracle_upgrade_state().await?)?
             }
-            MethodRequest::GetWaypointView() => {
-                serde_json::to_value(self.get_waypoint().await?)?
-            }
+            MethodRequest::GetWaypointView() => serde_json::to_value(self.get_waypoint().await?)?,
         };
         Ok(response)
     }
@@ -381,18 +388,19 @@ impl<'a> Handler<'a> {
         &self,
         params: GetTowerStateParams,
     ) -> Result<TowerStateResourceView, JsonRpcError> {
-        data::get_miner_state(self.service.db.borrow(), self.version(), params.account, &self.ledger_info)
+        data::get_miner_state(
+            self.service.db.borrow(),
+            self.version(),
+            params.account,
+            &self.ledger_info,
+        )
     }
 
-    async fn get_oracle_upgrade_state(
-        &self,
-    ) -> Result<OracleUpgradeStateView, JsonRpcError> {
+    async fn get_oracle_upgrade_state(&self) -> Result<OracleUpgradeStateView, JsonRpcError> {
         data::get_oracle_upgrade_state(self.service.db.borrow(), self.version())
     }
 
-    async fn get_waypoint(
-        &self,
-    ) -> Result<WaypointView, JsonRpcError> {
+    async fn get_waypoint(&self) -> Result<WaypointView, JsonRpcError> {
         data::get_waypoint(self.ledger_info)
     }
 }

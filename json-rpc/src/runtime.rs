@@ -10,7 +10,8 @@ use crate::{
 };
 use anyhow::{ensure, Result};
 use diem_config::config::{NodeConfig, RoleType};
-use diem_json_rpc_types::Method;
+use diem_json_rpc_types::errors::JsonRpcError;
+use diem_json_rpc_types::{request::MethodRequest, Method};
 use diem_logger::{debug, Schema};
 use diem_mempool::MempoolClientSender;
 use diem_types::{chain_id::ChainId, ledger_info::LedgerInfoWithSignatures};
@@ -30,6 +31,9 @@ use warp::{
     reject::{self, Reject},
     Filter, Reply,
 };
+
+////////0L/////////
+use diem_logger::error;
 
 // Counter labels for runtime metrics
 const LABEL_FAIL: &str = "fail";
@@ -357,6 +361,32 @@ async fn rpc_request_handler(
     match diem_json_rpc_types::request::JsonRpcRequest::from_value(request) {
         Ok(request) => {
             method = Some(request.method_request.method());
+            match request.method_request {
+                MethodRequest::Submit(ref params) => {
+                    println!(
+                        "AAAA: {:?} {:?}",
+                        params.data.sender(),
+                        params.data.authenticator()
+                    );
+                    let key = params.data.sender().to_hex();
+                    let mut rl = service.rate_limiter.lock().unwrap();
+                    let has_access = rl.acquire_all_tokens(String::from(key.clone()), 1);
+                    if !has_access.is_ok() {
+                        println!("AAAA: Access denied: {:?}", key.clone());
+                        error!(
+                            "access denied due to rate limit for account : {}",
+                            key.clone()
+                        );
+                        response.error = Some(JsonRpcError::invalid_request_with_msg(format!(
+                            "{}, exceed rate limit",
+                            key.clone()
+                        )));
+                        bump_counters(&response, LABEL_BATCH, None, sdk_info);
+                        return response;
+                    }
+                }
+                _ => (),
+            }
             let timer = counters::METHOD_LATENCY
                 .with_label_values(&[request_type_label, request.method_request.method().as_str()])
                 .start_timer();

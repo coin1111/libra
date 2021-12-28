@@ -4,9 +4,9 @@ use std::time::Instant;
 pub type RpcTokenBucketLimiter = TokenBucketRateLimiter<String>;
 
 pub struct RpcRateLimiterConfig {
-    initial_fill_rate_pct: u8,
-    bucket_size: usize,        // how many tokens in one bucket
-    global_bucket_size: usize, // how many tokens in global bucket
+    pub initial_fill_rate_pct: u8,
+    pub bucket_size: usize,        // how many tokens in one bucket
+    pub global_bucket_size: usize, // how many tokens in global bucket
 }
 
 pub struct RpcRateLimiter {
@@ -14,9 +14,9 @@ pub struct RpcRateLimiter {
     buckets: RpcTokenBucketLimiter,
     global_buckets: RpcTokenBucketLimiter,
 }
-const GLOBAL_KEY : &str= "global";
+const GLOBAL_KEY: &str = "global";
 impl RpcRateLimiter {
-    fn new(config: RpcRateLimiterConfig) -> Self {
+    pub fn new(config: RpcRateLimiterConfig) -> Self {
         let buckets = TokenBucketRateLimiter::new(
             "rpc_ratelimiter",
             String::from("rpc_ratelimiter"),
@@ -89,7 +89,10 @@ impl RpcRateLimiter {
             .acquire_all_tokens(requested);
         if let Err(_) = global_tokens {
             // cannot acquire global tokens, return bucket tokens
-            self.buckets.bucket(key.clone()).lock().return_tokens(requested);
+            self.buckets
+                .bucket(key.clone())
+                .lock()
+                .return_tokens(requested);
         }
         return global_tokens;
     }
@@ -111,13 +114,15 @@ mod tests {
         let mut rl = RpcRateLimiter::new(config);
         rl.acquire_all_tokens(String::from("aa"), 1)
             .expect("Should be successful");
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
 
         // wait for 1 second
         thread::sleep(time::Duration::from_millis(1000));
         rl.acquire_all_tokens(String::from("aa"), 1)
             .expect("Should be successful");
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
     }
     // test with multiple tokens per bucket
     #[test]
@@ -130,13 +135,15 @@ mod tests {
         let mut rl = RpcRateLimiter::new(config);
         rl.acquire_all_tokens(String::from("aa"), 10)
             .expect("Should be successful");
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
 
         // wait for 1 second
         thread::sleep(time::Duration::from_millis(1000));
         rl.acquire_all_tokens(String::from("aa"), 1)
             .expect("Should be successful");
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
     }
     // 2 buckets with 5 tokens each and global limit 10
     #[test]
@@ -152,8 +159,10 @@ mod tests {
         rl.acquire_all_tokens(String::from("bb"), 5)
             .expect("Should be successful");
 
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
-        rl.acquire_all_tokens(String::from("bb"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("bb"), 1)
+            .expect_err("Expected error");
 
         // wait for 2 seconds
         thread::sleep(time::Duration::from_millis(2000));
@@ -162,8 +171,10 @@ mod tests {
         rl.acquire_all_tokens(String::from("bb"), 1)
             .expect("Should be successful");
 
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
-        rl.acquire_all_tokens(String::from("bb"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("bb"), 1)
+            .expect_err("Expected error");
     }
 
     //3 buckets with 5 tokens each and global limit 12
@@ -182,16 +193,20 @@ mod tests {
         rl.acquire_all_tokens(String::from("aa"), 1)
             .expect("Should be successful");
         // but no more
-        rl.acquire_all_tokens(String::from("aa"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
         // b can  borrow 5 tokens
         rl.acquire_all_tokens(String::from("bb"), 5)
             .expect("Should be successful");
         // but can not borrow  any extra
-        rl.acquire_all_tokens(String::from("bb"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("bb"), 1)
+            .expect_err("Expected error");
         // c cannot  borrow 5 tokens
-        rl.acquire_all_tokens(String::from("cc"), 5).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("cc"), 5)
+            .expect_err("Expected error");
         // but can borrow 1 remaining
-        rl.acquire_all_tokens(String::from("cc"), 1).expect("Should be successful");
+        rl.acquire_all_tokens(String::from("cc"), 1)
+            .expect("Should be successful");
     }
 
     //3 buckets with 5 tokens each and global limit 10
@@ -210,7 +225,8 @@ mod tests {
         rl.acquire_all_tokens(String::from("bb"), 5)
             .expect("Should be successful");
         // c has no tickets
-        rl.acquire_all_tokens(String::from("cc"), 1).expect_err("Expected error");
+        rl.acquire_all_tokens(String::from("cc"), 1)
+            .expect_err("Expected error");
 
         // wait for 1 seconds
         thread::sleep(time::Duration::from_millis(1000));
