@@ -14,6 +14,12 @@ pub struct JsonRpcConfig {
     pub content_length_limit: usize,
     pub tls_cert_path: Option<String>,
     pub tls_key_path: Option<String>,
+
+    //////////////0L////////////
+    pub rpc_ratelimit_enabled: bool, // if rpc rate limit is enabled
+    pub bucket_size: usize,          // how many tokens in one bucket
+    pub global_bucket_size: usize,   // how many tokens in global bucket
+    //////////////0L////////////
 }
 
 pub const DEFAULT_JSON_RPC_ADDRESS: &str = "127.0.0.1";
@@ -34,6 +40,12 @@ impl Default for JsonRpcConfig {
             content_length_limit: DEFAULT_CONTENT_LENGTH_LIMIT,
             tls_cert_path: None,
             tls_key_path: None,
+
+            //////////////0L////////////
+            rpc_ratelimit_enabled: false,
+            bucket_size: 1,         // how many tokens in one bucket
+            global_bucket_size: 10, // how many tokens in global bucket
+            //////////////0L////////////
         }
     }
 }

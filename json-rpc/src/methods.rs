@@ -42,7 +42,7 @@ pub(crate) struct JsonRpcService {
     chain_id: ChainId,
     batch_size_limit: u16,
     page_size_limit: u16,
-    pub rate_limiter: Arc<Mutex<RpcRateLimiter>>,
+    pub rate_limiter: Option<Arc<Mutex<RpcRateLimiter>>>,
 }
 
 impl JsonRpcService {
@@ -53,13 +53,24 @@ impl JsonRpcService {
         chain_id: ChainId,
         batch_size_limit: u16,
         page_size_limit: u16,
+        ////////////////0L//////////////////
+        rpc_ratelimit_enabled: bool,
+        bucket_size: usize,
+        global_bucket_size: usize,
+        ////////////////0L//////////////////
     ) -> Self {
+        //////////////0L////////////
         let config = RpcRateLimiterConfig {
-            initial_fill_rate_pct: 100,
-            bucket_size: 1,
-            global_bucket_size: 1,
+            initial_fill_rate_pct: 50,
+            bucket_size,
+            global_bucket_size,
         };
-        let rate_limiter = Arc::new(Mutex::new(RpcRateLimiter::new(config)));
+        let rate_limiter = if rpc_ratelimit_enabled {
+            Some(Arc::new(Mutex::new(RpcRateLimiter::new(config))))
+        } else {
+            None
+        };
+        //////////////0L////////////
         Self {
             db,
             mempool_sender,
@@ -67,7 +78,9 @@ impl JsonRpcService {
             chain_id,
             batch_size_limit,
             page_size_limit,
+            //////////////0L////////////
             rate_limiter,
+            //////////////0L////////////
         }
     }
 

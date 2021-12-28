@@ -105,6 +105,11 @@ pub fn bootstrap(
     content_len_limit: usize,
     tls_cert_path: &Option<String>,
     tls_key_path: &Option<String>,
+    ////////////////0L//////////////////
+    rpc_ratelimit_enabled: bool,
+    bucket_size: usize,
+    global_bucket_size: usize,
+    ////////////////0L//////////////////
     diem_db: Arc<dyn DbReader>,
     mp_sender: MempoolClientSender,
     role: RoleType,
@@ -123,6 +128,11 @@ pub fn bootstrap(
         chain_id,
         batch_size_limit,
         page_size_limit,
+        ////////////////0L//////////////////
+        rpc_ratelimit_enabled,
+        bucket_size,
+        global_bucket_size,
+        ////////////////0L//////////////////
     );
 
     let base_route = warp::any()
@@ -211,6 +221,11 @@ pub fn bootstrap_from_config(
         config.json_rpc.content_length_limit,
         &config.json_rpc.tls_cert_path,
         &config.json_rpc.tls_key_path,
+        ////////////0L////////////
+        config.json_rpc.rpc_ratelimit_enabled,
+        config.json_rpc.bucket_size,
+        config.json_rpc.global_bucket_size,
+        ////////////0L///////////////
         diem_db,
         mp_sender,
         config.base.role,
@@ -361,32 +376,31 @@ async fn rpc_request_handler(
     match diem_json_rpc_types::request::JsonRpcRequest::from_value(request) {
         Ok(request) => {
             method = Some(request.method_request.method());
-            match request.method_request {
-                MethodRequest::Submit(ref params) => {
-                    println!(
-                        "AAAA: {:?} {:?}",
-                        params.data.sender(),
-                        params.data.authenticator()
-                    );
-                    let key = params.data.sender().to_hex();
-                    let mut rl = service.rate_limiter.lock().unwrap();
-                    let has_access = rl.acquire_all_tokens(String::from(key.clone()), 1);
-                    if !has_access.is_ok() {
-                        println!("AAAA: Access denied: {:?}", key.clone());
-                        error!(
-                            "access denied due to rate limit for account : {}",
-                            key.clone()
-                        );
-                        response.error = Some(JsonRpcError::invalid_request_with_msg(format!(
-                            "{}, exceed rate limit",
-                            key.clone()
-                        )));
-                        bump_counters(&response, LABEL_BATCH, None, sdk_info);
-                        return response;
+            //////////////0L////////////
+            match &service.rate_limiter {
+                Some(rate_limiter) => match request.method_request {
+                    MethodRequest::Submit(ref params) => {
+                        let key = params.data.sender().to_hex();
+                        let mut rl = rate_limiter.lock().unwrap();
+                        let has_access = rl.acquire_all_tokens(String::from(key.clone()), 1);
+                        if !has_access.is_ok() {
+                            error!(
+                                "access denied due to rate limit for account : {}",
+                                key.clone()
+                            );
+                            response.error = Some(JsonRpcError::invalid_request_with_msg(format!(
+                                "{}, exceed rate limit",
+                                key.clone()
+                            )));
+                            bump_counters(&response, LABEL_BATCH, None, sdk_info);
+                            return response;
+                        }
                     }
-                }
+                    _ => (),
+                },
                 _ => (),
             }
+            //////////////0L////////////
             let timer = counters::METHOD_LATENCY
                 .with_label_values(&[request_type_label, request.method_request.method().as_str()])
                 .start_timer();
