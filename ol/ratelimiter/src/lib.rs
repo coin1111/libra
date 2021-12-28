@@ -3,13 +3,13 @@ use std::time::Instant;
 
 pub type RpcTokenBucketLimiter = TokenBucketRateLimiter<String>;
 
-struct RpcRateLimiterConfig {
+pub struct RpcRateLimiterConfig {
     initial_fill_rate_pct: u8,
     bucket_size: usize,        // how many tokens in one bucket
     global_bucket_size: usize, // how many tokens in global bucket
 }
 
-struct RpcRateLimiter {
+pub struct RpcRateLimiter {
     config: RpcRateLimiterConfig,
     buckets: RpcTokenBucketLimiter,
     global_buckets: RpcTokenBucketLimiter,
