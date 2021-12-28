@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.nodename }}
+  labels:
+    {{- include "ol.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ .Values.nodename }}
+  replicas: 1 
+  selector:
+    matchLabels:
+      {{- include "ol.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ol.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ol.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.nodename }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ .Values.node.command }}
+          {{- $args := list }}
+          {{- $args = .Values.validator  | append $args }}
+          {{- $args = .Values.debug  | append $args }}
+            {{- if .Values.node.args }}
+              {{- range $index, $v := .Values.node.args }}
+                {{- $args = $v  | append $args }}
+              {{- end }}
+            {{- end }}
+          {{- $vv :=  $args | join "\",\""}}
+          args:  ["{{ $vv }}"]
+          volumeMounts:
+            - name: nodevol
+              mountPath: /root/.0L
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+          {{- if eq .Values.validator true }}
+          - containerPort: {{ .Values.peerService.validatorPort }}
+          {{- else }}
+          - containerPort: {{ .Values.peerService.fullNodePort }}
+          {{- end }}
+          - containerPort: 8080 
+        - name: monitor
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ .Values.monitor.command }}
+          {{- $args := list }}
+          {{- $args = .Values.validator  | append $args }}
+          {{- $args = .Values.debug  | append $args }}
+            {{- if .Values.monitor.args }}
+              {{- range $index, $v := .Values.monitor.args }}
+                {{- $args = $v  | append $args }}
+              {{- end }}
+            {{- end }}
+          {{- $vv :=  $args | join "\",\""}}
+          args:  ["{{ $vv }}"]
+          volumeMounts:
+            - name: nodevol
+              mountPath: /root/.0L
+          resources:
+            {{- toYaml .Values.resources_mon | nindent 12 }}
+          ports:
+          - containerPort: 3030 
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: nodevol
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+        {{- if .Values.storage }}
+            storage: {{ .Values.storage }}
+	{{- else }}
+            storage: 1Gi 
+        {{- end }}
+        {{- if .Values.storageType }}
+        storageClassName: {{ .Values.storageType }}
+        {{- end }}

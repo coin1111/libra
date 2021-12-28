@@ -1,0 +1,16 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update
+
+RUN apt install pkg-config libssl-dev libgmp3-dev vim wamerican curl jq -y
+
+COPY get-olsf-bits.sh /
+
+WORKDIR /ol-bin
+RUN bash -c "/get-olsf-bits.sh"
+
+COPY onboard-val.sh /
+COPY run-node.sh /
+COPY run-monitor.sh /

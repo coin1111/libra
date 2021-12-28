@@ -1,0 +1,19 @@
+#
+# web managment service
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: management-svc
+  labels:
+    {{- include "ol.labels" . | nindent 4 }}
+spec:
+  type: LoadBalancer
+  {{- if .Values.loadBalancerIp }}
+  loadBalancerIP: {{ .Values.loadBalancerIp }}
+  {{- end }}
+  ports:
+    - port: 8080 
+      name: p8080
+  selector:
+    {{- include "ol.selectorLabels" . | nindent 4 }}
