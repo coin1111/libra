@@ -1,41 +1,38 @@
 use diem_rate_limiter::rate_limit::TokenBucketRateLimiter;
 use std::time::Instant;
-use std::rc::Rc;
 
 pub type RpcTokenBucketLimiter = TokenBucketRateLimiter<String>;
 
-#[derive(Clone)]
 pub struct RpcRateLimiterConfig {
     initial_fill_rate_pct: u8,
     bucket_size: usize,        // how many tokens in one bucket
     global_bucket_size: usize, // how many tokens in global bucket
 }
 
-#[derive(Clone)]
 pub struct RpcRateLimiter {
     config: RpcRateLimiterConfig,
-    buckets: Rc<RpcTokenBucketLimiter>,
-    global_buckets: Rc<RpcTokenBucketLimiter>,
+    buckets: RpcTokenBucketLimiter,
+    global_buckets: RpcTokenBucketLimiter,
 }
 const GLOBAL_KEY : &str= "global";
 impl RpcRateLimiter {
     fn new(config: RpcRateLimiterConfig) -> Self {
-        let buckets = Rc::new(TokenBucketRateLimiter::new(
+        let buckets = TokenBucketRateLimiter::new(
             "rpc_ratelimiter",
             String::from("rpc_ratelimiter"),
             config.initial_fill_rate_pct,
             config.bucket_size,
             1, // replenish bucket with 1 token per second
             None,
-        ));
-        let global_buckets = Rc::new(TokenBucketRateLimiter::new(
+        );
+        let global_buckets = TokenBucketRateLimiter::new(
             "rpc_ratelimiter",
             String::from("rpc_ratelimiter"),
             config.initial_fill_rate_pct,
             config.global_bucket_size,
             1, // replenish bucket with 1 token per second
             None,
-        ));
+        );
         RpcRateLimiter {
             config,
             buckets,
