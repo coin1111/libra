@@ -33,7 +33,8 @@ use warp::{
 };
 
 ////////0L/////////
-use diem_logger::error;
+use diem_logger::{info,error};
+////////0L/////////
 
 // Counter labels for runtime metrics
 const LABEL_FAIL: &str = "fail";
@@ -394,6 +395,11 @@ async fn rpc_request_handler(
                             )));
                             bump_counters(&response, LABEL_BATCH, None, sdk_info);
                             return response;
+                        } else {
+                            info!(
+                                "allow access due to rate limit for account : {}",
+                                key.clone()
+                            );
                         }
                     }
                     _ => (),
