@@ -38,7 +38,6 @@ function fix_ip() {
 # ol restore
 function ol_restore() {
     "$OL_BIN"/ol restore
-    cp /root/.0L/fullnode.node.yaml "$OL_NODE_CFG_FILE"
 }
 
 # fix peer ports to account for NodePort remap
@@ -48,7 +47,7 @@ function fix_ports() {
     # 6180 -> 30180
     #
     pushd "$OL_HOME_DIR"
-    for file in full.node.yaml validator.node.yaml
+    for file in fullnode.node.yaml validator.node.yaml
     do
         if [ -f "$file" ]; then
             sed -Ei 's/listen_address: "(.+)6179"/listen_address: "\130179"/g' "$file"
@@ -63,6 +62,17 @@ function fix_ports() {
         sed -Ei 's/("op_fullnode_network_addresses_string":)(".+)tcp\/6179/\1\2tcp\/30179/g' "$file"
         sed -Ei 's/("op_fullnode_network_addresses_string":)(".+)tcp\/6180/\1\2tcp\/30180/g' "$file"
     fi
+    popd
+}
+
+function enable_ratelimit() {
+    pushd "$OL_HOME_DIR"
+    for file in fullnode.node.yaml validator.node.yaml
+    do
+        if [ -f "$file" ]; then
+            sed -Ei 's/rpc_ratelimit_enabled: false/rpc_ratelimit_enabled: true/g' "$file"
+        fi
+    done
     popd
 }
 
@@ -121,7 +131,7 @@ OL_CFG_FILE="$OL_HOME_DIR"/0L.toml
 if [ "$is_validator" == "true" ]; then
     OL_NODE_CFG_FILE="$OL_HOME_DIR"/validator.node.yaml
 else
-    OL_NODE_CFG_FILE="$OL_HOME_DIR"/full.node.yaml
+    OL_NODE_CFG_FILE="$OL_HOME_DIR"/fullnode.node.yaml
 fi
 
 # web monitor dir
@@ -146,6 +156,9 @@ fix_ports
 
 # fix upstream node ip used by web mon
 fix_upstream_ip
+
+# enable ratelimit
+enable_ratelimit
 
 "$OL_BIN"/diem-node --config "$OL_NODE_CFG_FILE" &
 #sleep 1m

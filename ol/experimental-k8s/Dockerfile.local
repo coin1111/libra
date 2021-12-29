@@ -11,7 +11,7 @@ ARG LOCAL_WORK=ol/experimental-k8s
 # copy official bits
 COPY ${LOCAL_WORK}/get-olsf-bits.sh /
 WORKDIR /ol-bin
-RUN bash -c "/get-olsf-bits.sh"
+RUN bash -c "/get-olsf-bits.sh 1"
 
 # overlay built files
 WORKDIR /ol-bin
