@@ -2,6 +2,9 @@
 *.swp
 **/.terraform/
 #/////////////0L/////////////
+*
+!target/release
+!ol/
 #target/
 #//////////////0L///////////
 !target/libra-node-builder/libra-node

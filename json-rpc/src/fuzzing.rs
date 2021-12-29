@@ -120,6 +120,11 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
         diem_types::chain_id::ChainId::test(),
         config::DEFAULT_BATCH_SIZE_LIMIT,
         config::DEFAULT_PAGE_SIZE_LIMIT,
+        //////////////0L////////////
+        config::RPC_RATE_LIMIT_ENABLED,
+        config::BUCKET_SIZE,
+        config::GLOBAL_BUCKET_SIZE,
+        //////////////0L////////////
     );
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()

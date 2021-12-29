@@ -19,7 +19,7 @@ pub struct JsonRpcConfig {
     pub rpc_ratelimit_enabled: bool, // if rpc rate limit is enabled
     pub bucket_size: usize,          // how many tokens in one bucket
     pub global_bucket_size: usize,   // how many tokens in global bucket
-    //////////////0L////////////
+                                     //////////////0L////////////
 }
 
 pub const DEFAULT_JSON_RPC_ADDRESS: &str = "127.0.0.1";
@@ -28,6 +28,12 @@ pub const DEFAULT_BATCH_SIZE_LIMIT: u16 = 20;
 pub const DEFAULT_PAGE_SIZE_LIMIT: u16 = 1000;
 /// 0L increased the json-RPC length so we can include stdlib in upgrade oracle.
 pub const DEFAULT_CONTENT_LENGTH_LIMIT: usize = 4096 * 1024; //////// 0L ////////
+
+//////////////0L////////////
+pub const RPC_RATE_LIMIT_ENABLED: bool = false;
+pub const BUCKET_SIZE: usize = 1; // how many tokens in one bucket
+pub const GLOBAL_BUCKET_SIZE: usize = 10; // how many tokens in global bucket
+                                          //////////////0L////////////
 
 impl Default for JsonRpcConfig {
     fn default() -> JsonRpcConfig {
@@ -40,12 +46,11 @@ impl Default for JsonRpcConfig {
             content_length_limit: DEFAULT_CONTENT_LENGTH_LIMIT,
             tls_cert_path: None,
             tls_key_path: None,
-
             //////////////0L////////////
-            rpc_ratelimit_enabled: false,
-            bucket_size: 1,         // how many tokens in one bucket
-            global_bucket_size: 10, // how many tokens in global bucket
-            //////////////0L////////////
+            rpc_ratelimit_enabled: RPC_RATE_LIMIT_ENABLED,
+            bucket_size: BUCKET_SIZE, // how many tokens in one bucket
+            global_bucket_size: GLOBAL_BUCKET_SIZE, // how many tokens in global bucket
+                                      //////////////0L////////////
         }
     }
 }

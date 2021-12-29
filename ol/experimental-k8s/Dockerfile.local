@@ -15,6 +15,6 @@ COPY ./target/release/tower /ol-bin/
 COPY ./target/release/ol /ol-bin/
 COPY ./target/release/txs /ol-bin/
 
-COPY ol/expiremental-k8s/onboard-val.sh /
-COPY ol/expiremental-k8s/run-node.sh /
-COPY ol/expiremental-k8s/run-monitor.sh /
+COPY ol/experimental-k8s/onboard-val.sh /
+COPY ol/experimental-k8s/run-node.sh /
+COPY ol/experimental-k8s/run-monitor.sh /
