@@ -5,7 +5,9 @@
 image:
   repository: coin1111/olsf-libra 
   pullPolicy: IfNotPresent
-  tag: "ea15a384431a"
+  tag: "f3b7ba3df147" # rate limit
+  #tag: "ea15a384431a" # official bits
+
 
 imagePullSecrets: []
 nameOverride: ""

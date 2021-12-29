@@ -6,6 +6,14 @@ RUN apt-get update
 
 RUN apt install pkg-config libssl-dev libgmp3-dev vim wamerican curl jq -y
 
+ARG LOCAL_WORK=ol/experimental-k8s
+
+# copy official bits
+COPY ${LOCAL_WORK}/get-olsf-bits.sh /
+WORKDIR /ol-bin
+RUN bash -c "/get-olsf-bits.sh"
+
+# overlay built files
 WORKDIR /ol-bin
 COPY ./target/release/db-backup /ol-bin/
 COPY ./target/release/db-backup-verify /ol-bin/
@@ -15,6 +23,6 @@ COPY ./target/release/tower /ol-bin/
 COPY ./target/release/ol /ol-bin/
 COPY ./target/release/txs /ol-bin/
 
-COPY ol/experimental-k8s/onboard-val.sh /
-COPY ol/experimental-k8s/run-node.sh /
-COPY ol/experimental-k8s/run-monitor.sh /
+COPY ${LOCAL_WORK}/onboard-val.sh /
+COPY ${LOCAL_WORK}/run-node.sh /
+COPY ${LOCAL_WORK}/run-monitor.sh /
