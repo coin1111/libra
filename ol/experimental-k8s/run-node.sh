@@ -71,6 +71,8 @@ function enable_ratelimit() {
     do
         if [ -f "$file" ]; then
             sed -Ei 's/rpc_ratelimit_enabled: false/rpc_ratelimit_enabled: true/g' "$file"
+            sed -Ei 's/bucket_size: 1,/bucket_size: 1/g' "$file"
+            sed -Ei 's/global_bucket_size: 10,/global_bucket_size: 1/g' "$file"
         fi
     done
     popd

@@ -32,7 +32,7 @@ pub const DEFAULT_CONTENT_LENGTH_LIMIT: usize = 4096 * 1024; //////// 0L ///////
 //////////////0L////////////
 pub const RPC_RATE_LIMIT_ENABLED: bool = false;
 pub const BUCKET_SIZE: usize = 1; // how many tokens in one bucket
-pub const GLOBAL_BUCKET_SIZE: usize = 10; // how many tokens in global bucket
+pub const GLOBAL_BUCKET_SIZE: usize = 1; // how many tokens in global bucket
                                           //////////////0L////////////
 
 impl Default for JsonRpcConfig {

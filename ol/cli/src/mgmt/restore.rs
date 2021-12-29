@@ -437,7 +437,7 @@ json_rpc:
   address: 127.0.0.1:8080
   rpc_ratelimit_enabled: false
   bucket_size: 1
-  global_bucket_size: 10
+  global_bucket_size: 1
 upstream:
   networks:
     - public
@@ -481,7 +481,7 @@ json_rpc:
   address: 127.0.0.1:8080
   rpc_ratelimit_enabled: false
   bucket_size: 1
-  global_bucket_size: 10
+  global_bucket_size: 1
 upstream:
   networks:
     - public
