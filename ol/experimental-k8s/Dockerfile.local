@@ -1,0 +1,20 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update
+
+RUN apt install pkg-config libssl-dev libgmp3-dev vim wamerican curl jq -y
+
+WORKDIR /ol-bin
+COPY ./target/release/db-backup /ol-bin/
+COPY ./target/release/db-backup-verify /ol-bin/
+COPY ./target/release/db-restore /ol-bin/
+COPY ./target/release/diem-node /ol-bin/
+COPY ./target/release/tower /ol-bin/
+COPY ./target/release/ol /ol-bin/
+COPY ./target/release/txs /ol-bin/
+
+COPY ol/expiremental-k8s/onboard-val.sh /
+COPY ol/expiremental-k8s/run-node.sh /
+COPY ol/expiremental-k8s/run-monitor.sh /
