@@ -65,14 +65,18 @@ function fix_ports() {
     popd
 }
 
-function enable_ratelimit() {
+function configure_ratelimit() {
     pushd "$OL_HOME_DIR"
     for file in fullnode.node.yaml validator.node.yaml
     do
         if [ -f "$file" ]; then
-            sed -Ei 's/rpc_ratelimit_enabled: false/rpc_ratelimit_enabled: true/g' "$file"
-            sed -Ei 's/fill_rate_tps: 0.3/fill_rate_tps: 0.5/g' "$file"
-            #sed -Ei 's/global_bucket_size: 10,/global_bucket_size: 1/g' "$file"
+            if [ "$ratelimit_enabled" == "true" ]; then
+              sed -Ei 's/rpc_ratelimit_enabled: (.+)/rpc_ratelimit_enabled: true/g' "$file"
+              sed -Ei 's/fill_rate_tps: (.+)/fill_rate_tps: 0.5/g' "$file"
+              sed -Ei 's/global_bucket_size: (.+)/global_bucket_size: 5/g' "$file"
+            else
+              sed -Ei 's/rpc_ratelimit_enabled: (.+)/rpc_ratelimit_enabled: false/g' "$file"
+            fi
         fi
     done
     popd
@@ -82,7 +86,7 @@ function enable_ratelimit() {
 function fix_upstream_ip() {
     pushd "$OL_HOME_DIR"
     # fix upstream node in 0L.toml
-    if [ "$upstream_url" != "" ]; then
+    if [ "$upstream_url" == http*]; then
         t="echo $upstream_url | sed -E 's/\//\\\\\//g'"
         et=$(eval $t)
         tt="sed -Ei 's/(upstream_nodes = )\[\"(.+)\"\]/\1\[\"$et\"\]/g' 0L.toml"
@@ -94,9 +98,10 @@ function fix_upstream_ip() {
 # args
 is_validator="$1"
 is_debug="$2"
-upstream_url="$3"
+ratelimit_enabled="$3"
+upstream_url="$4"
 
-echo "validator: $is_validator, debug: $is_debug"
+echo "validator: $is_validator, debug: $is_debug", ratelimit_enabled: "$ratelimit_enabled"
 
 # 0L binaries
 if [[ -z "${OL_BIN}" ]]; then
@@ -159,8 +164,8 @@ fix_ports
 # fix upstream node ip used by web mon
 fix_upstream_ip
 
-# enable ratelimit
-enable_ratelimit
+# configure ratelimit
+configure_ratelimit
 
 "$OL_BIN"/diem-node --config "$OL_NODE_CFG_FILE" &
 #sleep 1m

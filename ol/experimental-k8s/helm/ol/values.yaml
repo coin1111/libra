@@ -5,7 +5,7 @@
 image:
   repository: coin1111/olsf-libra 
   pullPolicy: IfNotPresent
-  tag: "9dd8b75a86bc" # rate limit
+  tag: "206e2028f55d" # rate limit
   #tag: "ea15a384431a" # official bits
 
 
@@ -15,6 +15,7 @@ fullnameOverride: ""
 
 validator: false # if valiator
 debug: false # if in debug mode
+ratelimit_enabled: true # ratelimit enabled
 
 # passed from helm command line
 #loadBalancerIp: 104.197.3.222
