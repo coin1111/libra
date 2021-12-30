@@ -87,7 +87,7 @@ impl<Key: Eq + Hash + Clone + Debug> TokenBucketRateLimiter<Key> {
         }
     }
 
-    pub fn test(default_bucket_size: usize, default_fill_rate: usize) -> Self {
+    pub fn test(default_bucket_size: usize, default_fill_rate: f64) -> Self {
         Self::new(
             "test",
             "test".to_string(),
@@ -184,7 +184,7 @@ pub struct Bucket {
     /// The key for metrics purposes
     key: String,
     /// The current number of available tokens to be used
-    tokens: usize,
+    tokens: f64,
     /// Maximum number of `tokens` in the bucket
     size: usize,
     /// The fill rate of the bucket (`tokens/s`).  Amount added to `tokens` on a `refill`
@@ -219,7 +219,7 @@ impl Bucket {
             label,
             log_info,
             key,
-            tokens: initial,
+            tokens: initial as f64,
             size,
             rate,
             last_refresh_time: Instant::now(),
@@ -236,7 +236,7 @@ impl Bucket {
             label,
             log_info: String::new(),
             key: String::new(),
-            tokens: std::usize::MAX,
+            tokens: std::usize::MAX as f64,
             size: std::usize::MAX,
             rate: std::usize::MAX as f64,
             last_refresh_time: Instant::now(),
@@ -280,8 +280,7 @@ impl Bucket {
             }
             self.allowed_in_period = 0;
             self.throttled_in_period = 0;
-            let new_tokens = ((num_intervals as f64)*self.rate) as usize;
-            self.add_tokens(new_tokens);
+            self.add_tokens((num_intervals as f64)*self.rate);
 
             // We have to base everything off the original time, or we'll have drift where we slowly slow the bucket refill rate
             self.last_refresh_time += Duration::from_secs(num_intervals);
@@ -300,8 +299,7 @@ impl Bucket {
 
         // Refill if needed
         self.refill();
-
-        if self.tokens >= requested {
+        if self.tokens as usize >= requested {
             self.deduct_tokens(requested);
             self.allowed_in_period = self.allowed_in_period.saturating_add(requested);
             Ok(())
@@ -337,9 +335,11 @@ impl Bucket {
     /// Retrieve the maximum amount of tokens up to `count`
     /// Tells us how much of the requested size we can send
     fn deduct_tokens(&mut self, requested: usize) -> usize {
-        let tokens_allowed = min(self.tokens, requested);
-        self.tokens = self.tokens.saturating_sub(requested);
-
+        let tokens_allowed = min(self.tokens as usize, requested);
+        self.tokens = self.tokens - (requested as f64);
+        if self.tokens < 0.0 {
+            self.tokens = 0.0;
+        }
         tokens_allowed
     }
 
@@ -357,7 +357,7 @@ impl Bucket {
             // This means the batch can never succeed
             None
         } else {
-            let tokens_needed = requested.saturating_sub(self.tokens);
+            let tokens_needed = requested.saturating_sub(self.tokens as usize);
 
             let intervals = (tokens_needed as f64 / self.rate as f64).ceil() as u32;
             Some(self.last_refresh_time + (ONE_SEC * intervals))
@@ -366,14 +366,17 @@ impl Bucket {
 
     /// Add new tokens
     /// Ensures bucket doesn't overfill
-    fn add_tokens(&mut self, new_tokens: usize) {
-        self.tokens = min(self.size, self.tokens.saturating_add(new_tokens));
+    fn add_tokens(&mut self, new_tokens: f64) {
+        self.tokens = self.tokens + new_tokens;
+        if self.tokens > self.size as f64 {
+            self.tokens = self.size as f64;
+        }
     }
 
     /// Returns tokens that were unused
     pub fn return_tokens(&mut self, new_tokens: usize) {
         self.allowed_in_period = self.allowed_in_period.saturating_sub(new_tokens);
-        self.add_tokens(new_tokens);
+        self.add_tokens(new_tokens as f64);
     }
 }
 
@@ -404,7 +407,7 @@ mod tests {
     #[test]
     fn test_rate_limiting() {
         let bucket_size = 5;
-        let bucket_rate = 1;
+        let bucket_rate = 1.0;
         let key = "Key";
         let rate_limiter = TokenBucketRateLimiter::test(bucket_size, bucket_rate);
 
@@ -424,7 +427,7 @@ mod tests {
     #[test]
     fn test_message_rate_limiting() {
         let bucket_size = 5;
-        let bucket_rate = 3;
+        let bucket_rate = 3.0;
         let key = "Key";
         let rate_limiter = TokenBucketRateLimiter::test(bucket_size, bucket_rate);
 
@@ -453,7 +456,7 @@ mod tests {
     #[test]
     fn test_refill() {
         let bucket_size = 5;
-        let bucket_rate = 1;
+        let bucket_rate = 1.0;
         let key = "Key";
         let rate_limiter = TokenBucketRateLimiter::test(bucket_size, bucket_rate);
 
@@ -466,10 +469,10 @@ mod tests {
         sleep(bucket.time_of_next_refill().duration_since(Instant::now()));
         bucket.refill();
         let num_tokens = bucket.tokens;
-        assert!(num_tokens >= bucket_rate);
+        assert!(num_tokens as f64 >= bucket_rate);
 
         // Test the autorefill
-        assert_acquire(&mut bucket, num_tokens);
+        assert_acquire(&mut bucket, num_tokens as usize);
         sleep(bucket.time_of_next_refill().duration_since(Instant::now()));
         bucket.acquire_tokens(1).unwrap();
     }
@@ -477,7 +480,7 @@ mod tests {
     #[test]
     fn test_time_checks() {
         let bucket_size = 5;
-        let bucket_rate = 1;
+        let bucket_rate = 1.0;
         let rate_limiter = TokenBucketRateLimiter::test(bucket_size, bucket_rate);
 
         let bucket_arc = rate_limiter.bucket("Key");
@@ -510,7 +513,7 @@ mod tests {
     #[test]
     fn test_bucket_creation() {
         let key = "key";
-        let rate_limiter = TokenBucketRateLimiter::test(1, 1);
+        let rate_limiter = TokenBucketRateLimiter::test(1, 1.0);
         assert_num_keys(&rate_limiter, 0);
 
         // Ensure the buckets aren't being recreated
@@ -525,7 +528,7 @@ mod tests {
     fn test_garbage_collection() {
         let key_to_keep = "don't gc";
         let key_to_gc = "do gc";
-        let rate_limiter = TokenBucketRateLimiter::test(1, 1);
+        let rate_limiter = TokenBucketRateLimiter::test(1, 1.0);
         assert_num_keys(&rate_limiter, 0);
 
         // Create a bucket to hold onto

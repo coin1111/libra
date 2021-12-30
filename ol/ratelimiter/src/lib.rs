@@ -104,7 +104,7 @@ impl RpcRateLimiter {
 mod tests {
     use crate::{RpcRateLimiter, RpcRateLimiterConfig};
     use std::{thread, time};
-/*
+
     // rate limit with single token per sec
     #[test]
     fn single_token() {
@@ -241,7 +241,7 @@ mod tests {
             .expect("Should be successful");
     }
 
- */
+
     // fill rate less than 1 tps works
     #[test]
     fn fill_rate_less_1tps() {
