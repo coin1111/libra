@@ -5745,7 +5745,13 @@ name = "ol-ratelimiter"
 version = "0.1.0"
 dependencies = [
  "diem-infallible",
- "diem-rate-limiter",
+ "diem-logger",
+ "diem-metrics",
+ "diem-workspace-hack",
+ "futures",
+ "pin-project",
+ "tokio 1.11.0",
+ "tokio-util",
 ]
 
 [[package]]

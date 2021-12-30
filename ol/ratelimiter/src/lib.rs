@@ -1,4 +1,5 @@
-use diem_rate_limiter::rate_limit::TokenBucketRateLimiter;
+mod rate_limit;
+use rate_limit::TokenBucketRateLimiter;
 use std::time::Instant;
 
 pub type RpcTokenBucketLimiter = TokenBucketRateLimiter<String>;
@@ -7,6 +8,7 @@ pub struct RpcRateLimiterConfig {
     pub initial_fill_rate_pct: u8,
     pub bucket_size: usize,        // how many tokens in one bucket
     pub global_bucket_size: usize, // how many tokens in global bucket
+    pub fill_rate_tps: f64, // tokens per seconds
 }
 
 pub struct RpcRateLimiter {
@@ -22,7 +24,7 @@ impl RpcRateLimiter {
             String::from("rpc_ratelimiter"),
             config.initial_fill_rate_pct,
             config.bucket_size,
-            1, // replenish bucket with 1 token per second
+            config.fill_rate_tps, // replenish bucket with fill_rate_tps per second
             None,
         );
         let global_buckets = TokenBucketRateLimiter::new(
@@ -30,7 +32,7 @@ impl RpcRateLimiter {
             String::from("rpc_ratelimiter"),
             config.initial_fill_rate_pct,
             config.global_bucket_size,
-            1, // replenish bucket with 1 token per second
+            config.fill_rate_tps, // replenish bucket with fill_rate_tps token per second
             None,
         );
         RpcRateLimiter {
@@ -102,7 +104,7 @@ impl RpcRateLimiter {
 mod tests {
     use crate::{RpcRateLimiter, RpcRateLimiterConfig};
     use std::{thread, time};
-
+/*
     // rate limit with single token per sec
     #[test]
     fn single_token() {
@@ -110,6 +112,7 @@ mod tests {
             initial_fill_rate_pct: 100,
             bucket_size: 1,
             global_bucket_size: 1,
+            fill_rate_tps: 1.0,
         };
         let mut rl = RpcRateLimiter::new(config);
         rl.acquire_all_tokens(String::from("aa"), 1)
@@ -131,6 +134,7 @@ mod tests {
             initial_fill_rate_pct: 100,
             bucket_size: 10,
             global_bucket_size: 10,
+            fill_rate_tps: 1.0,
         };
         let mut rl = RpcRateLimiter::new(config);
         rl.acquire_all_tokens(String::from("aa"), 10)
@@ -152,6 +156,7 @@ mod tests {
             initial_fill_rate_pct: 100,
             bucket_size: 5,
             global_bucket_size: 10,
+            fill_rate_tps: 1.0,
         };
         let mut rl = RpcRateLimiter::new(config);
         rl.acquire_all_tokens(String::from("aa"), 5)
@@ -185,6 +190,7 @@ mod tests {
             initial_fill_rate_pct: 100,
             bucket_size: 5,
             global_bucket_size: 12,
+            fill_rate_tps: 1.0,
         };
         let mut rl = RpcRateLimiter::new(config);
         // cannot borrow 6, since 6/12 <= 0.5
@@ -217,6 +223,7 @@ mod tests {
             initial_fill_rate_pct: 100,
             bucket_size: 5,
             global_bucket_size: 10,
+            fill_rate_tps: 1.0,
         };
         let mut rl = RpcRateLimiter::new(config);
         // cannot borrow 6, since 6/12 <= 0.5
@@ -233,4 +240,34 @@ mod tests {
         rl.acquire_all_tokens(String::from("cc"), 1)
             .expect("Should be successful");
     }
+
+ */
+    // fill rate less than 1 tps works
+    #[test]
+    fn fill_rate_less_1tps() {
+        let config = RpcRateLimiterConfig {
+            initial_fill_rate_pct: 100,
+            bucket_size: 1,
+            global_bucket_size: 1,
+            fill_rate_tps: 0.5,
+        };
+        let mut rl = RpcRateLimiter::new(config);
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect("Should be successful");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
+
+        // wait for 1 second
+        thread::sleep(time::Duration::from_millis(1000));
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
+
+        // wait for 1 second
+        thread::sleep(time::Duration::from_millis(1000));
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect("Should be successful");
+        rl.acquire_all_tokens(String::from("aa"), 1)
+            .expect_err("Expected error");
+    }
+
 }
