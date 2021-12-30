@@ -438,7 +438,7 @@ json_rpc:
   rpc_ratelimit_enabled: false
   bucket_size: 1
   global_bucket_size: 1
-    fill_rate_tps: 0.3
+  fill_rate_tps: 0.3
 upstream:
   networks:
     - public
