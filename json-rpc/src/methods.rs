@@ -57,6 +57,7 @@ impl JsonRpcService {
         rpc_ratelimit_enabled: bool,
         bucket_size: usize,
         global_bucket_size: usize,
+        fill_rate_tps: f64,
         ////////////////0L//////////////////
     ) -> Self {
         //////////////0L////////////
@@ -64,6 +65,7 @@ impl JsonRpcService {
             initial_fill_rate_pct: 50,
             bucket_size,
             global_bucket_size,
+            fill_rate_tps,
         };
         let rate_limiter = if rpc_ratelimit_enabled {
             Some(Arc::new(Mutex::new(RpcRateLimiter::new(config))))

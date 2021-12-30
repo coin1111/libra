@@ -5,14 +5,15 @@ use anyhow::{format_err, Error, Result};
 use diem_config::{
     config::{
         RoleType,
-        BUCKET_SIZE,
         DEFAULT_BATCH_SIZE_LIMIT,
         DEFAULT_CONTENT_LENGTH_LIMIT,
         DEFAULT_PAGE_SIZE_LIMIT,
-        GLOBAL_BUCKET_SIZE,
-        //////////////0L////////////
         //////////////0L////////////
         RPC_RATE_LIMIT_ENABLED,
+        BUCKET_SIZE,
+        GLOBAL_BUCKET_SIZE,
+        FILL_RATE_TPS,
+        //////////////0L////////////
     },
     utils,
 };
@@ -84,6 +85,7 @@ pub fn test_bootstrap(
         RPC_RATE_LIMIT_ENABLED,
         BUCKET_SIZE,
         GLOBAL_BUCKET_SIZE,
+        FILL_RATE_TPS,
         //////////////0L////////////
         diem_db,
         mp_sender,

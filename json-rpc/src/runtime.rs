@@ -110,6 +110,7 @@ pub fn bootstrap(
     rpc_ratelimit_enabled: bool,
     bucket_size: usize,
     global_bucket_size: usize,
+    fill_rate_tps: f64,
     ////////////////0L//////////////////
     diem_db: Arc<dyn DbReader>,
     mp_sender: MempoolClientSender,
@@ -133,6 +134,7 @@ pub fn bootstrap(
         rpc_ratelimit_enabled,
         bucket_size,
         global_bucket_size,
+        fill_rate_tps,
         ////////////////0L//////////////////
     );
 
@@ -226,6 +228,7 @@ pub fn bootstrap_from_config(
         config.json_rpc.rpc_ratelimit_enabled,
         config.json_rpc.bucket_size,
         config.json_rpc.global_bucket_size,
+        config.json_rpc.fill_rate_tps,
         ////////////0L///////////////
         diem_db,
         mp_sender,

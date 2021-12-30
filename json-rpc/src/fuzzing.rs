@@ -124,6 +124,7 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
         config::RPC_RATE_LIMIT_ENABLED,
         config::BUCKET_SIZE,
         config::GLOBAL_BUCKET_SIZE,
+        config::FILL_RATE_TPS,
         //////////////0L////////////
     );
     let rt = tokio::runtime::Builder::new_current_thread()
