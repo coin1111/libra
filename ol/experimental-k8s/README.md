@@ -65,7 +65,11 @@ After modifications to values.yaml or any other help templates, uprade setup by 
 This step is required if published image is obsolete or if you made changes to run-node.sh or Dockerfile.olsf. Create dockerhub account to publish your image. Update olk and helm/ol/vaues.yaml to use your repo and your tag. Search for "tag" in both files.
 ```
 docker login
-./build-olsf-container.sh -p # -p publishes to dockerhub
+# build from official binaries
+./build-olsf-container.sh 0 -p # -p publishes to dockerhub
+# build from local ../../target/release binaries
+./build-olsf-container.sh 1 -p # -p publishes to dockerhub
+
 ```
 
 ### Debug Mode
