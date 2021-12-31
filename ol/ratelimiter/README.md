@@ -1,7 +1,7 @@
 # Rate Limiter for Write Transactions For Fullnode
 
 ## Goal
-Rate limiter restricts number of write transactions send via rpc port 8080. It's current purpose is to 
+Rate limiter restricts number of write transactions sent via rpc port 8080. It's current purpose is to 
 control number of proofs submitted by miners.
 
 ## Configuration
@@ -18,8 +18,8 @@ json_rpc:
 Every write transaction (Submit) is subject to a rate limit. Sender account id is used as a key.
 Each request is requires one token. If a token is available, access is allowed, otherwise error is returned.
 Each request also requires a token from a global bucket. For example if caller bucket capacity is one token and global capacity is 5,
-then only the first 5 callers are allowed, the rest is bloked despide them having available tokens in their buckets.
+then only the first 5 callers are allowed, the rest is bloked despite them having available tokens in their buckets.
 
-Rate limiter allows borrowing. E.g. if caller used up its tockens and global buket still has available tokens,
+Rate limiter allows borrowing. E.g. if caller used up its tokens and global buket still has available tokens,
 the caller can take more tokens as long as global bucket has at least 50% remaining capacity. For example if 
 global bucket is 5, a caller can take 2 tokens (2/5 < 50%).
