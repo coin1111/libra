@@ -27,10 +27,10 @@ function fix_ip() {
     pushd "$OL_HOME_DIR"
     curr_ip=$(grep "ip = " 0L.toml | awk '{print $3}' | tr -d '"')
     if [ "$my_ip" != "$curr_ip" ]; then
-    crepl="find . -name \"*\" | xargs -I {} sed -i 's/$curr_ip/$my_ip/g'  {}"
-    set +e
-    eval $crepl
-    set -e
+            crepl="find . -name \"0L.toml\" | xargs -I {} sed -i 's/ip = \"$curr_ip\"/ip = \"$my_ip\"/g'  {}"
+            set +e
+            eval $crepl
+            set -e
     fi
     popd
 }

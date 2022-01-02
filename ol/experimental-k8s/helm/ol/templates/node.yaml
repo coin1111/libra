@@ -65,7 +65,6 @@ spec:
           {{- $args := list }}
           {{- $args = .Values.validator  | append $args }}
           {{- $args = .Values.debug  | append $args }}
-          {{- $args = .Values.ratelimit_enabled  | append $args }}
             {{- if .Values.monitor.args }}
               {{- range $index, $v := .Values.monitor.args }}
                 {{- $args = $v  | append $args }}
