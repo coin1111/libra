@@ -19,6 +19,8 @@ script {
         BridgeEscrow::initialize(&alice);
         let target_address = BridgeEscrow::get_target_address(&alice);
         assert(Vector::length(&target_address) == 0,0);
+        let balance = BridgeEscrow::get_balance(&alice);
+        assert(balance == 0,1);
     }
 }
 //! check: EXECUTED
