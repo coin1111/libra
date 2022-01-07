@@ -31,9 +31,24 @@ script {
 
     fun main(alice: signer){
         let amount: u64 = 100;
+        // account is created in Test1
         let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
-        BridgeEscrow::deposit(&alice, amount, copy target_address);
         BridgeEscrow::deposit(&alice, amount, target_address);
     }
 }
 // check: "ABORTED { code: 1,"
+
+///// Test 3: Cannot deposit 0 amount
+//! new-transaction
+//! sender: alice
+//! gas-currency: GAS
+script {
+    use 0x1::BridgeEscrow;
+
+    fun main(alice: signer){
+        let amount: u64 = 0;
+        let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        BridgeEscrow::deposit(&alice, amount, copy target_address);
+    }
+}
+// check: "ABORTED { code: 3,"

@@ -22,10 +22,11 @@ address 0x1{
         }
 
         public fun deposit(sender: &signer, amount: u64, target_address: vector<u8>) {
-            let address = Signer::address_of(sender);
-            assert (!exists<AccountState>(address), ERROR_ALREADY_ACCOUNT_EXISTS);
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
             assert (Vector::length(&target_address) != 0, ERROR_TARGET_ADDRESS_EMPTY);
+
+            let address = Signer::address_of(sender);
+            assert (!exists<AccountState>(address), ERROR_ALREADY_ACCOUNT_EXISTS);
             move_to<AccountState>(sender, AccountState{ balance: amount, target_address: target_address });
         }
 
