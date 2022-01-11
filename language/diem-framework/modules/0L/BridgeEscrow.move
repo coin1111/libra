@@ -20,8 +20,9 @@ address 0x1 {
         const ERROR_ACCOUNT_NOT_EXISTS: u64 = 3005;
         const ERROR_NO_ESCROW_ACCOUNT: u64 = 3006;
         const ERROR_NOT_ALLOWED: u64 = 3007;
+        const ERROR_LOCKED_EMPTY: u64 = 3308;
 
-        struct AccountInfo has store, drop {
+        struct AccountInfo has copy, store, drop {
             // user address on this chain
             address: address,
             // user address on the other chain
@@ -79,6 +80,20 @@ address 0x1 {
             });
         }
 
+        public fun get_locked_at(index: u64, escrow_address: address): AccountInfo acquires EscrowState  {
+            assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
+            let state = borrow_global<EscrowState>(escrow_address);
+            let info = Vector::borrow(&state.locked, index);
+            *info
+        }
+        public fun get_unlocked_at(index: u64, escrow_address: address): AccountInfo acquires EscrowState  {
+            assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
+            let state = borrow_global<EscrowState>(escrow_address);
+            let info = Vector::borrow(&state.unlocked, index);
+            *info
+        }
+
+
         // executed under escrow account
         public fun withdraw_from_escrow(escrow: &signer, receiver: address, amount: u64, sender: address) acquires EscrowState  {
             // escrow has enough funds
@@ -120,14 +135,20 @@ address 0x1 {
             Vector::remove<AccountInfo>(&mut state.unlocked, i);
         }
 
-//        public fun get_balance(account: address): u64 acquires AccountState {
-//            let st = borrow_global<AccountState>(account);
-//            st.balance
-//        }
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
-            let st = borrow_global<EscrowState>(escrow);
-            st.balance
+            let state = borrow_global<EscrowState>(escrow);
+            state.balance
+        }
+
+        public fun get_locked_length(escrow: address): u64 acquires EscrowState {
+            let state = borrow_global<EscrowState>(escrow);
+            Vector::length(&state.locked)
+        }
+
+        public fun get_unlocked_length(escrow: address): u64 acquires EscrowState {
+            let state = borrow_global<EscrowState>(escrow);
+            Vector::length(&state.unlocked)
         }
 
 //        public fun get_escrow(account: address): address acquires AccountState {

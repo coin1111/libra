@@ -30,13 +30,15 @@ script {
         let amount: u64 = 100;
         BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, amount, @{{bob}});
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 1001);
+        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 1002);
     }
 }
 //! check: EXECUTED
 
 ///// Test 3: Bridge agent detects that Alice deposited funds and
 /// create complimentary transaction on the other chain
-/// in this case the other chain is the same, but account is bob
+/// in this case the other chain is the same.
+/// Complimentary account is bob
 //! new-transaction
 //! sender: escrow
 //! gas-currency: GAS
