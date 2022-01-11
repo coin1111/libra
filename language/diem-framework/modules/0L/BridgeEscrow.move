@@ -25,30 +25,43 @@ address 0x1 {
             // escrow address
             escrow: address,
             // address on this chain
-            target_address: vector<u8>,
+            target_address: address,
+            // value sent
+            balance: u64,
+        }
+
+        struct AccountInfo has store, drop {
+            // user address on this chain
+            address: address,
+            // user address on the other chain
+            target_address: address,
             // value sent
             balance: u64,
         }
     
         struct EscrowState has key {
+            locked: vector<AccountInfo>,
+            unlocked: vector<AccountInfo>,
             // current total balance of the bridge
             balance: u64,
         }
 
         // executed under escrow account
         public fun initialize_escrow(escrow: &signer) {
-            assert(!exists<EscrowState>(Signer::address_of(escrow)), ERROR_BRIDGE_STORE_EXISTS);
+            let escrow_addr = Signer::address_of(escrow);
+            assert(!exists<EscrowState>(escrow_addr), ERROR_BRIDGE_STORE_EXISTS);
             move_to<EscrowState>(escrow, EscrowState{
+                locked: Vector::empty<AccountInfo>(),
+                unlocked: Vector::empty<AccountInfo>(),
                 balance: 0,
             });
         }
 
         // executed under user account
         public fun deposit_to_escrow(sender: &signer, escrow: address, amount: u64,
-                                     target_address: vector<u8>) acquires EscrowState {
+                                     target_address: address) acquires EscrowState {
             // validate arguments
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
-            assert (Vector::length(&target_address) != 0, ERROR_TARGET_ADDRESS_EMPTY);
 
             // sender has enough funds
             let address = Signer::address_of(sender);
@@ -68,46 +81,61 @@ address 0x1 {
 
             // record account balance
             move_to<AccountState>(sender, AccountState{ balance: amount,
-                escrow: escrow, target_address: target_address });
+                escrow: escrow, target_address: copy target_address });
 
             // update escrow balance
-            let c_ref = &mut borrow_global_mut<EscrowState>(escrow).balance;
-            *c_ref = *c_ref + amount;
+            let state = borrow_global_mut<EscrowState>(escrow);
+            *&mut state.balance = *&mut state.balance + amount;
+
+            Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
+                address: Signer::address_of(sender),
+                target_address: target_address,
+                balance: amount,
+            });
         }
 
         // executed under escrow account
-        public fun withdraw_from_escrow(escrow: &signer, target: address, amount: u64) acquires EscrowState  {
+        public fun withdraw_from_escrow(escrow: &signer, receiver: address, amount: u64, sender: address) acquires EscrowState  {
             // escrow has enough funds
             let escrow_address = Signer::address_of(escrow);
             assert(DiemAccount::balance<GAS>(escrow_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
 
             // move funds from escrow to user account
             let with_cap = DiemAccount::extract_withdraw_capability(escrow);
-            DiemAccount::pay_from<GAS>(&with_cap, target, amount, x"", x"");
+            DiemAccount::pay_from<GAS>(&with_cap, receiver, amount, x"", x"");
             DiemAccount::restore_withdraw_capability(with_cap);
 
             // update balance
-            let c_ref = &mut borrow_global_mut<EscrowState>(escrow_address).balance;
-            assert(*c_ref >= amount, ERROR_INSUFFICIENT_BALANCE);
-            *c_ref = *c_ref - amount;
+            let state = borrow_global_mut<EscrowState>(escrow_address);
+            assert(state.balance >= amount, ERROR_INSUFFICIENT_BALANCE);
+            *&mut state.balance = *&mut state.balance - amount;
+
+            // add entry to unlocked to indicate that funds were transferred
+            Vector::push_back<AccountInfo>(&mut state.unlocked, AccountInfo{
+                address: receiver,
+                target_address: sender,
+                balance: amount,
+            });
         }
 
         // executed under escrow account
-        public fun delete_account(escrow: &signer, target: address) acquires AccountState {
-            // target account must exist
-            assert (exists<AccountState>(target), ERROR_ACCOUNT_NOT_EXISTS);
+        public fun delete_account(escrow: &signer, receiver: address, sender: address)
+            acquires EscrowState {
 
-            // destroy target account
-            let target_account = move_from<AccountState>(target);
-            // ensure that caller is escrow account
-            assert(target_account.escrow == Signer::address_of(escrow), ERROR_NOT_ALLOWED);
-            let AccountState { balance, escrow, target_address } = target_account;
-            let _ = balance;
-            let _ = escrow;
-            let _ = target_address;
+            let escrow_address = Signer::address_of(escrow);
+            let state = borrow_global_mut<EscrowState>(escrow_address);
+            let ai: AccountInfo = AccountInfo{
+                address: receiver,
+                // user address on the other chain
+                target_address: sender,
+                // value sent
+                balance: 0,
+            };
+            let (_, i) = Vector::index_of<AccountInfo>(&state.unlocked, &ai);
+            Vector::remove<AccountInfo>(&mut state.unlocked, i);
         }
 
-        public fun get_target_address(account: address): vector<u8> acquires AccountState{
+        public fun get_target_address(account: address): address acquires AccountState{
             let st = borrow_global<AccountState>(account);
             let tg = *&st.target_address;
             copy tg
