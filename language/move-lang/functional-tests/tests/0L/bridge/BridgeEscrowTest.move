@@ -28,7 +28,7 @@ script {
     fun main(sender: signer){
         //let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
-        BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, amount, @{{bob}});
+        BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, @{{bob}}, amount);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 1001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 1002);
     }
@@ -48,6 +48,11 @@ script {
 
     fun main(escrow: signer){
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 100, 1004);
+
+        // pick up the first available account and make transfer to the "other" chain
+        // which is the same chain with account bob
+        //let ai = BridgeEscrow::get_locked_at(@{{escrow}});
+
         BridgeEscrow::withdraw_from_escrow(&escrow,@{{bob}},100, @{{alice}});
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 1005);
     }

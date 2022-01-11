@@ -14,7 +14,6 @@ address 0x1 {
 
         const ERROR_BRIDGE_STORE_EXISTS:u64 = 3000;
         const ERROR_ALREADY_ACCOUNT_EXISTS: u64 = 3001;
-        const ERROR_TARGET_ADDRESS_EMPTY: u64 = 3002;
         const ERROR_AMOUNT_MUST_BE_POSITIVE: u64 = 3003;
         const ERROR_INSUFFICIENT_BALANCE: u64 = 3004;
         const ERROR_ACCOUNT_NOT_EXISTS: u64 = 3005;
@@ -24,9 +23,9 @@ address 0x1 {
 
         struct AccountInfo has copy, store, drop {
             // user address on this chain
-            address: address,
+            sender: address,
             // user address on the other chain
-            target_address: address,
+            receiver: address,
             // value sent
             balance: u64,
         }
@@ -50,8 +49,9 @@ address 0x1 {
         }
 
         // executed under user account
-        public fun deposit_to_escrow(sender: &signer, escrow: address, amount: u64,
-                                     target_address: address) acquires EscrowState {
+        public fun deposit_to_escrow(sender: &signer, escrow: address,
+                                     receiver: address, amount: u64
+                                     ) acquires EscrowState {
             // validate arguments
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
 
@@ -74,8 +74,8 @@ address 0x1 {
             *&mut state.balance = *&mut state.balance + amount;
 
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
-                address: Signer::address_of(sender),
-                target_address: target_address,
+                sender: Signer::address_of(sender),
+                receiver: receiver,
                 balance: amount,
             });
         }
@@ -112,8 +112,8 @@ address 0x1 {
 
             // add entry to unlocked to indicate that funds were transferred
             Vector::push_back<AccountInfo>(&mut state.unlocked, AccountInfo{
-                address: receiver,
-                target_address: sender,
+                sender: receiver,
+                receiver: sender,
                 balance: amount,
             });
         }
@@ -125,9 +125,9 @@ address 0x1 {
             let escrow_address = Signer::address_of(escrow);
             let state = borrow_global_mut<EscrowState>(escrow_address);
             let ai: AccountInfo = AccountInfo{
-                address: receiver,
+                sender: receiver,
                 // user address on the other chain
-                target_address: sender,
+                receiver: sender,
                 // value sent
                 balance: 0,
             };
