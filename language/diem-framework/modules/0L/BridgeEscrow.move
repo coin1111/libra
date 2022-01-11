@@ -20,15 +20,6 @@ address 0x1 {
         const ERROR_ACCOUNT_NOT_EXISTS: u64 = 3005;
         const ERROR_NO_ESCROW_ACCOUNT: u64 = 3006;
         const ERROR_NOT_ALLOWED: u64 = 3007;
-        
-        struct AccountState has key {
-            // escrow address
-            escrow: address,
-            // address on this chain
-            target_address: address,
-            // value sent
-            balance: u64,
-        }
 
         struct AccountInfo has store, drop {
             // user address on this chain
@@ -67,10 +58,6 @@ address 0x1 {
             let address = Signer::address_of(sender);
             assert(DiemAccount::balance<GAS>(address) >= amount, ERROR_INSUFFICIENT_BALANCE);
 
-            // account doesn't exist
-            // currently support only one transfer at a time
-            assert (!exists<AccountState>(address), ERROR_ALREADY_ACCOUNT_EXISTS);
-
             // escrow account exists
             assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
 
@@ -80,8 +67,6 @@ address 0x1 {
             DiemAccount::restore_withdraw_capability(with_cap);
 
             // record account balance
-            move_to<AccountState>(sender, AccountState{ balance: amount,
-                escrow: escrow, target_address: copy target_address });
 
             // update escrow balance
             let state = borrow_global_mut<EscrowState>(escrow);
@@ -135,29 +120,24 @@ address 0x1 {
             Vector::remove<AccountInfo>(&mut state.unlocked, i);
         }
 
-        public fun get_target_address(account: address): address acquires AccountState{
-            let st = borrow_global<AccountState>(account);
-            let tg = *&st.target_address;
-            copy tg
-        }
-        public fun get_balance(account: address): u64 acquires AccountState {
-            let st = borrow_global<AccountState>(account);
-            st.balance
-        }
+//        public fun get_balance(account: address): u64 acquires AccountState {
+//            let st = borrow_global<AccountState>(account);
+//            st.balance
+//        }
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
             let st = borrow_global<EscrowState>(escrow);
             st.balance
         }
 
-        public fun get_escrow(account: address): address acquires AccountState {
-            let st = borrow_global<AccountState>(account);
-            st.escrow
-        }
-        public fun has_escrow_balance(addr: address):  bool {
-            let has = exists<AccountState>(addr);
-            has
-        }
+//        public fun get_escrow(account: address): address acquires AccountState {
+//            let st = borrow_global<AccountState>(account);
+//            st.escrow
+//        }
+//        public fun has_escrow_balance(addr: address):  bool {
+//            let has = exists<AccountState>(addr);
+//            has
+//        }
     }
 
 }

@@ -24,13 +24,12 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
-    use 0x1::Signer;
 
     fun main(sender: signer){
         //let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
         BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, amount, @{{bob}});
-        assert(BridgeEscrow::get_balance(Signer::address_of(&sender)) == amount, 1001);
+        assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 1001);
     }
 }
 //! check: EXECUTED
@@ -44,12 +43,8 @@ script {
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Signer;
-    use 0x1::Debug;
 
     fun main(escrow: signer){
-        let bal = BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow));
-        Debug::print(&bal);
-
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 100, 1004);
         BridgeEscrow::withdraw_from_escrow(&escrow,@{{bob}},100, @{{alice}});
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 1005);
