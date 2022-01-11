@@ -80,22 +80,21 @@ address 0x1 {
             });
         }
 
-        public fun get_locked_at(index: u64, escrow_address: address): AccountInfo acquires EscrowState  {
+        public fun get_locked_at(index: u64, escrow_address: address): (address,address,u64) acquires EscrowState  {
             assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
             let state = borrow_global<EscrowState>(escrow_address);
             let info = Vector::borrow(&state.locked, index);
-            *info
+            (info.sender, info.receiver, info.balance)
         }
-        public fun get_unlocked_at(index: u64, escrow_address: address): AccountInfo acquires EscrowState  {
+        public fun get_unlocked_at(index: u64, escrow_address: address): (address,address,u64) acquires EscrowState  {
             assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
             let state = borrow_global<EscrowState>(escrow_address);
             let info = Vector::borrow(&state.unlocked, index);
-            *info
+            (info.sender, info.receiver, info.balance)
         }
 
-
         // executed under escrow account
-        public fun withdraw_from_escrow(escrow: &signer, receiver: address, amount: u64, sender: address) acquires EscrowState  {
+        public fun withdraw_from_escrow(escrow: &signer, sender:address, receiver:address, amount:u64) acquires EscrowState  {
             // escrow has enough funds
             let escrow_address = Signer::address_of(escrow);
             assert(DiemAccount::balance<GAS>(escrow_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
@@ -112,22 +111,22 @@ address 0x1 {
 
             // add entry to unlocked to indicate that funds were transferred
             Vector::push_back<AccountInfo>(&mut state.unlocked, AccountInfo{
-                sender: receiver,
-                receiver: sender,
+                sender: sender,
+                receiver: receiver,
                 balance: amount,
             });
         }
 
         // executed under escrow account
-        public fun delete_account(escrow: &signer, receiver: address, sender: address)
+        public fun delete_account(escrow: &signer, sender: address, receiver: address)
             acquires EscrowState {
 
             let escrow_address = Signer::address_of(escrow);
             let state = borrow_global_mut<EscrowState>(escrow_address);
             let ai: AccountInfo = AccountInfo{
-                sender: receiver,
+                sender: sender,
                 // user address on the other chain
-                receiver: sender,
+                receiver: receiver,
                 // value sent
                 balance: 0,
             };

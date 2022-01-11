@@ -51,9 +51,9 @@ script {
 
         // pick up the first available account and make transfer to the "other" chain
         // which is the same chain with account bob
-        //let ai = BridgeEscrow::get_locked_at(@{{escrow}});
+        let (sender, receiver, balance) = BridgeEscrow::get_locked_at(0, @{{escrow}});
 
-        BridgeEscrow::withdraw_from_escrow(&escrow,@{{bob}},100, @{{alice}});
+        BridgeEscrow::withdraw_from_escrow(&escrow, sender, receiver, balance);
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 1005);
     }
 }
@@ -68,7 +68,7 @@ script {
 
     fun main(escrow: signer){
         //assert(BridgeEscrow::has_escrow_balance(@{{alice}}), 1002);
-        BridgeEscrow::delete_account(&escrow,@{{bob}}, @{{alice}});
+        BridgeEscrow::delete_account(&escrow, @{{alice}},@{{bob}});
        // assert(!BridgeEscrow::has_escrow_balance(@{{alice}}), 1003);
     }
 }
