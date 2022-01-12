@@ -118,6 +118,19 @@ address 0x1 {
             (info.sender, info.receiver, info.balance, *&info.transfer_id)
         }
 
+        public fun find_locked_by_transfer_id(transfer_id: &vector<u8>, escrow_address: address):
+        Option<u64> acquires EscrowState {
+            let state = borrow_global<EscrowState>(escrow_address);
+            let i = 0;
+            let n = Vector::length(&state.locked);
+            while (i < n) {
+                let ai = Vector::borrow(&state.locked, i);
+                if (*&ai.transfer_id == *transfer_id) return Option::some(i);
+                i = i + 1
+            };
+            Option::none()
+        }
+
         public fun find_unlocked_by_transfer_id(transfer_id: &vector<u8>, escrow_address: address):
             Option<u64> acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow_address);
@@ -128,7 +141,6 @@ address 0x1 {
                 if (*&ai.transfer_id == *transfer_id) return Option::some(i);
                 i = i + 1
             };
-
             Option::none()
         }
 
