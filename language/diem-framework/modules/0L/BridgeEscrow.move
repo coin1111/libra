@@ -11,6 +11,7 @@ address 0x1 {
         use 0x1::DiemAccount;
         use 0x1::GAS::GAS;
         use 0x1::Vector;
+        use 0x1::Option::{Self, Option};
 
         const ERROR_BRIDGE_STORE_EXISTS:u64 = 3000;
         const ERROR_ALREADY_ACCOUNT_EXISTS: u64 = 3001;
@@ -115,6 +116,20 @@ address 0x1 {
             let state = borrow_global<EscrowState>(escrow_address);
             let info = Vector::borrow(&state.unlocked, index);
             (info.sender, info.receiver, info.balance, *&info.transfer_id)
+        }
+
+        public fun find_unlocked_by_transfer_id(transfer_id: &vector<u8>, escrow_address: address):
+            Option<u64> acquires EscrowState {
+            let state = borrow_global<EscrowState>(escrow_address);
+            let i = 0;
+            let n = Vector::length(&state.unlocked);
+            while (i < n) {
+                let ai = Vector::borrow(&state.unlocked, i);
+                if (*&ai.transfer_id == *transfer_id) return Option::some(i);
+                i = i + 1
+            };
+
+            Option::none()
         }
 
         // executed under escrow account
