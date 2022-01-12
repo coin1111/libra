@@ -29,8 +29,8 @@ script {
         //let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
         BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, @{{bob}}, amount);
-        assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 1001);
-        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 1002);
+        assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
+        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
 }
 //! check: EXECUTED
@@ -47,14 +47,17 @@ script {
     use 0x1::Signer;
 
     fun main(escrow: signer){
-        assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 100, 1004);
+        assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 100, 30001);
 
         // pick up the first available account and make transfer to the "other" chain
         // which is the same chain with account bob
         let (sender, receiver, balance) = BridgeEscrow::get_locked_at(0, @{{escrow}});
 
         BridgeEscrow::withdraw_from_escrow(&escrow, sender, receiver, balance);
-        assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 1005);
+        assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 30003);
+
+        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 30003);
+        assert(BridgeEscrow::get_unlocked_length(@{{escrow}}) == 1, 30004);
     }
 }
 //! check: EXECUTED
@@ -67,9 +70,12 @@ script {
     use 0x1::BridgeEscrow;
 
     fun main(escrow: signer){
-        //assert(BridgeEscrow::has_escrow_balance(@{{alice}}), 1002);
-        BridgeEscrow::delete_account(&escrow, @{{alice}},@{{bob}});
-       // assert(!BridgeEscrow::has_escrow_balance(@{{alice}}), 1003);
+        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 40001);
+
+        // pick up the first unlocked account and delete locked entry
+        let (sender, receiver, _) = BridgeEscrow::get_unlocked_at(0, @{{escrow}});
+        BridgeEscrow::delete_account(&escrow, sender, receiver);
+        assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 0, 40002);
     }
 }
 //! check: EXECUTED

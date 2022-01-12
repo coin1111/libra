@@ -130,8 +130,8 @@ address 0x1 {
                 // value sent
                 balance: 0,
             };
-            let (_, i) = Vector::index_of<AccountInfo>(&state.unlocked, &ai);
-            Vector::remove<AccountInfo>(&mut state.unlocked, i);
+            let (_, i) = Vector::index_of<AccountInfo>(&state.locked, &ai);
+            Vector::remove<AccountInfo>(&mut state.locked, i);
         }
 
 
