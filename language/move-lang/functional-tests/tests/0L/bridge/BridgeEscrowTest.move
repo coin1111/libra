@@ -54,17 +54,16 @@ script {
 
         // find accoutn by transfer_id t and make transfer to the "other" chain
         // which is the same chain with account bob
-        let index = BridgeEscrow::find_locked_by_transfer_id(&transfer_id, escrow_address);
+        let index = BridgeEscrow::find_locked_idx(escrow_address, &transfer_id);
         assert(Option::is_some(&index),30002);
         let idx = Option::borrow(&index);
+        assert(*idx == 0, 30003);
 
-        let (sender, receiver, balance, transfer_id) = BridgeEscrow::get_locked_at(*idx, escrow_address);
+        BridgeEscrow::withdraw_from_escrow(&escrow, &transfer_id);
+        assert(BridgeEscrow::get_escrow_balance(escrow_address) == 0, 30004);
 
-        BridgeEscrow::withdraw_from_escrow(&escrow, sender, receiver, balance, transfer_id);
-        assert(BridgeEscrow::get_escrow_balance(escrow_address) == 0, 30003);
-
-        assert(BridgeEscrow::get_locked_length(escrow_address) == 1, 30004);
-        assert(BridgeEscrow::get_unlocked_length(escrow_address) == 1, 30005);
+        assert(BridgeEscrow::get_locked_length(escrow_address) == 1, 30005);
+        assert(BridgeEscrow::get_unlocked_length(escrow_address) == 1, 30006);
     }
 }
 //! check: EXECUTED
@@ -84,13 +83,13 @@ script {
         assert(BridgeEscrow::get_locked_length(escrow_address) == 1, 40001);
 
         // find unlocked account using transfer_id and delete locked entry
-        let index = BridgeEscrow::find_unlocked_by_transfer_id(&transfer_id, escrow_address);
+        let index = BridgeEscrow::find_unlocked_idx(escrow_address, &transfer_id);
         assert(Option::is_some(&index),40002);
         let idx = Option::borrow(&index);
+        assert(*idx == 0, 4003);
 
-        let (sender, receiver, amount, transfer_id) = BridgeEscrow::get_unlocked_at(*idx, escrow_address);
-        BridgeEscrow::delete_transfer_account(&escrow, sender, receiver, amount, transfer_id);
-        assert(BridgeEscrow::get_locked_length(escrow_address) == 0, 40003);
+        BridgeEscrow::delete_transfer_account(&escrow, &transfer_id);
+        assert(BridgeEscrow::get_locked_length(escrow_address) == 0, 40004);
     }
 }
 //! check: EXECUTED

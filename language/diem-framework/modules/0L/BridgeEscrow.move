@@ -19,6 +19,7 @@ address 0x1 {
         const ERROR_INSUFFICIENT_BALANCE: u64 = 3004;
         const ERROR_NO_ESCROW_ACCOUNT: u64 = 3006;
         const ERROR_LOCKED_EMPTY: u64 = 3308;
+        const ERROR_INVALID_TRANSFER_ID : u64 = 3309;
 
         struct AccountInfo has copy, store, drop {
             // user address on this chain
@@ -82,43 +83,46 @@ address 0x1 {
                 transfer_id: transfer_id,
             });
         }
+        // executed under escrow account
+        public fun withdraw_from_escrow(escrow: &signer, transfer_id:&vector<u8>) acquires EscrowState  {
+            let escrow_address = Signer::address_of(escrow);
+
+            let idx_opt = find_locked_idx(escrow_address,transfer_id);
+            assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
+            let idx = Option::borrow(&idx_opt);
+
+            let ai = get_locked_at(escrow_address, *idx);
+
+            // escrow has enough funds
+            assert(DiemAccount::balance<GAS>(escrow_address) >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
+
+
+            // move funds from escrow to user account
+            let with_cap = DiemAccount::extract_withdraw_capability(escrow);
+            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
+            DiemAccount::restore_withdraw_capability(with_cap);
+
+            // update balance
+            let state = borrow_global_mut<EscrowState>(escrow_address);
+            assert(state.balance >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
+            *&mut state.balance = *&mut state.balance - ai.balance;
+
+            // add entry to unlocked to indicate that funds were transferred
+            Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
+        }
 
         // executed under escrow account
-        public fun delete_transfer_account(escrow: &signer,
-                                           sender: address,
-                                           receiver: address,
-                                           balance: u64,
-                                           transfer_id: vector<u8>)
+        public fun delete_transfer_account(escrow: &signer, transfer_id: &vector<u8>)
         acquires EscrowState {
-
             let escrow_address = Signer::address_of(escrow);
+            let idx_opt = find_locked_idx(escrow_address, transfer_id);
+            assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
+            let idx = Option::borrow(&idx_opt);
             let state = borrow_global_mut<EscrowState>(escrow_address);
-            let ai: AccountInfo = AccountInfo{
-                sender: sender,
-                // user address on the other chain
-                receiver: receiver,
-                // value sent
-                balance: balance,
-                transfer_id: transfer_id,
-            };
-            let (_, i) = Vector::index_of<AccountInfo>(&state.locked, &ai);
-            Vector::remove<AccountInfo>(&mut state.locked, i);
+            Vector::remove<AccountInfo>(&mut state.locked, *idx);
         }
 
-        public fun get_locked_at(index: u64, escrow_address: address): (address,address,u64,vector<u8>) acquires EscrowState  {
-            assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
-            let state = borrow_global<EscrowState>(escrow_address);
-            let info = Vector::borrow(&state.locked, index);
-            (info.sender, info.receiver, info.balance, *&info.transfer_id)
-        }
-        public fun get_unlocked_at(index: u64, escrow_address: address): (address,address,u64,vector<u8>) acquires EscrowState  {
-            assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
-            let state = borrow_global<EscrowState>(escrow_address);
-            let info = Vector::borrow(&state.unlocked, index);
-            (info.sender, info.receiver, info.balance, *&info.transfer_id)
-        }
-
-        public fun find_locked_by_transfer_id(transfer_id: &vector<u8>, escrow_address: address):
+        public fun find_locked_idx(escrow_address: address, transfer_id: &vector<u8>):
         Option<u64> acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow_address);
             let i = 0;
@@ -131,7 +135,7 @@ address 0x1 {
             Option::none()
         }
 
-        public fun find_unlocked_by_transfer_id(transfer_id: &vector<u8>, escrow_address: address):
+        public fun find_unlocked_idx(escrow_address: address,transfer_id: &vector<u8>):
             Option<u64> acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow_address);
             let i = 0;
@@ -144,31 +148,18 @@ address 0x1 {
             Option::none()
         }
 
-        // executed under escrow account
-        public fun withdraw_from_escrow(escrow: &signer, sender:address, receiver:address, amount:u64, transfer_id:vector<u8>) acquires EscrowState  {
-            // escrow has enough funds
-            let escrow_address = Signer::address_of(escrow);
-            assert(DiemAccount::balance<GAS>(escrow_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
-
-            // move funds from escrow to user account
-            let with_cap = DiemAccount::extract_withdraw_capability(escrow);
-            DiemAccount::pay_from<GAS>(&with_cap, receiver, amount, x"", x"");
-            DiemAccount::restore_withdraw_capability(with_cap);
-
-            // update balance
-            let state = borrow_global_mut<EscrowState>(escrow_address);
-            assert(state.balance >= amount, ERROR_INSUFFICIENT_BALANCE);
-            *&mut state.balance = *&mut state.balance - amount;
-
-            // add entry to unlocked to indicate that funds were transferred
-            Vector::push_back<AccountInfo>(&mut state.unlocked, AccountInfo{
-                sender: sender,
-                receiver: receiver,
-                balance: amount,
-                transfer_id: transfer_id,
-            });
+        public fun get_locked_at(escrow_address: address, index: u64): AccountInfo acquires EscrowState  {
+            assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
+            let state = borrow_global<EscrowState>(escrow_address);
+            let info = Vector::borrow(&state.locked, index);
+            *info
         }
-
+        public fun get_unlocked_at(escrow_address: address, index: u64): AccountInfo acquires EscrowState  {
+            assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
+            let state = borrow_global<EscrowState>(escrow_address);
+            let info = Vector::borrow(&state.unlocked, index);
+            *info
+        }
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow);
@@ -183,6 +174,21 @@ address 0x1 {
         public fun get_unlocked_length(escrow: address): u64 acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow);
             Vector::length(&state.unlocked)
+        }
+        public fun get_sender_from_ai(ai: &AccountInfo): address {
+            *&ai.sender
+        }
+
+        public fun get_receiver_from_ai(ai: &AccountInfo): address {
+            *&ai.receiver
+        }
+
+        public fun get_balance_from_ai(ai: &AccountInfo): u64 {
+            *&ai.balance
+        }
+
+        public fun get_transfer_id_from_ai(ai: &AccountInfo): vector<u8> {
+            *&ai.transfer_id
         }
     }
 
