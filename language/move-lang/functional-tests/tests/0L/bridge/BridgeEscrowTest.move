@@ -28,7 +28,7 @@ script {
     fun main(sender: signer){
         //let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
-        BridgeEscrow::deposit_to_escrow(&sender, @{{escrow}}, @{{bob}}, amount);
+        BridgeEscrow::create_transfer_account(&sender, @{{escrow}}, @{{bob}}, amount);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
@@ -74,7 +74,7 @@ script {
 
         // pick up the first unlocked account and delete locked entry
         let (sender, receiver, _) = BridgeEscrow::get_unlocked_at(0, @{{escrow}});
-        BridgeEscrow::delete_account(&escrow, sender, receiver);
+        BridgeEscrow::delete_transfer_account(&escrow, sender, receiver);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 0, 40002);
     }
 }

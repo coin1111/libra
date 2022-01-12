@@ -16,9 +16,7 @@ address 0x1 {
         const ERROR_ALREADY_ACCOUNT_EXISTS: u64 = 3001;
         const ERROR_AMOUNT_MUST_BE_POSITIVE: u64 = 3003;
         const ERROR_INSUFFICIENT_BALANCE: u64 = 3004;
-        const ERROR_ACCOUNT_NOT_EXISTS: u64 = 3005;
         const ERROR_NO_ESCROW_ACCOUNT: u64 = 3006;
-        const ERROR_NOT_ALLOWED: u64 = 3007;
         const ERROR_LOCKED_EMPTY: u64 = 3308;
 
         struct AccountInfo has copy, store, drop {
@@ -28,6 +26,8 @@ address 0x1 {
             receiver: address,
             // value sent
             balance: u64,
+            // transfer id
+           // transfer_id: vector<u8>,
         }
     
         struct EscrowState has key {
@@ -37,7 +37,6 @@ address 0x1 {
             balance: u64,
         }
 
-        // executed under escrow account
         public fun initialize_escrow(escrow: &signer) {
             let escrow_addr = Signer::address_of(escrow);
             assert(!exists<EscrowState>(escrow_addr), ERROR_BRIDGE_STORE_EXISTS);
@@ -49,7 +48,7 @@ address 0x1 {
         }
 
         // executed under user account
-        public fun deposit_to_escrow(sender: &signer, escrow: address,
+        public fun create_transfer_account(sender: &signer, escrow: address,
                                      receiver: address, amount: u64
                                      ) acquires EscrowState {
             // validate arguments
@@ -78,6 +77,23 @@ address 0x1 {
                 receiver: receiver,
                 balance: amount,
             });
+        }
+
+        // executed under escrow account
+        public fun delete_transfer_account(escrow: &signer, sender: address, receiver: address)
+        acquires EscrowState {
+
+            let escrow_address = Signer::address_of(escrow);
+            let state = borrow_global_mut<EscrowState>(escrow_address);
+            let ai: AccountInfo = AccountInfo{
+                sender: sender,
+                // user address on the other chain
+                receiver: receiver,
+                // value sent
+                balance: 0,
+            };
+            let (_, i) = Vector::index_of<AccountInfo>(&state.locked, &ai);
+            Vector::remove<AccountInfo>(&mut state.locked, i);
         }
 
         public fun get_locked_at(index: u64, escrow_address: address): (address,address,u64) acquires EscrowState  {
@@ -117,23 +133,6 @@ address 0x1 {
             });
         }
 
-        // executed under escrow account
-        public fun delete_account(escrow: &signer, sender: address, receiver: address)
-            acquires EscrowState {
-
-            let escrow_address = Signer::address_of(escrow);
-            let state = borrow_global_mut<EscrowState>(escrow_address);
-            let ai: AccountInfo = AccountInfo{
-                sender: sender,
-                // user address on the other chain
-                receiver: receiver,
-                // value sent
-                balance: 0,
-            };
-            let (_, i) = Vector::index_of<AccountInfo>(&state.locked, &ai);
-            Vector::remove<AccountInfo>(&mut state.locked, i);
-        }
-
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow);
@@ -149,15 +148,6 @@ address 0x1 {
             let state = borrow_global<EscrowState>(escrow);
             Vector::length(&state.unlocked)
         }
-
-//        public fun get_escrow(account: address): address acquires AccountState {
-//            let st = borrow_global<AccountState>(account);
-//            st.escrow
-//        }
-//        public fun has_escrow_balance(addr: address):  bool {
-//            let has = exists<AccountState>(addr);
-//            has
-//        }
     }
 
 }

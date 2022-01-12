@@ -417,7 +417,7 @@ mod tests {
         let reconfig_txn = create_new_update_diem_version_transaction(1);
 
         // Give the validator some money so it can send a rotation tx and rotate the validator's consensus key.
-        let money_txn = create_transfer_to_validator_transaction(validator_account, 2);
+        let money_txn = create_transfer_account_to_validator_transaction(validator_account, 2);
         let rotation_txn = create_consensus_key_rotation_transaction(&validators[0], 0);
 
         // Execute and commit the reconfig block
@@ -531,7 +531,7 @@ mod tests {
 
         // Give the validator some money so it can send a rotation tx, create another dummy prologue
         // to bump the timer and rotate the validator's consensus key.
-        let money_txn = create_transfer_to_validator_transaction(validator_account, 2);
+        let money_txn = create_transfer_account_to_validator_transaction(validator_account, 2);
         let dummy_txn_2 = create_dummy_transaction(2, validator_account);
         let rotation_txn = create_consensus_key_rotation_transaction(&validators[0], 0);
 
@@ -602,7 +602,7 @@ mod tests {
 
         // Give the validator some money so it can send a rotation tx, create another dummy prologue
         // to bump the timer and rotate the validator's consensus key.
-        let money_txn = create_transfer_to_validator_transaction(validator_account, 2);
+        let money_txn = create_transfer_account_to_validator_transaction(validator_account, 2);
         let dummy_txn = create_dummy_transaction(2, validator_account);
         let rotation_txn = create_consensus_key_rotation_transaction(&validators[0], 0);
 
@@ -702,7 +702,7 @@ mod tests {
     }
 
     /// Creates a transaction that sends funds to the specified validator account.
-    fn create_transfer_to_validator_transaction(
+    fn create_transfer_account_to_validator_transaction(
         validator_account: AccountAddress,
         sequence_number: u64,
     ) -> Transaction {
