@@ -27,7 +27,7 @@ address 0x1 {
             // value sent
             balance: u64,
             // transfer id
-           // transfer_id: vector<u8>,
+           transfer_id: vector<u8>,
         }
     
         struct EscrowState has key {
@@ -48,9 +48,11 @@ address 0x1 {
         }
 
         // executed under user account
-        public fun create_transfer_account(sender: &signer, escrow: address,
-                                     receiver: address, amount: u64
-                                     ) acquires EscrowState {
+        public fun create_transfer_account(escrow: address,
+                                           sender: &signer,
+                                           receiver: address,
+                                           amount: u64,
+                                           transfer_id: vector<u8>) acquires EscrowState {
             // validate arguments
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
 
@@ -76,11 +78,16 @@ address 0x1 {
                 sender: Signer::address_of(sender),
                 receiver: receiver,
                 balance: amount,
+                transfer_id: transfer_id,
             });
         }
 
         // executed under escrow account
-        public fun delete_transfer_account(escrow: &signer, sender: address, receiver: address)
+        public fun delete_transfer_account(escrow: &signer,
+                                           sender: address,
+                                           receiver: address,
+                                           balance: u64,
+                                           transfer_id: vector<u8>)
         acquires EscrowState {
 
             let escrow_address = Signer::address_of(escrow);
@@ -90,27 +97,28 @@ address 0x1 {
                 // user address on the other chain
                 receiver: receiver,
                 // value sent
-                balance: 0,
+                balance: balance,
+                transfer_id: transfer_id,
             };
             let (_, i) = Vector::index_of<AccountInfo>(&state.locked, &ai);
             Vector::remove<AccountInfo>(&mut state.locked, i);
         }
 
-        public fun get_locked_at(index: u64, escrow_address: address): (address,address,u64) acquires EscrowState  {
+        public fun get_locked_at(index: u64, escrow_address: address): (address,address,u64,vector<u8>) acquires EscrowState  {
             assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
             let state = borrow_global<EscrowState>(escrow_address);
             let info = Vector::borrow(&state.locked, index);
-            (info.sender, info.receiver, info.balance)
+            (info.sender, info.receiver, info.balance, *&info.transfer_id)
         }
-        public fun get_unlocked_at(index: u64, escrow_address: address): (address,address,u64) acquires EscrowState  {
+        public fun get_unlocked_at(index: u64, escrow_address: address): (address,address,u64,vector<u8>) acquires EscrowState  {
             assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
             let state = borrow_global<EscrowState>(escrow_address);
             let info = Vector::borrow(&state.unlocked, index);
-            (info.sender, info.receiver, info.balance)
+            (info.sender, info.receiver, info.balance, *&info.transfer_id)
         }
 
         // executed under escrow account
-        public fun withdraw_from_escrow(escrow: &signer, sender:address, receiver:address, amount:u64) acquires EscrowState  {
+        public fun withdraw_from_escrow(escrow: &signer, sender:address, receiver:address, amount:u64, transfer_id:vector<u8>) acquires EscrowState  {
             // escrow has enough funds
             let escrow_address = Signer::address_of(escrow);
             assert(DiemAccount::balance<GAS>(escrow_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
@@ -130,6 +138,7 @@ address 0x1 {
                 sender: sender,
                 receiver: receiver,
                 balance: amount,
+                transfer_id: transfer_id,
             });
         }
 

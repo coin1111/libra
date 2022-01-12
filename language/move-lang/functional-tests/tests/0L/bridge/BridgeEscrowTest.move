@@ -26,9 +26,9 @@ script {
     use 0x1::BridgeEscrow;
 
     fun main(sender: signer){
-        //let target_address: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
-        BridgeEscrow::create_transfer_account(&sender, @{{escrow}}, @{{bob}}, amount);
+        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{bob}}, amount, transfer_id);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
@@ -51,9 +51,9 @@ script {
 
         // pick up the first available account and make transfer to the "other" chain
         // which is the same chain with account bob
-        let (sender, receiver, balance) = BridgeEscrow::get_locked_at(0, @{{escrow}});
+        let (sender, receiver, balance, transfer_id) = BridgeEscrow::get_locked_at(0, @{{escrow}});
 
-        BridgeEscrow::withdraw_from_escrow(&escrow, sender, receiver, balance);
+        BridgeEscrow::withdraw_from_escrow(&escrow, sender, receiver, balance, transfer_id);
         assert(BridgeEscrow::get_escrow_balance(Signer::address_of(&escrow)) == 0, 30003);
 
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 30003);
@@ -73,8 +73,8 @@ script {
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 40001);
 
         // pick up the first unlocked account and delete locked entry
-        let (sender, receiver, _) = BridgeEscrow::get_unlocked_at(0, @{{escrow}});
-        BridgeEscrow::delete_transfer_account(&escrow, sender, receiver);
+        let (sender, receiver, amount, transfer_id) = BridgeEscrow::get_unlocked_at(0, @{{escrow}});
+        BridgeEscrow::delete_transfer_account(&escrow, sender, receiver, amount, transfer_id);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 0, 40002);
     }
 }
