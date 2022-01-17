@@ -94,3 +94,29 @@ script {
 }
 //! check: EXECUTED
 
+///// Test 4: Delete unlocked entry
+//! new-transaction
+//! sender: escrow
+//! gas-currency: GAS
+script {
+    use 0x1::BridgeEscrow;
+    use 0x1::Option;
+    use 0x1::Signer;
+
+    fun main(escrow: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let escrow_address = Signer::address_of(&escrow);
+        assert(BridgeEscrow::get_unlocked_length(escrow_address) == 1, 50001);
+
+        // find unlocked account using transfer_id and delete locked entry
+        let index = BridgeEscrow::find_unlocked_idx(escrow_address, &transfer_id);
+        assert(Option::is_some(&index),50002);
+        let idx = Option::borrow(&index);
+        assert(*idx == 0, 5003);
+
+        BridgeEscrow::delete_unlocked(&escrow, &transfer_id);
+        assert(BridgeEscrow::get_unlocked_length(escrow_address) == 0, 50004);
+    }
+}
+//! check: EXECUTED
+
