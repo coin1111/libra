@@ -63,3 +63,9 @@ it calls ```delete_unlocked(transfer_id)``` for each orphaned unlocked entry on 
 Second the agent processes remaining ```locked``` on Chain1. For each ```locked```
 entry it resumes execution from step 2.
 
+## Running Tests
+```
+cd language/move-lang/functional-tests/tests/0L
+cargo  test BridgeEscrowMultiTest
+```
+
