@@ -15,7 +15,7 @@ use txs::epoch::get_epoch;
 use txs::submit_tx::{eval_tx_status, TxParams};
 
 // only 72 proofs are allowed per epoch
-const MAX_PROOFS_PER_EPOCH: i64 = 72;
+const MAX_PROOFS_PER_EPOCH: i64 = 30;
 /// Submit a backlog of blocks that may have been mined while network is offline.
 /// Likely not more than 1.
 pub fn process_backlog(
