@@ -2056,10 +2056,10 @@ impl ClientProxy {
         currency: &str,
     ) -> Result<u64> {
         ensure!(!input.is_empty(), "Empty input not allowed for diem unit");
-        ensure!(
-            currency != GAS_NAME, //////// 0L ////////
-            "GAS not allowed to be minted or transferred. Use XUS instead"
-        );
+        // ensure!(
+        //     currency != GAS_NAME, //////// 0L ////////
+        //     "GAS not allowed to be minted or transferred. Use XUS instead"
+        // );
         // This is not supposed to panic as it is used as constant here.
         let currencies_info = self.client.get_currency_info()?;
         let currency_info = currencies_info
