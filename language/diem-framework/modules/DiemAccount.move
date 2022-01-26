@@ -1498,13 +1498,13 @@ module DiemAccount {
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
         
         // check amount if it is a slow wallet
-        if (is_slow(*&cap.account_address)) {
-          assert(
-                amount < unlocked_amount(*&cap.account_address),
-                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
-            );
-
-        };
+//        if (is_slow(*&cap.account_address)) {
+//          assert(
+//                amount < unlocked_amount(*&cap.account_address),
+//                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
+//            );
+//
+//        };
         deposit<Token>(
             *&cap.account_address,
             payee,

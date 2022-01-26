@@ -186,8 +186,8 @@ A function to create an error from from a category and a reason.
 
 
 <pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make">make</a>(_category: u8, reason: u64): u64 {
-    /////// 0L /////////
     // (category <b>as</b> u64) + (reason &lt;&lt; 8)
+    /////// 0L /////////
     (reason <b>as</b> u64) // Changed error codes make <b>to</b> easily track them in 0L
 }
 </code></pre>
