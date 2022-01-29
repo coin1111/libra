@@ -225,7 +225,8 @@ module DiemAccount {
 
 
     //////// 0L //////////
-    const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+    //const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+    const BOOTSTRAP_COIN_VALUE: u64 = 4000000;
 
     struct Escrow <Token> has store {
         to_account: address,
