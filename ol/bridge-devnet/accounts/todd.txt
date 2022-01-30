@@ -1,0 +1,14 @@
+0L Account Address:
+...........................
+8671AF7A44F80253F3E141123FF4A7D2
+
+Authentication Key (for key rotation):
+...........................
+1626d2f926949f5f8363df25f053d5258671af7a44f80253f3e141123ff4a7d2
+
+0L mnemonic:
+...........................
+game robot pupil patch dice flock clean tank muffin annual method code salad seed pumpkin fan canyon excuse voyage winner couple emotion join object
+
+WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.
+
