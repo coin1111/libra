@@ -1,0 +1,46 @@
+
+<a name="0x1_BridgeScripts"></a>
+
+# Module `0x1::BridgeScripts`
+
+
+
+-  [Function `bridge_create_escrow`](#0x1_BridgeScripts_bridge_create_escrow)
+
+
+<pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
+</code></pre>
+
+
+
+<a name="0x1_BridgeScripts_bridge_create_escrow"></a>
+
+## Function `bridge_create_escrow`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_create_escrow">bridge_create_escrow</a>(sender: signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_create_escrow">bridge_create_escrow</a>(
+    sender: signer,
+) {
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_initialize_escrow">BridgeEscrow::initialize_escrow</a>(&sender);
+}
+</code></pre>
+
+
+
+</details>
+
+
+[//]: # ("File containing references which can be used from documentation")
+[ACCESS_CONTROL]: https://github.com/diem/dip/blob/main/dips/dip-2.md
+[ROLE]: https://github.com/diem/dip/blob/main/dips/dip-2.md#roles
+[PERMISSION]: https://github.com/diem/dip/blob/main/dips/dip-2.md#permissions

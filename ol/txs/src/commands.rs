@@ -17,6 +17,7 @@ pub mod transfer_cmd;
 pub mod wallet_cmd;
 pub mod community_pay_cmd;
 pub mod val_config_cmd;
+pub mod bridge_create_escrow_cmd;
 
 mod relay_cmd;
 mod valset_cmd;
@@ -45,6 +46,7 @@ use self::{
     transfer_cmd::TransferCmd,   
     community_pay_cmd::CommunityPayCmd,
     val_config_cmd::ValConfigCmd,
+    bridge_create_escrow_cmd::BridgeCreateEscrowCmd,
 
 };
 use std::path::PathBuf;
@@ -113,6 +115,10 @@ pub enum TxsCmd {
     /// The `val-config` subcommand updates validator configuration on chain.
     #[options(help = "update the validator and operators on-chain configs (e.g. discovery)")]
     ValConfig(ValConfigCmd),
+
+    /// create bridge escrow
+    #[options(help = "create bridge escrow")]
+    BridgeCreateEscrow(BridgeCreateEscrowCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
