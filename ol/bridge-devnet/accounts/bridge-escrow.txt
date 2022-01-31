@@ -1,0 +1,14 @@
+0L Account Address:
+...........................
+708B1D23219EB737035CB29A68F0F3A8
+
+Authentication Key (for key rotation):
+...........................
+6c1578bcb229521f78099149d7f578f0708b1d23219eb737035cb29a68f0f3a8
+
+0L mnemonic:
+...........................
+flame gesture fold try mosquito oyster punch tribe mountain moment shaft document best give license reason dose earth boy budget trash lyrics equal credit
+
+WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.
+

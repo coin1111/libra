@@ -770,7 +770,7 @@ Separate struct to track cumulative deposits
 
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>: u64 = 4000000;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>: u64 = 1000000;
 </code></pre>
 
 

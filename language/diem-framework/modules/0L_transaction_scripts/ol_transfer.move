@@ -26,6 +26,22 @@ module TransferScripts {
         assert(DiemAccount::balance<GAS>(sender_addr) < sender_balance_pre, 02);
     }
 
+    public(script) fun balance_transfer_scaled(
+        sender: signer,
+        destination: address,
+        value: u64,
+    ) {
+        let sender_addr = Signer::address_of(&sender);
+        let sender_balance_pre = DiemAccount::balance<GAS>(sender_addr);
+        let destination_balance_pre = DiemAccount::balance<GAS>(destination);
+
+        let with_cap = DiemAccount::extract_withdraw_capability(&sender);
+        DiemAccount::pay_from<GAS>(&with_cap, destination, value, b"balance_transfer", b"");
+        DiemAccount::restore_withdraw_capability(with_cap);
+
+        assert(DiemAccount::balance<GAS>(destination) > destination_balance_pre, 01);
+        assert(DiemAccount::balance<GAS>(sender_addr) < sender_balance_pre, 02);
+    }
 
     public(script) fun community_transfer(
         sender: signer,
