@@ -1623,6 +1623,13 @@ pub enum ScriptFunctionCall {
 
     BridgeCreateEscrow {},
 
+    BridgeDeposit {
+        escrow: AccountAddress,
+        destination: AccountAddress,
+        value: u64,
+        transfer_id: Bytes,
+    },
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -3529,6 +3536,12 @@ impl ScriptFunctionCall {
                 encode_balance_transfer_scaled_script_function(destination, value)
             }
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
+            BridgeDeposit {
+                escrow,
+                destination,
+                value,
+                transfer_id,
+            } => encode_bridge_deposit_script_function(escrow, destination, value, transfer_id),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4188,6 +4201,28 @@ pub fn encode_bridge_create_escrow_script_function() -> TransactionPayload {
         ident_str!("bridge_create_escrow").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_bridge_deposit_script_function(
+    escrow: AccountAddress,
+    destination: AccountAddress,
+    value: u64,
+    transfer_id: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("bridge_deposit").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&destination).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+            bcs::to_bytes(&transfer_id).unwrap(),
+        ],
     ))
 }
 
@@ -8235,6 +8270,21 @@ fn decode_bridge_create_escrow_script_function(
     }
 }
 
+fn decode_bridge_deposit_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeDeposit {
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            destination: bcs::from_bytes(script.args().get(1)?).ok()?,
+            value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9375,6 +9425,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "BridgeScriptsbridge_create_escrow".to_string(),
             Box::new(decode_bridge_create_escrow_script_function),
+        );
+        map.insert(
+            "BridgeScriptsbridge_deposit".to_string(),
+            Box::new(decode_bridge_deposit_script_function),
         );
         map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),

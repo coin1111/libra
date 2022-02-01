@@ -6,6 +6,7 @@
 
 
 -  [Function `bridge_create_escrow`](#0x1_BridgeScripts_bridge_create_escrow)
+-  [Function `bridge_deposit`](#0x1_BridgeScripts_bridge_deposit)
 
 
 <pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
@@ -32,6 +33,36 @@
     sender: signer,
 ) {
     <a href="BridgeEscrow.md#0x1_BridgeEscrow_initialize_escrow">BridgeEscrow::initialize_escrow</a>(&sender);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeScripts_bridge_deposit"></a>
+
+## Function `bridge_deposit`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_deposit">bridge_deposit</a>(sender: signer, escrow: address, destination: address, value: u64, transfer_id: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_deposit">bridge_deposit</a>(
+    sender: signer,
+    escrow: address,
+    destination: address,
+    value: u64,
+    transfer_id: vector&lt;u8&gt;,
+) {
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, destination, value, transfer_id);
 }
 </code></pre>
 

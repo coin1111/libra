@@ -8,5 +8,15 @@ module BridgeScripts {
     ) {
         BridgeEscrow::initialize_escrow(&sender);
     }
+
+    public(script) fun bridge_deposit(
+        sender: signer,
+        escrow: address,
+        destination: address,
+        value: u64,
+        transfer_id: vector<u8>,
+    ) {
+        BridgeEscrow::create_transfer_account(escrow, &sender, destination, value, transfer_id);
+    }
 }
 }

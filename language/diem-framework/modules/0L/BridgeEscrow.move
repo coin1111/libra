@@ -20,6 +20,7 @@ address 0x1 {
         const ERROR_NO_ESCROW_ACCOUNT: u64 = 3006;
         const ERROR_LOCKED_EMPTY: u64 = 3308;
         const ERROR_INVALID_TRANSFER_ID : u64 = 3309;
+        const ERROR_TRANSFER_ID_EXISTS : u64 = 3310;
 
         struct AccountInfo has copy, store, drop {
             // user address on this chain
@@ -65,6 +66,9 @@ address 0x1 {
                                            receiver: address,
                                            amount: u64,
                                            transfer_id: vector<u8>) acquires EscrowState {
+            let idx_opt = find_locked_idx(escrow, &transfer_id);
+            assert(Option::is_none(&idx_opt), ERROR_TRANSFER_ID_EXISTS);
+
             // validate arguments
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
 

@@ -187,6 +187,15 @@
 
 
 
+<a name="0x1_BridgeEscrow_ERROR_TRANSFER_ID_EXISTS"></a>
+
+
+
+<pre><code><b>const</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_TRANSFER_ID_EXISTS">ERROR_TRANSFER_ID_EXISTS</a>: u64 = 3310;
+</code></pre>
+
+
+
 <a name="0x1_BridgeEscrow_initialize_escrow"></a>
 
 ## Function `initialize_escrow`
@@ -237,6 +246,9 @@
                                    receiver: address,
                                    amount: u64,
                                    transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
+    <b>let</b> idx_opt = <a href="BridgeEscrow.md#0x1_BridgeEscrow_find_locked_idx">find_locked_idx</a>(escrow, &transfer_id);
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>(&idx_opt), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_TRANSFER_ID_EXISTS">ERROR_TRANSFER_ID_EXISTS</a>);
+
     // validate arguments
     <b>assert</b> (amount &gt; 0, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_AMOUNT_MUST_BE_POSITIVE">ERROR_AMOUNT_MUST_BE_POSITIVE</a>);
 
