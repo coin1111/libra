@@ -7,6 +7,7 @@
 
 -  [Function `bridge_create_escrow`](#0x1_BridgeScripts_bridge_create_escrow)
 -  [Function `bridge_deposit`](#0x1_BridgeScripts_bridge_deposit)
+-  [Function `bridge_withdraw`](#0x1_BridgeScripts_bridge_withdraw)
 
 
 <pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
@@ -63,6 +64,33 @@
     transfer_id: vector&lt;u8&gt;,
 ) {
     <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, destination, value, transfer_id);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeScripts_bridge_withdraw"></a>
+
+## Function `bridge_withdraw`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(sender: signer, transfer_id: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(
+    sender: signer,
+    transfer_id: vector&lt;u8&gt;,
+) {
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, &transfer_id);
 }
 </code></pre>
 

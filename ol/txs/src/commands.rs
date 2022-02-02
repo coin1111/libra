@@ -19,6 +19,7 @@ pub mod community_pay_cmd;
 pub mod val_config_cmd;
 pub mod bridge_create_escrow_cmd;
 pub mod bridge_deposit_cmd;
+pub mod bridge_withdraw_cmd;
 
 mod relay_cmd;
 mod valset_cmd;
@@ -49,6 +50,7 @@ use self::{
     val_config_cmd::ValConfigCmd,
     bridge_create_escrow_cmd::BridgeCreateEscrowCmd,
     bridge_deposit_cmd::BridgeDepositCmd,
+    bridge_withdraw_cmd::BridgeWithdrawCmd,
 
 };
 use std::path::PathBuf;
@@ -122,9 +124,13 @@ pub enum TxsCmd {
     #[options(help = "create bridge escrow")]
     BridgeCreateEscrow(BridgeCreateEscrowCmd),
 
-    /// create bridge escrow
-    #[options(help = "deposit to bridge")]
+    /// deposit to bridge escrow
+    #[options(help = "deposit to bridge escrow")]
     BridgeDeposit(BridgeDepositCmd),
+
+    /// withdraw from bridge escrow
+    #[options(help = "withdraw from bridge escrow")]
+    BridgeWithdraw(BridgeWithdrawCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

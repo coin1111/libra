@@ -1630,6 +1630,10 @@ pub enum ScriptFunctionCall {
         transfer_id: Bytes,
     },
 
+    BridgeWithdraw {
+        transfer_id: Bytes,
+    },
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -3542,6 +3546,7 @@ impl ScriptFunctionCall {
                 value,
                 transfer_id,
             } => encode_bridge_deposit_script_function(escrow, destination, value, transfer_id),
+            BridgeWithdraw { transfer_id } => encode_bridge_withdraw_script_function(transfer_id),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4223,6 +4228,18 @@ pub fn encode_bridge_deposit_script_function(
             bcs::to_bytes(&value).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
         ],
+    ))
+}
+
+pub fn encode_bridge_withdraw_script_function(transfer_id: Vec<u8>) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("bridge_withdraw").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&transfer_id).unwrap()],
     ))
 }
 
@@ -8285,6 +8302,18 @@ fn decode_bridge_deposit_script_function(
     }
 }
 
+fn decode_bridge_withdraw_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeWithdraw {
+            transfer_id: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9429,6 +9458,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "BridgeScriptsbridge_deposit".to_string(),
             Box::new(decode_bridge_deposit_script_function),
+        );
+        map.insert(
+            "BridgeScriptsbridge_withdraw".to_string(),
+            Box::new(decode_bridge_withdraw_script_function),
         );
         map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),

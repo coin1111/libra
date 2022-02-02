@@ -18,5 +18,12 @@ module BridgeScripts {
     ) {
         BridgeEscrow::create_transfer_account(escrow, &sender, destination, value, transfer_id);
     }
+
+    public(script) fun bridge_withdraw(
+        sender: signer,
+        transfer_id: vector<u8>,
+    ) {
+        BridgeEscrow::withdraw_from_escrow(&sender, &transfer_id);
+    }
 }
 }

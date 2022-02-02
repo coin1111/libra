@@ -13,7 +13,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
 use ol_types::config::TxType;
 use std::{path::PathBuf, process::exit};
-/// `CreateAccount` subcommand
+/// `BridgeDeposit` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct BridgeDepositCmd {
     #[options(short = "e", help = "escrow address address")]
