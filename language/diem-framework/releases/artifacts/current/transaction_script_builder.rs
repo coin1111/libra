@@ -1621,6 +1621,11 @@ pub enum ScriptFunctionCall {
         value: u64,
     },
 
+    BridgeCloseTransfer {
+        transfer_id: Bytes,
+        close_other: bool,
+    },
+
     BridgeCreateEscrow {},
 
     BridgeDeposit {
@@ -3539,6 +3544,10 @@ impl ScriptFunctionCall {
             BalanceTransferScaled { destination, value } => {
                 encode_balance_transfer_scaled_script_function(destination, value)
             }
+            BridgeCloseTransfer {
+                transfer_id,
+                close_other,
+            } => encode_bridge_close_transfer_script_function(transfer_id, close_other),
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
             BridgeDeposit {
                 escrow,
@@ -4193,6 +4202,24 @@ pub fn encode_balance_transfer_scaled_script_function(
         vec![
             bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&value).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_bridge_close_transfer_script_function(
+    transfer_id: Vec<u8>,
+    close_other: bool,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("bridge_close_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&transfer_id).unwrap(),
+            bcs::to_bytes(&close_other).unwrap(),
         ],
     ))
 }
@@ -8277,6 +8304,19 @@ fn decode_balance_transfer_scaled_script_function(
     }
 }
 
+fn decode_bridge_close_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeCloseTransfer {
+            transfer_id: bcs::from_bytes(script.args().get(0)?).ok()?,
+            close_other: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_bridge_create_escrow_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9450,6 +9490,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TransferScriptsbalance_transfer_scaled".to_string(),
             Box::new(decode_balance_transfer_scaled_script_function),
+        );
+        map.insert(
+            "BridgeScriptsbridge_close_transfer".to_string(),
+            Box::new(decode_bridge_close_transfer_script_function),
         );
         map.insert(
             "BridgeScriptsbridge_create_escrow".to_string(),

@@ -25,5 +25,17 @@ module BridgeScripts {
     ) {
         BridgeEscrow::withdraw_from_escrow(&sender, &transfer_id);
     }
+
+    public(script) fun bridge_close_transfer(
+        sender: signer,
+        transfer_id: vector<u8>,
+        close_other: bool,
+    ) {
+        if (!close_other) {
+            BridgeEscrow::delete_transfer_account( & sender, &transfer_id);
+        } else {
+            BridgeEscrow::delete_unlocked( & sender, &transfer_id);
+        }
+    }
 }
 }

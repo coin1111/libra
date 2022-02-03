@@ -8,6 +8,7 @@
 -  [Function `bridge_create_escrow`](#0x1_BridgeScripts_bridge_create_escrow)
 -  [Function `bridge_deposit`](#0x1_BridgeScripts_bridge_deposit)
 -  [Function `bridge_withdraw`](#0x1_BridgeScripts_bridge_withdraw)
+-  [Function `bridge_close_transfer`](#0x1_BridgeScripts_bridge_close_transfer)
 
 
 <pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
@@ -91,6 +92,38 @@
     transfer_id: vector&lt;u8&gt;,
 ) {
     <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, &transfer_id);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeScripts_bridge_close_transfer"></a>
+
+## Function `bridge_close_transfer`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_close_transfer">bridge_close_transfer</a>(sender: signer, transfer_id: vector&lt;u8&gt;, close_other: bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_close_transfer">bridge_close_transfer</a>(
+    sender: signer,
+    transfer_id: vector&lt;u8&gt;,
+    close_other: bool,
+) {
+    <b>if</b> (!close_other) {
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">BridgeEscrow::delete_transfer_account</a>( & sender, &transfer_id);
+    } <b>else</b> {
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">BridgeEscrow::delete_unlocked</a>( & sender, &transfer_id);
+    }
 }
 </code></pre>
 

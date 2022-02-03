@@ -3,3 +3,9 @@ cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=pete b
 
 # withdraw
 cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=bridge-escrow bridge-withdraw -t 1234
+
+# close transfer account on this chain
+cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=bridge-escrow bridge-close-transfer -t 1234
+
+# close transfer account on the other chain
+cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=bridge-escrow bridge-close-transfer -t 1234 -o
