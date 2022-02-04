@@ -21,20 +21,22 @@ module BridgeScripts {
 
     public(script) fun bridge_withdraw(
         sender: signer,
+        escrow: address,
         transfer_id: vector<u8>,
     ) {
-        BridgeEscrow::withdraw_from_escrow(&sender, &transfer_id);
+        BridgeEscrow::withdraw_from_escrow(&sender, escrow, &transfer_id);
     }
 
     public(script) fun bridge_close_transfer(
         sender: signer,
+        escrow: address,
         transfer_id: vector<u8>,
         close_other: bool,
     ) {
         if (!close_other) {
-            BridgeEscrow::delete_transfer_account( & sender, &transfer_id);
+            BridgeEscrow::delete_transfer_account( & sender, escrow, &transfer_id);
         } else {
-            BridgeEscrow::delete_unlocked( & sender, &transfer_id);
+            BridgeEscrow::delete_unlocked( & sender, escrow, &transfer_id);
         }
     }
 }

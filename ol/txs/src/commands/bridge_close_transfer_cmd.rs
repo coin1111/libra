@@ -16,6 +16,9 @@ use std::{path::PathBuf, process::exit};
 /// `BridgeCloseTransfer` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct BridgeCloseTransferCmd {
+    #[options(short = "e", help = "escrow address")]
+    escrow: String,
+
     #[options(short = "t", help = "transfer id")]
     transfer_id: String,
 
@@ -39,7 +42,17 @@ fn hex_to_bytes(s: &String) -> Option<Vec<u8>> {
 impl Runnable for BridgeCloseTransferCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-
+        let escrow = match self.escrow.parse::<AccountAddress>() {
+            Ok(a) => a,
+            Err(e) => {
+                println!(
+                    "ERROR: could not parse this account address: {}, message: {}",
+                    self.escrow,
+                    &e.to_string()
+                );
+                exit(1);
+            }
+        };
         let transfer_id = match hex_to_bytes(&self.transfer_id) {
             Some(a) => a,
             None => {
@@ -51,7 +64,7 @@ impl Runnable for BridgeCloseTransferCmd {
             }
         };
 
-        match bridge_close_transfer(transfer_id, self.close_other, entry_args.save_path) {
+        match bridge_close_transfer(escrow, transfer_id, self.close_other, entry_args.save_path) {
             Ok(_) => println!("Success: Bridge withdraw posted: {}", self.transfer_id),
             Err(e) => {
                 println!("ERROR: execute bridge close transfer message: {:?}", &e);
@@ -63,12 +76,17 @@ impl Runnable for BridgeCloseTransferCmd {
 
 /// withdraw into escrow account
 pub fn bridge_close_transfer(
+    escrow: AccountAddress,
     transfer_id: Vec<u8>,
     close_other: bool,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_close_transfer_script_function(transfer_id, close_other);
+    let script = transaction_builder::encode_bridge_close_transfer_script_function(
+        escrow,
+        transfer_id,
+        close_other,
+    );
     maybe_submit(script, &tx_params, save_path)
 }

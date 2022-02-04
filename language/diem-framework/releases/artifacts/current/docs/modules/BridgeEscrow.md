@@ -290,7 +290,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(escrow: &signer, transfer_id: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(_sender: &signer, escrow_address: address, transfer_id: &vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -299,9 +299,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(escrow: &signer, transfer_id:&vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
-    <b>let</b> escrow_address = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(escrow);
-
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(_sender: &signer, escrow_address: address, transfer_id:&vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
     <b>let</b> idx_opt = <a href="BridgeEscrow.md#0x1_BridgeEscrow_find_locked_idx">find_locked_idx</a>(escrow_address,transfer_id);
     <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&idx_opt), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INVALID_TRANSFER_ID">ERROR_INVALID_TRANSFER_ID</a>);
     <b>let</b> idx = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&idx_opt);
@@ -313,9 +311,10 @@
 
 
     // 1. <b>move</b> funds from escrow <b>to</b> user account
-    <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(escrow);
-    <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, ai.receiver, ai.balance, x"", x"");
-    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
+    // TODO: uncomment
+//            <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(escrow);
+//            <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, ai.receiver, ai.balance, x"", x"");
+//            <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
 
     // 2. <b>update</b> escrow state
     // <b>update</b> balance
@@ -338,7 +337,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">delete_transfer_account</a>(escrow: &signer, transfer_id: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">delete_transfer_account</a>(_sender: &signer, escrow_address: address, transfer_id: &vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -347,9 +346,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">delete_transfer_account</a>(escrow: &signer, transfer_id: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">delete_transfer_account</a>(_sender: &signer, escrow_address: address, transfer_id: &vector&lt;u8&gt;)
 <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
-    <b>let</b> escrow_address = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(escrow);
     <b>let</b> idx_opt = <a href="BridgeEscrow.md#0x1_BridgeEscrow_find_locked_idx">find_locked_idx</a>(escrow_address, transfer_id);
     <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&idx_opt), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INVALID_TRANSFER_ID">ERROR_INVALID_TRANSFER_ID</a>);
     <b>let</b> idx = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&idx_opt);
@@ -368,7 +366,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">delete_unlocked</a>(escrow: &signer, transfer_id: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">delete_unlocked</a>(_sender: &signer, escrow_address: address, transfer_id: &vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -377,9 +375,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">delete_unlocked</a>(escrow: &signer, transfer_id: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">delete_unlocked</a>(_sender: &signer, escrow_address: address, transfer_id: &vector&lt;u8&gt;)
 <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
-    <b>let</b> escrow_address = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(escrow);
     <b>let</b> idx_opt = <a href="BridgeEscrow.md#0x1_BridgeEscrow_find_unlocked_idx">find_unlocked_idx</a>(escrow_address, transfer_id);
     <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&idx_opt), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INVALID_TRANSFER_ID">ERROR_INVALID_TRANSFER_ID</a>);
     <b>let</b> idx = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&idx_opt);

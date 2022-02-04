@@ -16,6 +16,9 @@ use std::{path::PathBuf, process::exit};
 /// `BridgeWithdraw` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct BridgeWithdrawCmd {
+    #[options(short = "e", help = "escrow address")]
+    escrow: String,
+
     #[options(short = "t", help = "transfer id")]
     transfer_id: String,
 }
@@ -36,7 +39,17 @@ fn hex_to_bytes(s: &String) -> Option<Vec<u8>> {
 impl Runnable for BridgeWithdrawCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-
+        let escrow = match self.escrow.parse::<AccountAddress>() {
+            Ok(a) => a,
+            Err(e) => {
+                println!(
+                    "ERROR: could not parse this account address: {}, message: {}",
+                    self.escrow,
+                    &e.to_string()
+                );
+                exit(1);
+            }
+        };
         let transfer_id = match hex_to_bytes(&self.transfer_id) {
             Some(a) => a,
             None => {
@@ -48,7 +61,7 @@ impl Runnable for BridgeWithdrawCmd {
             }
         };
 
-        match bridge_withdraw(transfer_id, entry_args.save_path) {
+        match bridge_withdraw(escrow, transfer_id, entry_args.save_path) {
             Ok(_) => println!("Success: Bridge withdraw posted: {}", self.transfer_id),
             Err(e) => {
                 println!("ERROR: execute bridge withdraw message: {:?}", &e);
@@ -60,11 +73,12 @@ impl Runnable for BridgeWithdrawCmd {
 
 /// withdraw into escrow account
 pub fn bridge_withdraw(
+    escrow: AccountAddress,
     transfer_id: Vec<u8>,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_withdraw_script_function(transfer_id);
+    let script = transaction_builder::encode_bridge_withdraw_script_function(escrow, transfer_id);
     maybe_submit(script, &tx_params, save_path)
 }

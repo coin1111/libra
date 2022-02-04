@@ -78,7 +78,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(sender: signer, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(sender: signer, escrow: address, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -89,9 +89,10 @@
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(
     sender: signer,
+    escrow: address,
     transfer_id: vector&lt;u8&gt;,
 ) {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, &transfer_id);
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, escrow, &transfer_id);
 }
 </code></pre>
 
@@ -105,7 +106,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_close_transfer">bridge_close_transfer</a>(sender: signer, transfer_id: vector&lt;u8&gt;, close_other: bool)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_close_transfer">bridge_close_transfer</a>(sender: signer, escrow: address, transfer_id: vector&lt;u8&gt;, close_other: bool)
 </code></pre>
 
 
@@ -116,13 +117,14 @@
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_close_transfer">bridge_close_transfer</a>(
     sender: signer,
+    escrow: address,
     transfer_id: vector&lt;u8&gt;,
     close_other: bool,
 ) {
     <b>if</b> (!close_other) {
-        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">BridgeEscrow::delete_transfer_account</a>( & sender, &transfer_id);
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_transfer_account">BridgeEscrow::delete_transfer_account</a>( & sender, escrow, &transfer_id);
     } <b>else</b> {
-        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">BridgeEscrow::delete_unlocked</a>( & sender, &transfer_id);
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_delete_unlocked">BridgeEscrow::delete_unlocked</a>( & sender, escrow, &transfer_id);
     }
 }
 </code></pre>

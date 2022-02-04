@@ -1622,6 +1622,7 @@ pub enum ScriptFunctionCall {
     },
 
     BridgeCloseTransfer {
+        escrow: AccountAddress,
         transfer_id: Bytes,
         close_other: bool,
     },
@@ -1636,6 +1637,7 @@ pub enum ScriptFunctionCall {
     },
 
     BridgeWithdraw {
+        escrow: AccountAddress,
         transfer_id: Bytes,
     },
 
@@ -3545,9 +3547,10 @@ impl ScriptFunctionCall {
                 encode_balance_transfer_scaled_script_function(destination, value)
             }
             BridgeCloseTransfer {
+                escrow,
                 transfer_id,
                 close_other,
-            } => encode_bridge_close_transfer_script_function(transfer_id, close_other),
+            } => encode_bridge_close_transfer_script_function(escrow, transfer_id, close_other),
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
             BridgeDeposit {
                 escrow,
@@ -3555,7 +3558,10 @@ impl ScriptFunctionCall {
                 value,
                 transfer_id,
             } => encode_bridge_deposit_script_function(escrow, destination, value, transfer_id),
-            BridgeWithdraw { transfer_id } => encode_bridge_withdraw_script_function(transfer_id),
+            BridgeWithdraw {
+                escrow,
+                transfer_id,
+            } => encode_bridge_withdraw_script_function(escrow, transfer_id),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4207,6 +4213,7 @@ pub fn encode_balance_transfer_scaled_script_function(
 }
 
 pub fn encode_bridge_close_transfer_script_function(
+    escrow: AccountAddress,
     transfer_id: Vec<u8>,
     close_other: bool,
 ) -> TransactionPayload {
@@ -4218,6 +4225,7 @@ pub fn encode_bridge_close_transfer_script_function(
         ident_str!("bridge_close_transfer").to_owned(),
         vec![],
         vec![
+            bcs::to_bytes(&escrow).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
             bcs::to_bytes(&close_other).unwrap(),
         ],
@@ -4258,7 +4266,10 @@ pub fn encode_bridge_deposit_script_function(
     ))
 }
 
-pub fn encode_bridge_withdraw_script_function(transfer_id: Vec<u8>) -> TransactionPayload {
+pub fn encode_bridge_withdraw_script_function(
+    escrow: AccountAddress,
+    transfer_id: Vec<u8>,
+) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
@@ -4266,7 +4277,10 @@ pub fn encode_bridge_withdraw_script_function(transfer_id: Vec<u8>) -> Transacti
         ),
         ident_str!("bridge_withdraw").to_owned(),
         vec![],
-        vec![bcs::to_bytes(&transfer_id).unwrap()],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&transfer_id).unwrap(),
+        ],
     ))
 }
 
@@ -8309,8 +8323,9 @@ fn decode_bridge_close_transfer_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeCloseTransfer {
-            transfer_id: bcs::from_bytes(script.args().get(0)?).ok()?,
-            close_other: bcs::from_bytes(script.args().get(1)?).ok()?,
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
+            close_other: bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
@@ -8347,7 +8362,8 @@ fn decode_bridge_withdraw_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeWithdraw {
-            transfer_id: bcs::from_bytes(script.args().get(0)?).ok()?,
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None

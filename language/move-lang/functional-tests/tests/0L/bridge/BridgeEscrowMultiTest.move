@@ -5,6 +5,7 @@
 //! account: bob, 10, 0
 //! account: carol, 50, 0
 //! account: escrow, 1, 0
+//! account: dave, 1000000GAS, 0, validator
 
 ///// Test 1: Init escrow account
 //! new-transaction
@@ -74,16 +75,16 @@ script {
 /// in this case the other chain is the same.
 /// Complimentary account is carol
 //! new-transaction
-//! sender: escrow
+//! sender: dave
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Signer;
     use 0x1::Option;
 
-    fun main(escrow: signer){
+    fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
-        let escrow_address = Signer::address_of(&escrow);
+        let escrow_address: address = @{{escrow}};
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 100+ 50 + 10, 30001);
 
         // find account by transfer_id and make transfer to the "other" chain
@@ -93,7 +94,7 @@ script {
         let idx = Option::borrow(&index);
         assert(*idx == 1, 30003);
 
-        BridgeEscrow::withdraw_from_escrow(&escrow, &transfer_id2);
+        BridgeEscrow::withdraw_from_escrow(&sender, escrow_address, &transfer_id2);
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 50 + 100, 30004);
 
         assert(BridgeEscrow::get_locked_length(escrow_address) == 3, 30005);
@@ -104,16 +105,16 @@ script {
 
 ///// Test 4: Delete Bob escrow account
 //! new-transaction
-//! sender: escrow
+//! sender: dave
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Option;
     use 0x1::Signer;
 
-    fun main(escrow: signer){
+    fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
-        let escrow_address = Signer::address_of(&escrow);
+        let escrow_address: address = @{{escrow}};
         assert(BridgeEscrow::get_locked_length(escrow_address) == 3, 40001);
 
         // find unlocked account using transfer_id and delete locked entry
@@ -122,7 +123,7 @@ script {
         let idx = Option::borrow(&index);
         assert(*idx == 0, 4003);
 
-        BridgeEscrow::delete_transfer_account(&escrow, &transfer_id2);
+        BridgeEscrow::delete_transfer_account(&sender, escrow_address, &transfer_id2);
         assert(BridgeEscrow::get_locked_length(escrow_address) == 2, 40004);
     }
 }
@@ -130,16 +131,16 @@ script {
 
 ///// Test 4: Delete Bob escrow account
 //! new-transaction
-//! sender: escrow
+//! sender: dave
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Option;
     use 0x1::Signer;
 
-    fun main(escrow: signer){
+    fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
-        let escrow_address = Signer::address_of(&escrow);
+        let escrow_address: address = @{{escrow}};
         assert(BridgeEscrow::get_unlocked_length(escrow_address) == 1, 50001);
 
         let index = BridgeEscrow::find_unlocked_idx(escrow_address, &transfer_id2);
@@ -147,7 +148,7 @@ script {
         let idx = Option::borrow(&index);
         assert(*idx == 0, 5003);
 
-        BridgeEscrow::delete_unlocked(&escrow, &transfer_id2);
+        BridgeEscrow::delete_unlocked(&sender, escrow_address, &transfer_id2);
         assert(BridgeEscrow::get_unlocked_length(escrow_address) == 0, 50004);
     }
 }

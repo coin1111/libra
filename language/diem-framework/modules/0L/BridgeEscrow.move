@@ -102,9 +102,7 @@ address 0x1 {
         // Moves funds from escrow account to user account.
         // Creates an entry in unlocked vector to indicate such transfer.
         // Executed under escrow account
-        public fun withdraw_from_escrow(escrow: &signer, transfer_id:&vector<u8>) acquires EscrowState  {
-            let escrow_address = Signer::address_of(escrow);
-
+        public fun withdraw_from_escrow(_sender: &signer, escrow_address: address, transfer_id:&vector<u8>) acquires EscrowState  {
             let idx_opt = find_locked_idx(escrow_address,transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
@@ -116,9 +114,10 @@ address 0x1 {
 
 
             // 1. move funds from escrow to user account
-            let with_cap = DiemAccount::extract_withdraw_capability(escrow);
-            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
-            DiemAccount::restore_withdraw_capability(with_cap);
+            // TODO: uncomment
+//            let with_cap = DiemAccount::extract_withdraw_capability(escrow);
+//            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
+//            DiemAccount::restore_withdraw_capability(with_cap);
 
             // 2. update escrow state
             // update balance
@@ -133,9 +132,8 @@ address 0x1 {
         // Remove transfer account when transfer is completed
         // Removes entry in locked vector.
         // Executed under escrow account
-        public fun delete_transfer_account(escrow: &signer, transfer_id: &vector<u8>)
+        public fun delete_transfer_account(_sender: &signer, escrow_address: address, transfer_id: &vector<u8>)
         acquires EscrowState {
-            let escrow_address = Signer::address_of(escrow);
             let idx_opt = find_locked_idx(escrow_address, transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
@@ -145,9 +143,8 @@ address 0x1 {
 
         // Remove unlocked vector entry to indiicate transfer completion
         // Executed under escrow account
-        public fun delete_unlocked(escrow: &signer, transfer_id: &vector<u8>)
+        public fun delete_unlocked(_sender: &signer, escrow_address: address, transfer_id: &vector<u8>)
         acquires EscrowState {
-            let escrow_address = Signer::address_of(escrow);
             let idx_opt = find_unlocked_idx(escrow_address, transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
