@@ -8,6 +8,7 @@
 address 0x1 {
     module BridgeEscrow {
         use 0x1::Signer;
+        use 0x1::Diem;
         use 0x1::DiemAccount;
         use 0x1::GAS::GAS;
         use 0x1::Vector;
@@ -31,8 +32,9 @@ address 0x1 {
             // value sent
             balance: u64,
             // transfer id
-           transfer_id: vector<u8>,
+            transfer_id: vector<u8>,
         }
+
         // State of escrow account
         // Escrow account holds funds to be tranferred on the other chain
         // as well as state of transfer
@@ -44,6 +46,8 @@ address 0x1 {
             unlocked: vector<AccountInfo>,
             // current total balance of the bridge
             balance: u64,
+            // tokens
+            tokens: Diem::Diem<GAS>,
         }
         // Creates en empty escrow account state
         public fun initialize_escrow(escrow: &signer) {
@@ -52,7 +56,7 @@ address 0x1 {
             move_to<EscrowState>(escrow, EscrowState{
                 locked: Vector::empty<AccountInfo>(),
                 unlocked: Vector::empty<AccountInfo>(),
-                balance: 0,
+                balance: 0
             });
         }
 
@@ -82,6 +86,7 @@ address 0x1 {
             // 1. move funds from user to escrow account
             let with_cap = DiemAccount::extract_withdraw_capability(sender);
             DiemAccount::pay_from<GAS>(&with_cap, escrow, amount, x"", x"");
+            let tokens = DiemAccount::withdraw_tokens<GAS>(&with_cap, escrow, amount, x"");
             DiemAccount::restore_withdraw_capability(with_cap);
 
             // 2. update escrow state
@@ -89,6 +94,7 @@ address 0x1 {
             // update escrow balance
             let state = borrow_global_mut<EscrowState>(escrow);
             *&mut state.balance = *&mut state.balance + amount;
+            *&mut state.tokens.value = *&mut state.tokens.value + tokens.value;
 
             // create an entry in locked vector
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
@@ -180,14 +186,8 @@ address 0x1 {
         public fun get_locked_at(escrow_address: address, index: u64): AccountInfo acquires EscrowState  {
             assert(get_locked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
             let state = borrow_global<EscrowState>(escrow_address);
-            let info = Vector::borrow(&state.locked, index);
-            *info
-        }
-        public fun get_unlocked_at(escrow_address: address, index: u64): AccountInfo acquires EscrowState  {
-            assert(get_unlocked_length(escrow_address) > index, ERROR_LOCKED_EMPTY);
-            let state = borrow_global<EscrowState>(escrow_address);
-            let info = Vector::borrow(&state.unlocked, index);
-            *info
+            let ai = Vector::borrow(&state.locked, index);
+            *ai
         }
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {

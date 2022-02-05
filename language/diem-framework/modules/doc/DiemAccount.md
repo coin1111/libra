@@ -43,6 +43,7 @@ before and after every transaction.
 -  [Function `withdraw_from_balance`](#0x1_DiemAccount_withdraw_from_balance)
 -  [Function `withdraw_from`](#0x1_DiemAccount_withdraw_from)
     -  [Access Control](#@Access_Control_1)
+-  [Function `withdraw_tokens`](#0x1_DiemAccount_withdraw_tokens)
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
 -  [Function `extract_withdraw_capability_by_address`](#0x1_DiemAccount_extract_withdraw_capability_by_address)
@@ -2513,6 +2514,35 @@ Can only withdraw from the balances of cap.account_address [[H19]][PERMISSION].
         metadata
     };
     emits msg <b>to</b> handle;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_withdraw_tokens"></a>
+
+## Function `withdraw_tokens`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>, payee: address, amount: u64, metadata: vector&lt;u8&gt;): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(
+    cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a>,
+    payee: address,
+    amount: u64,
+    metadata: vector&lt;u8&gt;,
+): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;  {
+    <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token&gt;(cap, payee, amount, metadata)
 }
 </code></pre>
 

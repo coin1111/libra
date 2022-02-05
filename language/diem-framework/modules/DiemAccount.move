@@ -1164,6 +1164,18 @@ module DiemAccount {
         emits msg to handle;
     }
 
+    // public wrapper for withdraw_from
+    // to return tokens directly to a caller
+    // TODO: needs to be a friend function of BridgeEscrow module, not public
+    public fun withdraw_tokens<Token: store>(
+        cap: &WithdrawCapability,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+    ): Diem<Token>  {
+        withdraw_tokens<Token>(cap, payee, amount, metadata)
+    }
+
     /// Withdraw `amount` `Diem<Token>`'s from `cap.address` and send them to the `Preburn`
     /// resource under `dd`.
     public fun preburn<Token: store>(
