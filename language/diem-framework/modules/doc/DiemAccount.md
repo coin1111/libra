@@ -45,6 +45,7 @@ before and after every transaction.
     -  [Access Control](#@Access_Control_1)
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
+-  [Function `extract_withdraw_capability_by_address`](#0x1_DiemAccount_extract_withdraw_capability_by_address)
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
 -  [Function `process_community_wallets`](#0x1_DiemAccount_process_community_wallets)
 -  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
@@ -950,6 +951,15 @@ The withdrawal of funds would have exceeded the the account's limits
 
 
 <pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>: u64 = 12016;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_EWITHDRAWAL_MUST_BE_VALIDATOR"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_MUST_BE_VALIDATOR">EWITHDRAWAL_MUST_BE_VALIDATOR</a>: u64 = 120129;
 </code></pre>
 
 
@@ -2719,6 +2729,95 @@ the sender's account balance.
     sender_addr: address;
     <b>aborts_if</b> !<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(sender_addr) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
     <b>aborts_if</b> <a href="DiemAccount.md#0x1_DiemAccount_spec_holds_delegated_withdraw_capability">spec_holds_delegated_withdraw_capability</a>(sender_addr) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_INVALID_STATE">Errors::INVALID_STATE</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_extract_withdraw_capability_by_address"></a>
+
+## Function `extract_withdraw_capability_by_address`
+
+Return a unique capability granting permission to withdraw from
+the sender's account balance.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability_by_address">extract_withdraw_capability_by_address</a>(sender: &signer, target_address: address): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability_by_address">extract_withdraw_capability_by_address</a>(
+    sender: &signer,
+    target_address: address
+): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+    <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>assert</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(sender_addr) == <b>true</b> ||
+           sender_addr == target_address, <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_MUST_BE_VALIDATOR">EWITHDRAWAL_MUST_BE_VALIDATOR</a>);
+    /////// 0L /////////
+    // Community wallets have own transfer mechanism.
+    <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+    <b>assert</b>(
+        !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &target_address),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
+    );
+    /////// 0L /////////
+    // Slow wallet transfers disabled by default, enabled when epoch is 1000
+    // At that point slow wallets receive 1,000 coins unlocked per day.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(target_address) && !<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>() ) {
+        // <b>if</b> transfers are not enabled for slow wallets
+        // then the tx should fail
+        <b>assert</b>(
+            <b>false</b>,
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
+        );
+    };
+    // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
+    <b>assert</b>(
+        !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(target_address),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
+    );
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(target_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
+    <b>let</b> account = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(target_address);
+    <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability)
+}
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>pragma</b> opaque;
+<b>modifies</b> <b>global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(target_address);
+<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapByAddressAbortsIf">ExtractWithdrawCapByAddressAbortsIf</a>{target_address};
+<b>ensures</b> <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(target_address);
+<b>ensures</b> result == <b>old</b>(<a href="DiemAccount.md#0x1_DiemAccount_spec_get_withdraw_cap">spec_get_withdraw_cap</a>(target_address));
+<b>ensures</b> <b>global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(target_address) == update_field(<b>old</b>(<b>global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(target_address)),
+    withdraw_capability, <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_spec_none">Option::spec_none</a>());
+<b>ensures</b> result.account_address == target_address;
+</code></pre>
+
+
+
+
+<a name="0x1_DiemAccount_ExtractWithdrawCapByAddressAbortsIf"></a>
+
+
+<pre><code><b>schema</b> <a href="DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapByAddressAbortsIf">ExtractWithdrawCapByAddressAbortsIf</a> {
+    target_address: address;
+    <b>aborts_if</b> !<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(target_address) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
+    <b>aborts_if</b> <a href="DiemAccount.md#0x1_DiemAccount_spec_holds_delegated_withdraw_capability">spec_holds_delegated_withdraw_capability</a>(target_address) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_INVALID_STATE">Errors::INVALID_STATE</a>;
 }
 </code></pre>
 

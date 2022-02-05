@@ -200,6 +200,7 @@ module DiemAccount {
     const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
     const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
     const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
+    const EWITHDRAWAL_MUST_BE_VALIDATOR: u64 = 120129;
 
 
 
@@ -1276,6 +1277,61 @@ module DiemAccount {
         sender_addr: address;
         aborts_if !exists_at(sender_addr) with Errors::NOT_PUBLISHED;
         aborts_if spec_holds_delegated_withdraw_capability(sender_addr) with Errors::INVALID_STATE;
+    }
+
+    /// Return a unique capability granting permission to withdraw from
+/// the sender's account balance.
+    // Function code: 10 Prefix: 170110     /////// 0L /////////
+    public fun extract_withdraw_capability_by_address(
+        sender: &signer,
+        target_address: address
+    ): WithdrawCapability acquires DiemAccount {
+        let sender_addr = Signer::address_of(sender);
+        assert(DiemSystem::is_validator(sender_addr) == true ||
+               sender_addr == target_address, EWITHDRAWAL_MUST_BE_VALIDATOR);
+        /////// 0L /////////
+        // Community wallets have own transfer mechanism.
+        let community_wallets = Wallet::get_comm_list();
+        assert(
+            !Vector::contains(&community_wallets, &target_address),
+            Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
+        );
+        /////// 0L /////////
+        // Slow wallet transfers disabled by default, enabled when epoch is 1000
+        // At that point slow wallets receive 1,000 coins unlocked per day.
+        if (is_slow(target_address) && !DiemConfig::check_transfer_enabled() ) {
+            // if transfers are not enabled for slow wallets
+            // then the tx should fail
+            assert(
+                false,
+                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
+            );
+        };
+        // Abort if we already extracted the unique withdraw capability for this account.
+        assert(
+            !delegated_withdraw_capability(target_address),
+            Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        );
+        assert(exists_at(target_address), Errors::not_published(EACCOUNT));
+        let account = borrow_global_mut<DiemAccount>(target_address);
+        Option::extract(&mut account.withdraw_capability)
+    }
+
+    spec extract_withdraw_capability_by_address {
+        pragma opaque;
+        modifies global<DiemAccount>(target_address);
+        include ExtractWithdrawCapByAddressAbortsIf{target_address};
+        ensures exists<DiemAccount>(target_address);
+        ensures result == old(spec_get_withdraw_cap(target_address));
+        ensures global<DiemAccount>(target_address) == update_field(old(global<DiemAccount>(target_address)),
+            withdraw_capability, Option::spec_none());
+        ensures result.account_address == target_address;
+    }
+
+    spec schema ExtractWithdrawCapByAddressAbortsIf {
+        target_address: address;
+        aborts_if !exists_at(target_address) with Errors::NOT_PUBLISHED;
+        aborts_if spec_holds_delegated_withdraw_capability(target_address) with Errors::INVALID_STATE;
     }
 
     /// Return the withdraw capability to the account it originally came from

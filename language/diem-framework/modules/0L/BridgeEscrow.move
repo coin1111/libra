@@ -102,7 +102,7 @@ address 0x1 {
         // Moves funds from escrow account to user account.
         // Creates an entry in unlocked vector to indicate such transfer.
         // Executed under escrow account
-        public fun withdraw_from_escrow(_sender: &signer, escrow_address: address, transfer_id:&vector<u8>) acquires EscrowState  {
+        public fun withdraw_from_escrow(sender: &signer, escrow_address: address, transfer_id:&vector<u8>) acquires EscrowState  {
             let idx_opt = find_locked_idx(escrow_address,transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
@@ -114,10 +114,9 @@ address 0x1 {
 
 
             // 1. move funds from escrow to user account
-            // TODO: uncomment
-//            let with_cap = DiemAccount::extract_withdraw_capability(escrow);
-//            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
-//            DiemAccount::restore_withdraw_capability(with_cap);
+            let with_cap = DiemAccount::extract_withdraw_capability_by_address(sender, escrow_address);
+            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
+            DiemAccount::restore_withdraw_capability(with_cap);
 
             // 2. update escrow state
             // update balance
