@@ -2541,8 +2541,8 @@ Can only withdraw from the balances of cap.account_address [[H19]][PERMISSION].
     payee: address,
     amount: u64,
     metadata: vector&lt;u8&gt;,
-): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;  {
-    <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token&gt;(cap, payee, amount, metadata)
+): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;  <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>{
+    <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(cap, payee, amount, metadata)
 }
 </code></pre>
 

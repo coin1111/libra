@@ -1172,8 +1172,8 @@ module DiemAccount {
         payee: address,
         amount: u64,
         metadata: vector<u8>,
-    ): Diem<Token>  {
-        withdraw_tokens<Token>(cap, payee, amount, metadata)
+    ): Diem<Token>  acquires Balance, AccountOperationsCapability, DiemAccount{
+        withdraw_from<Token>(cap, payee, amount, metadata)
     }
 
     /// Withdraw `amount` `Diem<Token>`'s from `cap.address` and send them to the `Preburn`

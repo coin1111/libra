@@ -56,7 +56,8 @@ address 0x1 {
             move_to<EscrowState>(escrow, EscrowState{
                 locked: Vector::empty<AccountInfo>(),
                 unlocked: Vector::empty<AccountInfo>(),
-                balance: 0
+                balance: 0,
+                tokens: Diem::zero<GAS>(),
             });
         }
 
@@ -94,7 +95,7 @@ address 0x1 {
             // update escrow balance
             let state = borrow_global_mut<EscrowState>(escrow);
             *&mut state.balance = *&mut state.balance + amount;
-            *&mut state.tokens.value = *&mut state.tokens.value + tokens.value;
+            Diem::deposit(&mut state.tokens,tokens);
 
             // create an entry in locked vector
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
@@ -192,7 +193,7 @@ address 0x1 {
 
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow);
-            state.balance
+            Diem::value(&state.tokens)
         }
 
         public fun get_locked_length(escrow: address): u64 acquires EscrowState {

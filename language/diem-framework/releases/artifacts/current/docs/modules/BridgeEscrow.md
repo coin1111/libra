@@ -16,7 +16,6 @@
 -  [Function `find_locked_idx`](#0x1_BridgeEscrow_find_locked_idx)
 -  [Function `find_unlocked_idx`](#0x1_BridgeEscrow_find_unlocked_idx)
 -  [Function `get_locked_at`](#0x1_BridgeEscrow_get_locked_at)
--  [Function `get_unlocked_at`](#0x1_BridgeEscrow_get_unlocked_at)
 -  [Function `get_escrow_balance`](#0x1_BridgeEscrow_get_escrow_balance)
 -  [Function `get_locked_length`](#0x1_BridgeEscrow_get_locked_length)
 -  [Function `get_unlocked_length`](#0x1_BridgeEscrow_get_unlocked_length)
@@ -26,7 +25,8 @@
 -  [Function `get_transfer_id_from_ai`](#0x1_BridgeEscrow_get_transfer_id_from_ai)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -110,6 +110,12 @@
 </dd>
 <dt>
 <code>balance: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>tokens: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;</code>
 </dt>
 <dd>
 
@@ -218,6 +224,7 @@
         locked: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>&gt;(),
         unlocked: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>&gt;(),
         balance: 0,
+        tokens: <a href="Diem.md#0x1_Diem_zero">Diem::zero</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(),
     });
 }
 </code></pre>
@@ -262,6 +269,7 @@
     // 1. <b>move</b> funds from user <b>to</b> escrow account
     <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(sender);
     <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, escrow, amount, x"", x"");
+    <b>let</b> tokens = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">DiemAccount::withdraw_tokens</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, escrow, amount, x"");
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
 
     // 2. <b>update</b> escrow state
@@ -269,6 +277,7 @@
     // <b>update</b> escrow balance
     <b>let</b> state = borrow_global_mut&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow);
     *&<b>mut</b> state.balance = *&<b>mut</b> state.balance + amount;
+    <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> state.tokens,tokens);
 
     // create an entry in locked vector
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>&gt;(&<b>mut</b> state.locked, <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>{
@@ -472,35 +481,8 @@
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_get_locked_at">get_locked_at</a>(escrow_address: address, index: u64): <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a> <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
     <b>assert</b>(<a href="BridgeEscrow.md#0x1_BridgeEscrow_get_locked_length">get_locked_length</a>(escrow_address) &gt; index, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_LOCKED_EMPTY">ERROR_LOCKED_EMPTY</a>);
     <b>let</b> state = borrow_global&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow_address);
-    <b>let</b> info = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&state.locked, index);
-    *info
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BridgeEscrow_get_unlocked_at"></a>
-
-## Function `get_unlocked_at`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_get_unlocked_at">get_unlocked_at</a>(escrow_address: address, index: u64): <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">BridgeEscrow::AccountInfo</a>
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_get_unlocked_at">get_unlocked_at</a>(escrow_address: address, index: u64): <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a> <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
-    <b>assert</b>(<a href="BridgeEscrow.md#0x1_BridgeEscrow_get_unlocked_length">get_unlocked_length</a>(escrow_address) &gt; index, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_LOCKED_EMPTY">ERROR_LOCKED_EMPTY</a>);
-    <b>let</b> state = borrow_global&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow_address);
-    <b>let</b> info = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&state.unlocked, index);
-    *info
+    <b>let</b> ai = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&state.locked, index);
+    *ai
 }
 </code></pre>
 
@@ -525,7 +507,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_get_escrow_balance">get_escrow_balance</a>(escrow: address): u64 <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
     <b>let</b> state = borrow_global&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow);
-    state.balance
+    <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&state.tokens)
 }
 </code></pre>
 
