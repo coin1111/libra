@@ -63,6 +63,12 @@ it calls ```delete_unlocked(transfer_id)``` for each orphaned unlocked entry on 
 Second the agent processes remaining ```locked``` on Chain1. For each ```locked```
 entry it resumes execution from step 2.
 
+## Distributed (multi-sig) version of the bridge
+The main algorithm of distributed (multi-sig)  version is the same as for single-agent version. Steps 2-4 of the transfaer are handled by multiple agents instead of one. Each agent is run by a validator and executes under context a validator. Bridge contract methods are modified to count votes of agents. Whenever a threshold is met, e.g. 3 out 5 required votes by validator agent are cast, method is executed. Otherwise vote count is incremented. When method is executed it is marked as executed for this invocation (based on hash of its arguments) such that an agent cannot accidentally call the same method twice.
+
+Only selected subset of validators are selected to be participants in bridge operation. This is needed to reduce amount of transactions required on both move and eth side. Addresses of validators are stored in bridge contract and can be configured by any of the validator in the bridge set. This approach simplifies management, introducing a tradeoff that validators must be highly trusted. To ensure bridge validator complience, a stake can be requested to be held in s special account to compencate any potential loss due to a validator malicious behaviour.
+
+
 ## Running Tests
 ```
 cd language/move-lang/functional-tests/tests/0L
