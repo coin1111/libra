@@ -77,8 +77,8 @@ address 0x1 {
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
 
             // sender has enough funds
-            let address = Signer::address_of(sender);
-            assert(DiemAccount::balance<GAS>(address) >= amount, ERROR_INSUFFICIENT_BALANCE);
+            let sender_address = Signer::address_of(sender);
+            assert(DiemAccount::balance<GAS>(sender_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
 
             // escrow account exists
             assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
@@ -96,7 +96,7 @@ address 0x1 {
 
             // create an entry in locked vector
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
-                sender: Signer::address_of(sender),
+                sender: sender_address,
                 receiver: receiver,
                 balance: amount,
                 transfer_id: transfer_id,
