@@ -2061,7 +2061,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">deposit_tokens</a>&lt;Token: store&gt;(sender: &signer, payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">deposit_tokens</a>&lt;Token: store&gt;(sender: &signer, payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -2070,7 +2070,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">deposit_tokens</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">deposit_tokens</a>&lt;Token: store&gt;(
     sender: &signer,
     payer: address,
     payee: address,
@@ -2559,7 +2559,7 @@ Can only withdraw from the balances of cap.account_address [[H19]][PERMISSION].
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>, payee: address, amount: u64, metadata: vector&lt;u8&gt;): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>, payee: address, amount: u64, metadata: vector&lt;u8&gt;): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
 </code></pre>
 
 
@@ -2568,7 +2568,7 @@ Can only withdraw from the balances of cap.account_address [[H19]][PERMISSION].
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">withdraw_tokens</a>&lt;Token: store&gt;(
     cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a>,
     payee: address,
     amount: u64,

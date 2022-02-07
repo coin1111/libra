@@ -44,6 +44,7 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    friend 0x1::BridgeEscrow;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -916,7 +917,7 @@ module DiemAccount {
         emits msg to handle;
     }
 
-    public fun deposit_tokens<Token: store>(
+    public(friend) fun deposit_tokens<Token: store>(
         sender: &signer,
         payer: address,
         payee: address,
@@ -1178,8 +1179,7 @@ module DiemAccount {
 
     // public wrapper for withdraw_from
     // to return tokens directly to a caller
-    // TODO: needs to be a friend function of BridgeEscrow module, not public
-    public fun withdraw_tokens<Token: store>(
+    public(friend) fun withdraw_tokens<Token: store>(
         cap: &WithdrawCapability,
         payee: address,
         amount: u64,
