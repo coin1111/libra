@@ -116,23 +116,24 @@ address 0x1 {
 
             let ai = get_locked_at(escrow_address, *idx);
 
-            // escrow has enough funds
-            assert(DiemAccount::balance<GAS>(escrow_address) >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
-
-
-            // 1. move funds from escrow to user account
-            let with_cap = DiemAccount::extract_withdraw_capability_by_address(sender, escrow_address);
-            DiemAccount::pay_from<GAS>(&with_cap, ai.receiver, ai.balance, x"", x"");
-            DiemAccount::restore_withdraw_capability(with_cap);
-
-            // 2. update escrow state
-            // update balance
+            // update escrow state
             let state = borrow_global_mut<EscrowState>(escrow_address);
-            assert(state.balance >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
+
+            // escrow has enough funds
+            assert(Diem::get_value(&state.tokens) >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
+
+            // update balance
             *&mut state.balance = *&mut state.balance - ai.balance;
+            // withdraw tokens from escrow
+            let tokens = Diem::withdraw(&mut state.tokens,ai.balance);
+
+            let receiver_address = ai.receiver;
 
             // add entry to unlocked to indicate that funds were transferred
             Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
+
+            // move funds from escrow to user account
+            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_address, tokens, x"", x"");
         }
 
         // Remove transfer account when transfer is completed

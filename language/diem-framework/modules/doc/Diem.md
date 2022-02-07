@@ -47,6 +47,7 @@ minting and burning of coins.
 -  [Function `value`](#0x1_Diem_value)
 -  [Function `split`](#0x1_Diem_split)
 -  [Function `withdraw`](#0x1_Diem_withdraw)
+-  [Function `get_value`](#0x1_Diem_get_value)
 -  [Function `withdraw_all`](#0x1_Diem_withdraw_all)
 -  [Function `join`](#0x1_Diem_join)
 -  [Function `deposit`](#0x1_Diem_deposit)
@@ -2765,6 +2766,30 @@ value of the passed-in <code>coin</code>.
     coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;;
     amount: u64;
     <b>aborts_if</b> coin.<a href="Diem.md#0x1_Diem_value">value</a> &lt; amount <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Diem_get_value"></a>
+
+## Function `get_value`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_get_value">get_value</a>&lt;CoinType: store&gt;(coin: &<a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_get_value">get_value</a>&lt;CoinType: store&gt;(coin: &<a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;): u64 {
+    coin.value
 }
 </code></pre>
 

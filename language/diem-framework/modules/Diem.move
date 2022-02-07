@@ -1189,6 +1189,10 @@ module Diem {
         aborts_if coin.value < amount with Errors::LIMIT_EXCEEDED;
     }
 
+    public fun get_value<CoinType: store>(coin: &Diem<CoinType>): u64 {
+        coin.value
+    }
+
     /// Return a `Diem<CoinType>` worth `coin.value` and reduces the `value` of the input `coin` to
     /// zero. Does not abort.
     public fun withdraw_all<CoinType: store>(coin: &mut Diem<CoinType>): Diem<CoinType> {

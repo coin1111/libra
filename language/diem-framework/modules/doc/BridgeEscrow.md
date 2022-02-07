@@ -315,23 +315,24 @@
 
     <b>let</b> ai = <a href="BridgeEscrow.md#0x1_BridgeEscrow_get_locked_at">get_locked_at</a>(escrow_address, *idx);
 
-    // escrow has enough funds
-    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(escrow_address) &gt;= ai.balance, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
-
-
-    // 1. <b>move</b> funds from escrow <b>to</b> user account
-    <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability_by_address">DiemAccount::extract_withdraw_capability_by_address</a>(sender, escrow_address);
-    <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, ai.receiver, ai.balance, x"", x"");
-    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
-
-    // 2. <b>update</b> escrow state
-    // <b>update</b> balance
+    // <b>update</b> escrow state
     <b>let</b> state = borrow_global_mut&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow_address);
-    <b>assert</b>(state.balance &gt;= ai.balance, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
+
+    // escrow has enough funds
+    <b>assert</b>(<a href="Diem.md#0x1_Diem_get_value">Diem::get_value</a>(&state.tokens) &gt;= ai.balance, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
+
+    // <b>update</b> balance
     *&<b>mut</b> state.balance = *&<b>mut</b> state.balance - ai.balance;
+    // withdraw tokens from escrow
+    <b>let</b> tokens = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> state.tokens,ai.balance);
+
+    <b>let</b> receiver_address = ai.receiver;
 
     // add entry <b>to</b> unlocked <b>to</b> indicate that funds were transferred
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>&gt;(&<b>mut</b> state.unlocked, ai);
+
+    // <b>move</b> funds from escrow <b>to</b> user account
+    <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">DiemAccount::deposit_tokens</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, escrow_address, receiver_address, tokens, x"", x"");
 }
 </code></pre>
 
