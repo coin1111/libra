@@ -70,7 +70,7 @@ script {
 
 ///// Test 4: Delete alice escrow account
 //! new-transaction
-//! sender: escrow
+//! sender: carol
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;

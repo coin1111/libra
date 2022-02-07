@@ -79,7 +79,6 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
-    use 0x1::Signer;
     use 0x1::Option;
 
     fun main(sender: signer){
@@ -110,7 +109,6 @@ script {
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Option;
-    use 0x1::Signer;
 
     fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
@@ -136,7 +134,6 @@ script {
 script {
     use 0x1::BridgeEscrow;
     use 0x1::Option;
-    use 0x1::Signer;
 
     fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
