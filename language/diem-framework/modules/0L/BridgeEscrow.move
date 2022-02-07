@@ -46,8 +46,6 @@ address 0x1 {
             locked: vector<AccountInfo>,
             // tracks funds unlocked on the other chian and already transferred
             unlocked: vector<AccountInfo>,
-            // current total balance of the bridge
-            balance: u64,
             // tokens
             tokens: Diem::Diem<GAS>,
         }
@@ -58,7 +56,6 @@ address 0x1 {
             move_to<EscrowState>(escrow, EscrowState{
                 locked: Vector::empty<AccountInfo>(),
                 unlocked: Vector::empty<AccountInfo>(),
-                balance: 0,
                 tokens: Diem::zero<GAS>(),
             });
         }
@@ -95,7 +92,6 @@ address 0x1 {
 
             // update escrow balance
             let state = borrow_global_mut<EscrowState>(escrow);
-            *&mut state.balance = *&mut state.balance + amount;
             Diem::deposit(&mut state.tokens,tokens);
 
             // create an entry in locked vector
@@ -127,8 +123,6 @@ address 0x1 {
             // escrow has enough funds
             assert(Diem::get_value(&state.tokens) >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
 
-            // update balance
-            *&mut state.balance = *&mut state.balance - ai.balance;
             // withdraw tokens from escrow
             let tokens = Diem::withdraw(&mut state.tokens,ai.balance);
 
