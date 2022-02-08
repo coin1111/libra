@@ -26,12 +26,11 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
-    use 0x1::Vector;
 
     fun main(sender: signer){
         let transfer_id1: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
-        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{bob}}, Vector::empty<u8>(), amount, transfer_id1);
+        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{bob}}, amount, transfer_id1);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
@@ -44,12 +43,11 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
-    use 0x1::Vector;
 
     fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
         let amount: u64 = 10;
-        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{carol}}, Vector::empty<u8>(), amount, transfer_id2);
+        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{carol}},  amount, transfer_id2);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount + 100, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 2, 20002);
     }
@@ -62,12 +60,11 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
-    use 0x1::Vector;
 
     fun main(sender: signer){
         let transfer_id3: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E7";
         let amount: u64 = 50;
-        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{alice}}, Vector::empty<u8>(), amount, transfer_id3);
+        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{alice}},  amount, transfer_id3);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount + 100 + 10, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 3, 20002);
     }
@@ -98,9 +95,8 @@ script {
 
         let ai = BridgeEscrow::get_locked_at(escrow_address,*idx);
 
-        BridgeEscrow::withdraw_from_escrow(&sender, escrow_address,
+        BridgeEscrow::withdraw_from_escrow_this(&sender, escrow_address,
                 BridgeEscrow::get_sender_this(&ai),
-                BridgeEscrow::get_sender_other(&ai),
                 BridgeEscrow::get_receiver_this(&ai),
                 BridgeEscrow::get_balance(&ai),
                 BridgeEscrow::get_transfer_id(&ai),

@@ -2,6 +2,7 @@
 address 0x1 {
 module BridgeScripts {
     use 0x1::BridgeEscrow;
+    use 0x1::Vector;
 
     public(script) fun bridge_create_escrow(
         sender: signer,
@@ -17,7 +18,11 @@ module BridgeScripts {
         value: u64,
         transfer_id: vector<u8>,
     ) {
-        BridgeEscrow::create_transfer_account(escrow, &sender, receiver, receiver_other, value, transfer_id);
+        if (Vector::length(&receiver_other) == 0) {
+            BridgeEscrow::create_transfer_account_this(escrow, &sender, receiver, value, transfer_id);
+        } else {
+            BridgeEscrow::create_transfer_account_other(escrow, &sender, receiver_other, value, transfer_id);
+        }
     }
 
     public(script) fun bridge_withdraw(
@@ -29,13 +34,21 @@ module BridgeScripts {
         balance: u64,
         transfer_id: vector<u8>,
     ) {
-        BridgeEscrow::withdraw_from_escrow(&sender, escrow,
-            sender_this,
-            sender_other,
-            receiver, // receiver
-            balance, // balance
-            transfer_id, // transfer_id
-        );
+        if (Vector::length(&sender_other) == 0) {
+            BridgeEscrow::withdraw_from_escrow_this(&sender, escrow,
+                sender_this,
+                receiver, // receiver
+                balance, // balance
+                transfer_id, // transfer_id
+            );
+        } else {
+            BridgeEscrow::withdraw_from_escrow_other(&sender, escrow,
+                sender_other,
+                receiver, // receiver
+                balance, // balance
+                transfer_id, // transfer_id
+            );
+        }
     }
 
     public(script) fun bridge_close_transfer(
