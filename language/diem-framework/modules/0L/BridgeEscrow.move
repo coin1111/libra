@@ -29,14 +29,14 @@ address 0x1 {
         struct AccountInfo has copy, store, drop {
             // user address on this chain
             // 0L->eth transfer
-            sender: address,
+            sender_this: address,
             // user address on the other chain
             // eth->0L transfer
             sender_other: vector<u8>,
             // user address on the other chain
             // receiver address on 0L chain
             // eth->0L transfer
-            receiver: address,
+            receiver_this: address,
             // receiver address on eth chain
             // 0L->eth transfer
             receiver_other: vector<u8>,
@@ -76,7 +76,7 @@ address 0x1 {
         // Executed under user account
         public fun create_transfer_account(escrow: address,
                                            sender: &signer,
-                                           receiver: address,
+                                           receiver_this: address,
                                            receiver_other: vector<u8>,
                                            amount: u64,
                                            transfer_id: vector<u8>) acquires EscrowState {
@@ -87,15 +87,15 @@ address 0x1 {
             assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
 
             // sender has enough funds
-            let sender_address = Signer::address_of(sender);
-            assert(DiemAccount::balance<GAS>(sender_address) >= amount, ERROR_INSUFFICIENT_BALANCE);
+            let sender_this = Signer::address_of(sender);
+            assert(DiemAccount::balance<GAS>(sender_this) >= amount, ERROR_INSUFFICIENT_BALANCE);
 
             // escrow account exists
             assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
 
             // receiver_other must be non-empty OR receiver must exists and have no -
             if (Vector::length(&receiver_other) == 0) {
-                assert(DiemAccount::balance<GAS>(receiver) > 0, ERROR_NO_RECEIVER_ACCOUNT);
+                assert(DiemAccount::balance<GAS>(receiver_this) > 0, ERROR_NO_RECEIVER_ACCOUNT);
             };
 
             // 1. move funds from user to escrow account
@@ -111,9 +111,9 @@ address 0x1 {
 
             // create an entry in locked vector
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
-                sender: sender_address,
+                sender_this: sender_this,
                 sender_other: Vector::empty<u8>(),
-                receiver: receiver,
+                receiver_this: receiver_this,
                 receiver_other: receiver_other,
                 balance: amount,
                 transfer_id: transfer_id,
@@ -127,7 +127,7 @@ address 0x1 {
                                         escrow_address: address,
                                         sender_this: address, // sender on this  chain
                                         sender_other: vector<u8>, // sender on the other chain
-                                        receiver:address, // receiver on this chain
+                                        receiver_this:address, // receiver on this chain
                                         balance: u64, // balance to transfer
                                         transfer_id: vector<u8>, // transfer_id
                                         ) acquires EscrowState  {
@@ -150,9 +150,9 @@ address 0x1 {
 
             // add entry to unlocked to indicate that funds were transferred
             let ai = AccountInfo {
-                sender: sender_this,
+                sender_this: sender_this,
                 sender_other: sender_other,
-                receiver: copy receiver,
+                receiver_this: copy receiver_this,
                 receiver_other: Vector::empty<u8>(),
                 balance: balance,
                 transfer_id: transfer_id,
@@ -160,7 +160,7 @@ address 0x1 {
             Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
 
             // move funds from escrow to user account
-            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver, tokens, x"", x"");
+            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
         }
 
         // Remove transfer account when transfer is completed
@@ -241,16 +241,16 @@ address 0x1 {
             let state = borrow_global<EscrowState>(escrow);
             Vector::length(&state.unlocked)
         }
-        public fun get_sender(ai: &AccountInfo): address {
-            *&ai.sender
+        public fun get_sender_this(ai: &AccountInfo): address {
+            *&ai.sender_this
         }
 
         public fun get_sender_other(ai: &AccountInfo): vector<u8> {
             *&ai.sender_other
         }
 
-        public fun get_receiver(ai: &AccountInfo): address {
-            *&ai.receiver
+        public fun get_receiver_this(ai: &AccountInfo): address {
+            *&ai.receiver_this
         }
 
         public fun get_receiver_other(ai: &AccountInfo): vector<u8> {

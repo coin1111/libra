@@ -63,9 +63,9 @@ script {
         let ai = BridgeEscrow::get_locked_at(escrow_address,*idx);
 
         BridgeEscrow::withdraw_from_escrow(&sender, escrow_address,
-            BridgeEscrow::get_sender(&ai),
+            BridgeEscrow::get_sender_this(&ai),
             BridgeEscrow::get_sender_other(&ai),
-            BridgeEscrow::get_receiver(&ai),
+            BridgeEscrow::get_receiver_this(&ai),
             BridgeEscrow::get_balance(&ai),
             BridgeEscrow::get_transfer_id(&ai),
             );
