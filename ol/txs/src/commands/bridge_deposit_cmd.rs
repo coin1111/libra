@@ -18,8 +18,10 @@ use std::{path::PathBuf, process::exit};
 pub struct BridgeDepositCmd {
     #[options(short = "e", help = "escrow address address")]
     escrow_account: String,
-    #[options(short = "d", help = "destination address")]
-    destination_account: String,
+    #[options(short = "r", help = "receiver address")]
+    receiver_account: String,
+    #[options(short = "o", help = "receiver address on the other chain")]
+    receiver_other: String,
     #[options(short = "c", help = "the amount of coins to send to escrow, scaled")]
     coins: u64,
     #[options(short = "t", help = "transfer id")]
@@ -53,16 +55,31 @@ impl Runnable for BridgeDepositCmd {
                 exit(1);
             }
         };
-        let destination = match self.destination_account.parse::<AccountAddress>() {
+        let receiver = match self.receiver_account.parse::<AccountAddress>() {
             Ok(a) => a,
             Err(e) => {
                 println!(
                     "ERROR: could not parse this account address: {}, message: {}",
-                    self.destination_account,
+                    self.receiver_account,
                     &e.to_string()
                 );
                 exit(1);
             }
+        };
+
+        let receiver_other = !if self.receiver_other.empty() {
+            match hex_to_bytes(&self.receiver_other) {
+                Some(a) => a,
+                None => {
+                    println!(
+                        "ERROR: could not parse this receiver_other: {}",
+                        self.receiver_other
+                    );
+                    exit(1);
+                }
+            }
+        } else {
+            Vec::new();
         };
 
         let transfer_id = match hex_to_bytes(&self.transfer_id) {
@@ -78,7 +95,8 @@ impl Runnable for BridgeDepositCmd {
 
         match bridge_deposit(
             escrow,
-            destination,
+            receiver,
+            receiver_other,
             self.coins,
             transfer_id,
             entry_args.save_path,
@@ -95,7 +113,8 @@ impl Runnable for BridgeDepositCmd {
 /// Deposit into escrow account
 pub fn bridge_deposit(
     escrow: AccountAddress,
-    destination: AccountAddress,
+    receiver: AccountAddress,
+    receiver_other: Vec<u8>,
     coins: u64,
     transfer_id: Vec<u8>,
     save_path: Option<PathBuf>,
@@ -104,7 +123,8 @@ pub fn bridge_deposit(
     // coins are scaled
     let script = transaction_builder::encode_bridge_deposit_script_function(
         escrow,
-        destination,
+        receiver,
+        receiver_other,
         coins,
         transfer_id,
     );

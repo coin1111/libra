@@ -2,7 +2,6 @@
 address 0x1 {
 module BridgeScripts {
     use 0x1::BridgeEscrow;
-    use 0x1::Vector;
 
     public(script) fun bridge_create_escrow(
         sender: signer,
@@ -13,11 +12,12 @@ module BridgeScripts {
     public(script) fun bridge_deposit(
         sender: signer,
         escrow: address,
-        destination: address,
+        receiver: address,
+        receiver_other: vector<u8>,
         value: u64,
         transfer_id: vector<u8>,
     ) {
-        BridgeEscrow::create_transfer_account(escrow, &sender, destination, Vector::empty<u8>(), value, transfer_id);
+        BridgeEscrow::create_transfer_account(escrow, &sender, receiver, receiver_other, value, transfer_id);
     }
 
     public(script) fun bridge_withdraw(

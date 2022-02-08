@@ -12,7 +12,6 @@
 
 
 <pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
-<b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
@@ -49,7 +48,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_deposit">bridge_deposit</a>(sender: signer, escrow: address, destination: address, value: u64, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_deposit">bridge_deposit</a>(sender: signer, escrow: address, receiver: address, receiver_other: vector&lt;u8&gt;, value: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -61,11 +60,12 @@
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_deposit">bridge_deposit</a>(
     sender: signer,
     escrow: address,
-    destination: address,
+    receiver: address,
+    receiver_other: vector&lt;u8&gt;,
     value: u64,
     transfer_id: vector&lt;u8&gt;,
 ) {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, destination, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), value, transfer_id);
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, receiver, receiver_other, value, transfer_id);
 }
 </code></pre>
 

@@ -1631,7 +1631,8 @@ pub enum ScriptFunctionCall {
 
     BridgeDeposit {
         escrow: AccountAddress,
-        destination: AccountAddress,
+        receiver: AccountAddress,
+        receiver_other: Bytes,
         value: u64,
         transfer_id: Bytes,
     },
@@ -3558,10 +3559,17 @@ impl ScriptFunctionCall {
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
             BridgeDeposit {
                 escrow,
-                destination,
+                receiver,
+                receiver_other,
                 value,
                 transfer_id,
-            } => encode_bridge_deposit_script_function(escrow, destination, value, transfer_id),
+            } => encode_bridge_deposit_script_function(
+                escrow,
+                receiver,
+                receiver_other,
+                value,
+                transfer_id,
+            ),
             BridgeWithdraw {
                 escrow,
                 sender_this,
@@ -4261,7 +4269,8 @@ pub fn encode_bridge_create_escrow_script_function() -> TransactionPayload {
 
 pub fn encode_bridge_deposit_script_function(
     escrow: AccountAddress,
-    destination: AccountAddress,
+    receiver: AccountAddress,
+    receiver_other: Vec<u8>,
     value: u64,
     transfer_id: Vec<u8>,
 ) -> TransactionPayload {
@@ -4274,7 +4283,8 @@ pub fn encode_bridge_deposit_script_function(
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&destination).unwrap(),
+            bcs::to_bytes(&receiver).unwrap(),
+            bcs::to_bytes(&receiver_other).unwrap(),
             bcs::to_bytes(&value).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
         ],
@@ -8371,9 +8381,10 @@ fn decode_bridge_deposit_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeDeposit {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            destination: bcs::from_bytes(script.args().get(1)?).ok()?,
-            value: bcs::from_bytes(script.args().get(2)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
+            receiver: bcs::from_bytes(script.args().get(1)?).ok()?,
+            receiver_other: bcs::from_bytes(script.args().get(2)?).ok()?,
+            value: bcs::from_bytes(script.args().get(3)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
