@@ -99,10 +99,10 @@ script {
         let ai = BridgeEscrow::get_locked_at(escrow_address,*idx);
 
         BridgeEscrow::withdraw_from_escrow(&sender, escrow_address,
-                BridgeEscrow::get_sender_other_from_ai(&ai),
-                BridgeEscrow::get_receiver_from_ai(&ai),
-                BridgeEscrow::get_balance_from_ai(&ai),
-                BridgeEscrow::get_transfer_id_from_ai(&ai),
+                BridgeEscrow::get_sender_other(&ai),
+                BridgeEscrow::get_receiver(&ai),
+                BridgeEscrow::get_balance(&ai),
+                BridgeEscrow::get_transfer_id(&ai),
         );
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 50 + 100, 30004);
 

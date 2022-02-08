@@ -233,27 +233,27 @@ address 0x1 {
             let state = borrow_global<EscrowState>(escrow);
             Vector::length(&state.unlocked)
         }
-        public fun get_sender_from_ai(ai: &AccountInfo): address {
+        public fun get_sender(ai: &AccountInfo): address {
             *&ai.sender
         }
 
-        public fun get_sender_other_from_ai(ai: &AccountInfo): vector<u8> {
+        public fun get_sender_other(ai: &AccountInfo): vector<u8> {
             *&ai.sender_other
         }
 
-        public fun get_receiver_from_ai(ai: &AccountInfo): address {
+        public fun get_receiver(ai: &AccountInfo): address {
             *&ai.receiver
         }
 
-        public fun get_receiver_other_from_ai(ai: &AccountInfo): vector<u8> {
+        public fun get_receiver_other(ai: &AccountInfo): vector<u8> {
             *&ai.receiver_other
         }
 
-        public fun get_balance_from_ai(ai: &AccountInfo): u64 {
+        public fun get_balance(ai: &AccountInfo): u64 {
             *&ai.balance
         }
 
-        public fun get_transfer_id_from_ai(ai: &AccountInfo): vector<u8> {
+        public fun get_transfer_id(ai: &AccountInfo): vector<u8> {
             *&ai.transfer_id
         }
     }
