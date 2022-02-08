@@ -26,6 +26,8 @@ address 0x1 {
         const ERROR_MUST_BE_VALIDATOR: u64 = 3311;
         const ERROR_NO_RECEIVER_ACCOUNT: u64 = 3312;
 
+        const ZERO_ADDRESS: address = @0x0;
+
         struct AccountInfo has copy, store, drop {
             // user address on this chain
             // 0L->eth transfer
@@ -67,6 +69,35 @@ address 0x1 {
                 unlocked: Vector::empty<AccountInfo>(),
                 tokens: Diem::zero<GAS>(),
             });
+        }
+
+        // Creates an account for transfer between 0L->0L accounts
+        // Used for testing purposes
+        // When user initiates a transfer it calls this method which
+        // moves funds from user account into an escrow account.
+        // It also creates an entry in locked to indicate such transfer.
+        // Executed under user account
+        public fun create_transfer_account_this(escrow: address,
+                                           sender_address: &signer,
+                                           receiver_address: address,
+                                           amount: u64,
+                                           transfer_id: vector<u8>) acquires EscrowState {
+            create_transfer_account(escrow, sender_address,receiver_address,
+                Vector::empty<u8>(), amount, transfer_id)
+        }
+
+        // Creates an account for transfer between 0L->eth accounts
+        // When user initiates a transfer it calls this method which
+        // moves funds from user account into an escrow account.
+        // It also creates an entry in locked to indicate such transfer.
+        // Executed under user account
+        public fun create_transfer_account_other(escrow: address,
+                                                sender_address: &signer,
+                                                receiver_address: vector<u8>,
+                                                amount: u64,
+                                                transfer_id: vector<u8>) acquires EscrowState {
+            create_transfer_account(escrow, sender_address,ZERO_ADDRESS,
+                receiver_address, amount, transfer_id)
         }
 
         // Creates an account for transfer
@@ -118,6 +149,33 @@ address 0x1 {
                 balance: amount,
                 transfer_id: transfer_id,
             });
+        }
+
+        // Moves funds from escrow account to user account between 0L->0L accounts
+        // Used for testing purposes
+        // Creates an entry in unlocked vector to indicate such transfer.
+        // Executed under escrow account
+        public fun withdraw_from_escrow_this(sender: &signer,
+                                        escrow_address: address,
+                                        sender_address: address, // sender on this  chain
+                                        receiver_address:address, // receiver on this chain
+                                        balance: u64, // balance to transfer
+                                        transfer_id: vector<u8>, // transfer_id
+        ) acquires EscrowState  {
+            withdraw_from_escrow(sender,escrow_address,sender_address, Vector::empty<u8>(), receiver_address, balance, transfer_id)
+        }
+
+        // Moves funds from escrow account to user account between eth->0L accounts
+        // Creates an entry in unlocked vector to indicate such transfer.
+        // Executed under escrow account
+        public fun withdraw_from_escrow_other(sender: &signer,
+                                             escrow_address: address,
+                                             sender_address: vector<u8>, // sender on the other chain
+                                             receiver_address:address, // receiver on this chain
+                                             balance: u64, // balance to transfer
+                                             transfer_id: vector<u8>, // transfer_id
+        ) acquires EscrowState  {
+            withdraw_from_escrow(sender,escrow_address,ZERO_ADDRESS, sender_address, receiver_address, balance, transfer_id)
         }
 
         // Moves funds from escrow account to user account.
