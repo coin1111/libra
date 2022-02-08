@@ -123,7 +123,9 @@ address 0x1 {
         // Moves funds from escrow account to user account.
         // Creates an entry in unlocked vector to indicate such transfer.
         // Executed under escrow account
-        public fun withdraw_from_escrow(sender: &signer, escrow_address: address,
+        public fun withdraw_from_escrow(sender: &signer,
+                                        escrow_address: address,
+                                        sender_this: address, // sender on this  chain
                                         sender_other: vector<u8>, // sender on the other chain
                                         receiver:address, // receiver on this chain
                                         balance: u64, // balance to transfer
@@ -148,7 +150,7 @@ address 0x1 {
 
             // add entry to unlocked to indicate that funds were transferred
             let ai = AccountInfo {
-                sender: escrow_address,
+                sender: sender_this,
                 sender_other: sender_other,
                 receiver: copy receiver,
                 receiver_other: Vector::empty<u8>(),

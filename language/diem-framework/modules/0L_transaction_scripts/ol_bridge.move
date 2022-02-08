@@ -26,6 +26,7 @@ module BridgeScripts {
         transfer_id: vector<u8>,
     ) {
         BridgeEscrow::withdraw_from_escrow(&sender, escrow,
+            escrow,
             Vector::empty<u8>(), // sender_other
             escrow, // receiver
             0, // balance
