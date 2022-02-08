@@ -21,7 +21,7 @@ module BridgeScripts {
         if (Vector::length(&receiver_other) == 0) {
             BridgeEscrow::create_transfer_account_this(escrow, &sender, receiver, value, transfer_id);
         } else {
-            BridgeEscrow::create_transfer_account_other(escrow, &sender, receiver_other, value, transfer_id);
+            BridgeEscrow::create_transfer_account(escrow, &sender, receiver_other, value, transfer_id);
         }
     }
 
@@ -42,7 +42,7 @@ module BridgeScripts {
                 transfer_id, // transfer_id
             );
         } else {
-            BridgeEscrow::withdraw_from_escrow_other(&sender, escrow,
+            BridgeEscrow::withdraw_from_escrow(&sender, escrow,
                 sender_other,
                 receiver, // receiver
                 balance, // balance

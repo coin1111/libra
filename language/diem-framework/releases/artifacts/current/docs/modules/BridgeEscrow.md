@@ -10,11 +10,11 @@
 -  [Constants](#@Constants_0)
 -  [Function `initialize_escrow`](#0x1_BridgeEscrow_initialize_escrow)
 -  [Function `create_transfer_account_this`](#0x1_BridgeEscrow_create_transfer_account_this)
--  [Function `create_transfer_account_other`](#0x1_BridgeEscrow_create_transfer_account_other)
 -  [Function `create_transfer_account`](#0x1_BridgeEscrow_create_transfer_account)
+-  [Function `create_transfer_account_aux`](#0x1_BridgeEscrow_create_transfer_account_aux)
 -  [Function `withdraw_from_escrow_this`](#0x1_BridgeEscrow_withdraw_from_escrow_this)
--  [Function `withdraw_from_escrow_other`](#0x1_BridgeEscrow_withdraw_from_escrow_other)
 -  [Function `withdraw_from_escrow`](#0x1_BridgeEscrow_withdraw_from_escrow)
+-  [Function `withdraw_from_escrow_aux`](#0x1_BridgeEscrow_withdraw_from_escrow_aux)
 -  [Function `delete_transfer_account`](#0x1_BridgeEscrow_delete_transfer_account)
 -  [Function `delete_unlocked`](#0x1_BridgeEscrow_delete_unlocked)
 -  [Function `find_locked_idx`](#0x1_BridgeEscrow_find_locked_idx)
@@ -292,37 +292,8 @@
                                    receiver_address: address,
                                    amount: u64,
                                    transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow, sender_address,receiver_address,
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow, sender_address,receiver_address,
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), amount, transfer_id)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BridgeEscrow_create_transfer_account_other"></a>
-
-## Function `create_transfer_account_other`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_other">create_transfer_account_other</a>(escrow: address, sender_address: &signer, receiver_address: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_other">create_transfer_account_other</a>(escrow: address,
-                                        sender_address: &signer,
-                                        receiver_address: vector&lt;u8&gt;,
-                                        amount: u64,
-                                        transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow, sender_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>,
-        receiver_address, amount, transfer_id)
 }
 </code></pre>
 
@@ -336,7 +307,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address, sender: &signer, receiver_this: address, receiver_other: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address, sender_address: &signer, receiver_address: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -346,6 +317,35 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address,
+                                        sender_address: &signer,
+                                        receiver_address: vector&lt;u8&gt;,
+                                        amount: u64,
+                                        transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow, sender_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>,
+        receiver_address, amount, transfer_id)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeEscrow_create_transfer_account_aux"></a>
+
+## Function `create_transfer_account_aux`
+
+
+
+<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow: address, sender: &signer, receiver_this: address, receiver_other: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow: address,
                                    sender: &signer,
                                    receiver_this: address,
                                    receiver_other: vector&lt;u8&gt;,
@@ -418,37 +418,7 @@
                                 balance: u64, // balance <b>to</b> transfer
                                 transfer_id: vector&lt;u8&gt;, // transfer_id
 ) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender,escrow_address,sender_address, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), receiver_address, balance, transfer_id)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BridgeEscrow_withdraw_from_escrow_other"></a>
-
-## Function `withdraw_from_escrow_other`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_other">withdraw_from_escrow_other</a>(sender: &signer, escrow_address: address, sender_address: vector&lt;u8&gt;, receiver_address: address, balance: u64, transfer_id: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_other">withdraw_from_escrow_other</a>(sender: &signer,
-                                     escrow_address: address,
-                                     sender_address: vector&lt;u8&gt;, // sender on the other chain
-                                     receiver_address:address, // receiver on this chain
-                                     balance: u64, // balance <b>to</b> transfer
-                                     transfer_id: vector&lt;u8&gt;, // transfer_id
-) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender,escrow_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>, sender_address, receiver_address, balance, transfer_id)
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender,escrow_address,sender_address, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), receiver_address, balance, transfer_id)
 }
 </code></pre>
 
@@ -462,7 +432,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer, escrow_address: address, sender_this: address, sender_other: vector&lt;u8&gt;, receiver_this: address, balance: u64, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer, escrow_address: address, sender_address: vector&lt;u8&gt;, receiver_address: address, balance: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -472,6 +442,36 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer,
+                                     escrow_address: address,
+                                     sender_address: vector&lt;u8&gt;, // sender on the other chain
+                                     receiver_address:address, // receiver on this chain
+                                     balance: u64, // balance <b>to</b> transfer
+                                     transfer_id: vector&lt;u8&gt;, // transfer_id
+) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender,escrow_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>, sender_address, receiver_address, balance, transfer_id)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeEscrow_withdraw_from_escrow_aux"></a>
+
+## Function `withdraw_from_escrow_aux`
+
+
+
+<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender: &signer, escrow_address: address, sender_this: address, sender_other: vector&lt;u8&gt;, receiver_this: address, balance: u64, transfer_id: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender: &signer,
                                 escrow_address: address,
                                 sender_this: address, // sender on this  chain
                                 sender_other: vector&lt;u8&gt;, // sender on the other chain

@@ -69,7 +69,7 @@
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&receiver_other) == 0) {
         <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_this">BridgeEscrow::create_transfer_account_this</a>(escrow, &sender, receiver, value, transfer_id);
     } <b>else</b> {
-        <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_other">BridgeEscrow::create_transfer_account_other</a>(escrow, &sender, receiver_other, value, transfer_id);
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, receiver_other, value, transfer_id);
     }
 }
 </code></pre>
@@ -110,7 +110,7 @@
             transfer_id, // transfer_id
         );
     } <b>else</b> {
-        <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_other">BridgeEscrow::withdraw_from_escrow_other</a>(&sender, escrow,
+        <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, escrow,
             sender_other,
             receiver, // receiver
             balance, // balance
