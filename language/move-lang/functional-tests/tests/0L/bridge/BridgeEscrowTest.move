@@ -25,11 +25,12 @@ script {
 //! gas-currency: GAS
 script {
     use 0x1::BridgeEscrow;
+    use 0x1::Vector;
 
     fun main(sender: signer){
         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let amount: u64 = 100;
-        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{bob}}, amount, transfer_id);
+        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, @{{bob}}, Vector::empty<u8>(), amount, transfer_id);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
@@ -52,14 +53,21 @@ script {
         let escrow_address: address = @{{escrow}};
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 100, 30001);
 
-        // find accoutn by transfer_id t and make transfer to the "other" chain
+        // find account by transfer_id t and make transfer to the "other" chain
         // which is the same chain with account bob
         let index = BridgeEscrow::find_locked_idx(escrow_address, &transfer_id);
         assert(Option::is_some(&index),30002);
         let idx = Option::borrow(&index);
         assert(*idx == 0, 30003);
 
-        BridgeEscrow::withdraw_from_escrow(&sender, escrow_address, &transfer_id);
+        let ai = BridgeEscrow::get_locked_at(escrow_address,*idx);
+
+        BridgeEscrow::withdraw_from_escrow(&sender, escrow_address,
+            BridgeEscrow::get_sender_other_from_ai(&ai),
+            BridgeEscrow::get_receiver_from_ai(&ai),
+            BridgeEscrow::get_balance_from_ai(&ai),
+            BridgeEscrow::get_transfer_id_from_ai(&ai),
+            );
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 0, 30004);
 
         assert(BridgeEscrow::get_locked_length(escrow_address) == 1, 30005);

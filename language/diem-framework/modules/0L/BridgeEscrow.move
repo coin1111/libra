@@ -27,10 +27,18 @@ address 0x1 {
 
         struct AccountInfo has copy, store, drop {
             // user address on this chain
+            // 0L->eth transfer
             sender: address,
             // user address on the other chain
-            // TODO: convert to vector<u8>
+            // eth->0L transfer
+            sender_other: vector<u8>,
+            // user address on the other chain
+            // receiver address on 0L chain
+            // eth->0L transfer
             receiver: address,
+            // receiver address on eth chain
+            // 0L->eth transfer
+            receiver_other: vector<u8>,
             // value sent
             balance: u64,
             // transfer id
@@ -68,6 +76,7 @@ address 0x1 {
         public fun create_transfer_account(escrow: address,
                                            sender: &signer,
                                            receiver: address,
+                                           receiver_other: vector<u8>,
                                            amount: u64,
                                            transfer_id: vector<u8>) acquires EscrowState {
             let idx_opt = find_locked_idx(escrow, &transfer_id);
@@ -97,7 +106,9 @@ address 0x1 {
             // create an entry in locked vector
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
                 sender: sender_address,
+                sender_other: Vector::empty<u8>(),
                 receiver: receiver,
+                receiver_other: receiver_other,
                 balance: amount,
                 transfer_id: transfer_id,
             });
@@ -106,33 +117,42 @@ address 0x1 {
         // Moves funds from escrow account to user account.
         // Creates an entry in unlocked vector to indicate such transfer.
         // Executed under escrow account
-        public fun withdraw_from_escrow(sender: &signer, escrow_address: address, transfer_id:&vector<u8>) acquires EscrowState  {
+        public fun withdraw_from_escrow(sender: &signer, escrow_address: address,
+                                        sender_other: vector<u8>, // sender on the other chain
+                                        receiver:address, // receiver on this chain
+                                        balance: u64, // balance to transfer
+                                        transfer_id: vector<u8>, // transfer_id
+                                        ) acquires EscrowState  {
             let sender_address= Signer::address_of(sender);
             assert(DiemSystem::is_validator(sender_address) == true ||
                    sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
-            
-            let idx_opt = find_locked_idx(escrow_address,transfer_id);
-            assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
-            let idx = Option::borrow(&idx_opt);
 
-            let ai = get_locked_at(escrow_address, *idx);
+            // check that transfer id is not present
+            let idx_opt = find_unlocked_idx( escrow_address, &transfer_id);
+            assert(Option::is_none(&idx_opt), ERROR_TRANSFER_ID_EXISTS);
 
             // update escrow state
-            let state = borrow_global_mut<EscrowState>(escrow_address);
+            let state = borrow_global_mut<EscrowState>( escrow_address);
 
             // escrow has enough funds
-            assert(Diem::get_value(&state.tokens) >= ai.balance, ERROR_INSUFFICIENT_BALANCE);
+            assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
 
             // withdraw tokens from escrow
-            let tokens = Diem::withdraw(&mut state.tokens,ai.balance);
-
-            let receiver_address = ai.receiver;
+            let tokens = Diem::withdraw(&mut state.tokens,balance);
 
             // add entry to unlocked to indicate that funds were transferred
+            let ai = AccountInfo {
+                sender: escrow_address,
+                sender_other: sender_other,
+                receiver: copy receiver,
+                receiver_other: Vector::empty<u8>(),
+                balance: balance,
+                transfer_id: transfer_id,
+            };
             Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
 
             // move funds from escrow to user account
-            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_address, tokens, x"", x"");
+            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver, tokens, x"", x"");
         }
 
         // Remove transfer account when transfer is completed
@@ -217,8 +237,16 @@ address 0x1 {
             *&ai.sender
         }
 
+        public fun get_sender_other_from_ai(ai: &AccountInfo): vector<u8> {
+            *&ai.sender_other
+        }
+
         public fun get_receiver_from_ai(ai: &AccountInfo): address {
             *&ai.receiver
+        }
+
+        public fun get_receiver_other_from_ai(ai: &AccountInfo): vector<u8> {
+            *&ai.receiver_other
         }
 
         public fun get_balance_from_ai(ai: &AccountInfo): u64 {
