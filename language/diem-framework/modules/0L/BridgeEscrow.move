@@ -24,6 +24,7 @@ address 0x1 {
         const ERROR_INVALID_TRANSFER_ID : u64 = 3309;
         const ERROR_TRANSFER_ID_EXISTS : u64 = 3310;
         const ERROR_MUST_BE_VALIDATOR: u64 = 3311;
+        const ERROR_NO_RECEIVER_ACCOUNT: u64 = 3312;
 
         struct AccountInfo has copy, store, drop {
             // user address on this chain
@@ -91,6 +92,11 @@ address 0x1 {
 
             // escrow account exists
             assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
+
+            // receiver_other must be non-empty OR receiver must exists and have no -
+            if (Vector::length(&receiver_other) == 0) {
+                assert(DiemAccount::balance<GAS>(receiver) > 0, ERROR_NO_RECEIVER_ACCOUNT);
+            };
 
             // 1. move funds from user to escrow account
             let with_cap = DiemAccount::extract_withdraw_capability(sender);

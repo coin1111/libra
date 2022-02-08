@@ -2,7 +2,7 @@
 ///// The tags below create validators alice and bob, giving them 1000000 GAS coins.
 
 //! account: alice, 1000000, 0
-//! account: bob, 0, 0
+//! account: bob, 1, 0
 //! account: escrow, 1, 0
 //! account: carol, 1000000, 0, validator
 

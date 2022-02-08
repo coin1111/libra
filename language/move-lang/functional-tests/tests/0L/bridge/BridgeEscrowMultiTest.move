@@ -1,7 +1,7 @@
 ///// Setting up the test fixtures for the transactions below. 
 ///// The tags below create validators alice and bob, giving them 1000000 GAS coins.
 
-//! account: alice, 100, 0
+//! account: alice, 101, 0
 //! account: bob, 10, 0
 //! account: carol, 50, 0
 //! account: escrow, 1, 0
