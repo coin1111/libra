@@ -23,13 +23,17 @@ module BridgeScripts {
     public(script) fun bridge_withdraw(
         sender: signer,
         escrow: address,
+        sender_this: address,
+        sender_other: vector<u8>,
+        receiver: address,
+        balance: u64,
         transfer_id: vector<u8>,
     ) {
         BridgeEscrow::withdraw_from_escrow(&sender, escrow,
-            escrow,
-            Vector::empty<u8>(), // sender_other
-            escrow, // receiver
-            0, // balance
+            sender_this,
+            sender_other,
+            receiver, // receiver
+            balance, // balance
             transfer_id, // transfer_id
         );
     }

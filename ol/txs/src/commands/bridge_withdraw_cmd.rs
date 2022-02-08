@@ -19,6 +19,18 @@ pub struct BridgeWithdrawCmd {
     #[options(short = "e", help = "escrow address")]
     escrow: String,
 
+    #[options(short = "s", help = "sender on this chain")]
+    sender: String,
+
+    #[options(short = "o", help = "sender on the other chain")]
+    sender_other: String,
+
+    #[options(short = "r", help = "receiver")]
+    receiver: String,
+
+    #[options(short = "b", help = "balance")]
+    balance: u64,
+
     #[options(short = "t", help = "transfer id")]
     transfer_id: String,
 }
@@ -50,6 +62,50 @@ impl Runnable for BridgeWithdrawCmd {
                 exit(1);
             }
         };
+
+        let sender = if !self.sender.is_empty() {
+            match self.sender.parse::<AccountAddress>() {
+                Ok(a) => a,
+                Err(e) => {
+                    println!(
+                        "ERROR: could not parse this account address: {}, message: {}",
+                        self.sender,
+                        &e.to_string()
+                    );
+                    exit(1);
+                }
+            }
+        } else {
+            AccountAddress::ZERO
+        };
+
+        let sender_other = if !self.sender_other.is_empty() {
+            match hex_to_bytes(&self.sender_other) {
+                Some(a) => a,
+                None => {
+                    println!(
+                        "ERROR: could not parse this sender_other: {}",
+                        self.sender_other
+                    );
+                    exit(1);
+                }
+            }
+        } else {
+            Vec::new()
+        };
+
+        let receiver = match self.receiver.parse::<AccountAddress>() {
+            Ok(a) => a,
+            Err(e) => {
+                println!(
+                    "ERROR: could not parse this account address: {}, message: {}",
+                    self.receiver,
+                    &e.to_string()
+                );
+                exit(1);
+            }
+        };
+
         let transfer_id = match hex_to_bytes(&self.transfer_id) {
             Some(a) => a,
             None => {
@@ -61,7 +117,7 @@ impl Runnable for BridgeWithdrawCmd {
             }
         };
 
-        match bridge_withdraw(escrow, transfer_id, entry_args.save_path) {
+        match bridge_withdraw(escrow, sender, sender_other, receiver, self.balance, transfer_id, entry_args.save_path) {
             Ok(_) => println!("Success: Bridge withdraw posted: {}", self.transfer_id),
             Err(e) => {
                 println!("ERROR: execute bridge withdraw message: {:?}", &e);
@@ -74,11 +130,16 @@ impl Runnable for BridgeWithdrawCmd {
 /// withdraw into escrow account
 pub fn bridge_withdraw(
     escrow: AccountAddress,
+    sender: AccountAddress,
+    sender_other: Vec<u8>,
+    receiver: AccountAddress,
+    balance: u64,
     transfer_id: Vec<u8>,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_withdraw_script_function(escrow, transfer_id);
+    let script = transaction_builder::encode_bridge_withdraw_script_function(escrow, sender,
+                                                                             sender_other, receiver, balance, transfer_id);
     maybe_submit(script, &tx_params, save_path)
 }

@@ -1638,6 +1638,10 @@ pub enum ScriptFunctionCall {
 
     BridgeWithdraw {
         escrow: AccountAddress,
+        sender_this: AccountAddress,
+        sender_other: Bytes,
+        receiver: AccountAddress,
+        balance: u64,
         transfer_id: Bytes,
     },
 
@@ -3560,8 +3564,19 @@ impl ScriptFunctionCall {
             } => encode_bridge_deposit_script_function(escrow, destination, value, transfer_id),
             BridgeWithdraw {
                 escrow,
+                sender_this,
+                sender_other,
+                receiver,
+                balance,
                 transfer_id,
-            } => encode_bridge_withdraw_script_function(escrow, transfer_id),
+            } => encode_bridge_withdraw_script_function(
+                escrow,
+                sender_this,
+                sender_other,
+                receiver,
+                balance,
+                transfer_id,
+            ),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4268,6 +4283,10 @@ pub fn encode_bridge_deposit_script_function(
 
 pub fn encode_bridge_withdraw_script_function(
     escrow: AccountAddress,
+    sender_this: AccountAddress,
+    sender_other: Vec<u8>,
+    receiver: AccountAddress,
+    balance: u64,
     transfer_id: Vec<u8>,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
@@ -4279,6 +4298,10 @@ pub fn encode_bridge_withdraw_script_function(
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&sender_this).unwrap(),
+            bcs::to_bytes(&sender_other).unwrap(),
+            bcs::to_bytes(&receiver).unwrap(),
+            bcs::to_bytes(&balance).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
         ],
     ))
@@ -8363,7 +8386,11 @@ fn decode_bridge_withdraw_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeWithdraw {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sender_this: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sender_other: bcs::from_bytes(script.args().get(2)?).ok()?,
+            receiver: bcs::from_bytes(script.args().get(3)?).ok()?,
+            balance: bcs::from_bytes(script.args().get(4)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(5)?).ok()?,
         })
     } else {
         None

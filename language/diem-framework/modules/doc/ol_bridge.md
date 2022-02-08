@@ -12,6 +12,7 @@
 
 
 <pre><code><b>use</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow">0x1::BridgeEscrow</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
@@ -64,7 +65,7 @@
     value: u64,
     transfer_id: vector&lt;u8&gt;,
 ) {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, destination, value, transfer_id);
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">BridgeEscrow::create_transfer_account</a>(escrow, &sender, destination, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), value, transfer_id);
 }
 </code></pre>
 
@@ -78,7 +79,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(sender: signer, escrow: address, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(sender: signer, escrow: address, sender_this: address, sender_other: vector&lt;u8&gt;, receiver: address, balance: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -90,9 +91,19 @@
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_bridge.md#0x1_BridgeScripts_bridge_withdraw">bridge_withdraw</a>(
     sender: signer,
     escrow: address,
+    sender_this: address,
+    sender_other: vector&lt;u8&gt;,
+    receiver: address,
+    balance: u64,
     transfer_id: vector&lt;u8&gt;,
 ) {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, escrow, &transfer_id);
+    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">BridgeEscrow::withdraw_from_escrow</a>(&sender, escrow,
+        sender_this,
+        sender_other,
+        receiver, // receiver
+        balance, // balance
+        transfer_id, // transfer_id
+    );
 }
 </code></pre>
 
