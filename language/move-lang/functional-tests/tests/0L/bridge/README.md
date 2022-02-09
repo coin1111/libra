@@ -35,7 +35,7 @@ Each method invocation is transactional. A method either completes or fails
 ## Steps in the transfer
 
 1. Alice calls ```create_transfer_account(alice,bob,100,0x12345)```. Inside the method,
-funds are moved from Alice's account on Chain1 into escrow on Chain1. An entry in ```unlocked```
+funds are moved from Alice's account on Chain1 into escrow on Chain1. An entry in ```locked```
 vector for this ```transfer_id=0x12345``` is also added to indicate that transfer is initiated
 2. A bridge agent detects that new entry in ```locked``` has been created on Chain1. The agent 
 calls ```withdraw_from_escrow(0x12345)``` on Chain2. This method
