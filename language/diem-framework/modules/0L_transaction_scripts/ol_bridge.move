@@ -13,13 +13,13 @@ module BridgeScripts {
     public(script) fun bridge_deposit(
         sender: signer,
         escrow: address,
-        receiver: address,
+        receiver_this: address,
         receiver_other: vector<u8>,
         value: u64,
         transfer_id: vector<u8>,
     ) {
         if (Vector::length(&receiver_other) == 0) {
-            BridgeEscrow::create_transfer_account_this(escrow, &sender, receiver, value, transfer_id);
+            BridgeEscrow::create_transfer_account_this(escrow, &sender, receiver_this, value, transfer_id);
         } else {
             BridgeEscrow::create_transfer_account(escrow, &sender, receiver_other, value, transfer_id);
         }
