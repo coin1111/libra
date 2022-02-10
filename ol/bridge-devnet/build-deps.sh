@@ -1,4 +1,5 @@
 pushd ../..
+make stdlib
 cargo build -p diem-node -p cli
 pushd language/move-stdlib
 cargo run --release
