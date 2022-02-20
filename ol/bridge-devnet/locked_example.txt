@@ -1,0 +1,88 @@
+Warn: could not find a validator config file, trying fullnode
+ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs
+[0m[0m[1m[36m   RESOURCES[0m Some(
+    Vector(
+        Struct(
+            StructTag {
+                address: 00000000000000000000000000000001,
+                module: Identifier(
+                    "BridgeEscrow",
+                ),
+                name: Identifier(
+                    "AccountInfo",
+                ),
+                type_params: [],
+            },
+        ),
+        [
+            Struct(
+                AnnotatedMoveStruct {
+                    abilities: [Copy, Drop, Store, ],
+                    type_: StructTag {
+                        address: 00000000000000000000000000000001,
+                        module: Identifier(
+                            "BridgeEscrow",
+                        ),
+                        name: Identifier(
+                            "AccountInfo",
+                        ),
+                        type_params: [],
+                    },
+                    value: [
+                        (
+                            Identifier(
+                                "sender_this",
+                            ),
+                            Address(
+                                770B2C65843B25CA12CA48091FC33CD8,
+                            ),
+                        ),
+                        (
+                            Identifier(
+                                "sender_other",
+                            ),
+                            Bytes(
+                                [],
+                            ),
+                        ),
+                        (
+                            Identifier(
+                                "receiver_this",
+                            ),
+                            Address(
+                                8671AF7A44F80253F3E141123FF4A7D2,
+                            ),
+                        ),
+                        (
+                            Identifier(
+                                "receiver_other",
+                            ),
+                            Bytes(
+                                [],
+                            ),
+                        ),
+                        (
+                            Identifier(
+                                "balance",
+                            ),
+                            U64(
+                                100,
+                            ),
+                        ),
+                        (
+                            Identifier(
+                                "transfer_id",
+                            ),
+                            Bytes(
+                                [
+                                    18,
+                                    52,
+                                ],
+                            ),
+                        ),
+                    ],
+                },
+            ),
+        ],
+    ),
+)
