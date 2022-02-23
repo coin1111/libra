@@ -166,10 +166,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "agent"
-version = "0.1.0"
-
-[[package]]
 name = "ahash"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -627,6 +623,75 @@ dependencies = [
  "diem-workspace-hack",
  "futures",
  "tokio 1.11.0",
+]
+
+[[package]]
+name = "bridge-agent"
+version = "0.0.1"
+dependencies = [
+ "abscissa_core",
+ "abscissa_tokio",
+ "ajson",
+ "anyhow",
+ "async-stream",
+ "backup-cli",
+ "bcs",
+ "bitflags",
+ "byteorder",
+ "cassowary",
+ "chrono",
+ "cli",
+ "clokwerk",
+ "crossterm",
+ "dialoguer",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-json-rpc-client",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-types",
+ "diem-wallet",
+ "diemdb",
+ "dirs 2.0.2",
+ "fs_extra",
+ "futures",
+ "glob",
+ "gumdrop 0.7.0",
+ "handlebars",
+ "hex 0.4.3",
+ "machine-ip",
+ "move-binary-format",
+ "move-core-types",
+ "move-vm-types",
+ "nix 0.18.0",
+ "num-format",
+ "ol-keys",
+ "ol-types",
+ "once_cell",
+ "port_scanner",
+ "rand 0.8.3",
+ "regex",
+ "reqwest",
+ "resource-viewer",
+ "rocksdb 0.15.0",
+ "rustyline 6.3.0",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sm",
+ "storage-interface",
+ "sysinfo",
+ "thiserror",
+ "tokio 1.11.0",
+ "tokio-stream",
+ "toml",
+ "unicode-segmentation",
+ "unicode-width",
+ "url",
+ "walkdir",
+ "warp",
 ]
 
 [[package]]
