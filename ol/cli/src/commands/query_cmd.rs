@@ -136,7 +136,6 @@ impl Runnable for QueryCmd {
         match node.query(query_type) {
             Ok(info) => {
                 status_info!(display, format!("{}", info));
-                //println!("{}", info);
             }
             Err(e) => {
                 println!("could not query node, exiting. Message: {:?}", e);
