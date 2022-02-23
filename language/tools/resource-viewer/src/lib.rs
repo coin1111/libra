@@ -236,7 +236,7 @@ fn pretty_print_value(
         AnnotatedMoveValue::U8(v) => write!(f, "{}u8", v),
         AnnotatedMoveValue::U64(v) => write!(f, "{}", v),
         AnnotatedMoveValue::U128(v) => write!(f, "{}u128", v),
-        AnnotatedMoveValue::Address(a) => write!(f, "{}", a.short_str_lossless()),
+        AnnotatedMoveValue::Address(a) => write!(f, r#""{}""#, a.short_str_lossless()),
         AnnotatedMoveValue::Vector(_, v) => {
             writeln!(f, "[")?;
             for value in v.iter() {
@@ -247,7 +247,7 @@ fn pretty_print_value(
             write_indent(f, indent)?;
             write!(f, "]")
         }
-        AnnotatedMoveValue::Bytes(v) => write!(f, "{}", hex::encode(&v)),
+        AnnotatedMoveValue::Bytes(v) => write!(f, r#""{}""#, hex::encode(&v)),
         AnnotatedMoveValue::Struct(s) => pretty_print_struct(f, s, indent),
     }
 }
@@ -257,27 +257,33 @@ fn pretty_print_struct(
     value: &AnnotatedMoveStruct,
     indent: u64,
 ) -> std::fmt::Result {
+    writeln!(f, "{{")?;
+    write_indent(f, indent + 4)?;
     pretty_print_ability_modifiers(f, value.abilities)?;
-    writeln!(f, "{} {{", value.type_)?;
+    writeln!(f, ",")?;
+    write_indent(f, indent + 4)?;
+    writeln!(f, r#""struct":{{"{}":{{"#, value.type_)?;
     for (field_name, v) in value.value.iter() {
-        write_indent(f, indent + 4)?;
-        write!(f, "{}: ", field_name)?;
-        pretty_print_value(f, v, indent + 4)?;
-        writeln!(f)?;
+        write_indent(f, indent + 8)?;
+        write!(f, r#""{}": "#, field_name)?;
+        pretty_print_value(f, v, indent + 8)?;
+        writeln!(f, ",")?;
     }
     write_indent(f, indent)?;
-    write!(f, "}}")
+    write!(f, "}}}}}}")
 }
 
 fn pretty_print_ability_modifiers(f: &mut Formatter, abilities: AbilitySet) -> std::fmt::Result {
+    let mut vec = Vec::new();
     for ability in abilities {
         match ability {
-            Ability::Copy => write!(f, "copy ")?,
-            Ability::Drop => write!(f, "drop ")?,
-            Ability::Store => write!(f, "store ")?,
-            Ability::Key => write!(f, "key ")?,
+            Ability::Copy => vec.push(r#""copy""#),
+            Ability::Drop => vec.push(r#""drop""#),
+            Ability::Store => vec.push(r#""store""#),
+            Ability::Key => vec.push(r#""key""#),
         }
     }
+    write!(f, r#""modifiers":[{}]"#, vec.join(","))?;
     Ok(())
 }
 

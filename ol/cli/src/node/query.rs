@@ -138,7 +138,12 @@ impl Node {
                 match self.get_annotate_account_blob(account) {
                     Ok((Some(r), _)) => {
                         let value = find_value_from_state(&r, module_name, struct_name, key_name);
-                        format!("{:#?}", value)
+                        match value {
+                            Some(v) => {
+                                format!("{}", v)
+                            }
+                            _ => format!("{:#?}", value)
+                        }
                     }
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
