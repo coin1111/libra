@@ -163,6 +163,7 @@ members = [
     "types",
     "vm-validator",
     # //////// 0L ////////
+    "ol/bridge/agent",
     "ol/cli",    
     "ol/keys",
     "ol/tower",
