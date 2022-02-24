@@ -26,8 +26,6 @@ use diem_types::{
         testnet_dd_account_address,
         treasury_compliance_account_address,
         type_tag_for_currency_code,
-        // ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH,
-        GAS_NAME,
         XUS_NAME,
     },
     account_state::AccountState,

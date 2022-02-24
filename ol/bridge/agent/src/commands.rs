@@ -11,9 +11,11 @@
 //! application's configuration file.
 
 mod query_cmd;
+mod agent_cmd;
 
 use self::{
     query_cmd::QueryCmd,
+    agent_cmd::AgentCmd,
 };
 
 use crate::entrypoint;
@@ -37,6 +39,10 @@ pub enum OlCliCmd {
     /// The `query` subcommand
     #[options(help = "run simple queries through subcommands, prints the value to stdout")]
     Query(QueryCmd),
+
+    /// The `agent` subcommand
+    #[options(help = "start agent")]
+    Agent(AgentCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
