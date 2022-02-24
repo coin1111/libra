@@ -7,30 +7,30 @@ use abscissa_core::{
 };
 use abscissa_tokio::TokioComponent;
 /// Application state
-pub static APPLICATION: AppCell<OlCliApp> = AppCell::new();
+pub static APPLICATION: AppCell<BridgeAgentApp> = AppCell::new();
 
 /// Obtain a read-only (multi-reader) lock on the application state.
 ///
 /// Panics if the application state has not been initialized.
-pub fn app_reader() -> application::lock::Reader<OlCliApp> {
+pub fn app_reader() -> application::lock::Reader<BridgeAgentApp> {
     APPLICATION.read()
 }
 
 /// Obtain an exclusive mutable lock on the application state.
-pub fn app_writer() -> application::lock::Writer<OlCliApp> {
+pub fn app_writer() -> application::lock::Writer<BridgeAgentApp> {
     APPLICATION.write()
 }
 
 /// Obtain a read-only (multi-reader) lock on the application configuration.
 ///
 /// Panics if the application configuration has not been loaded.
-pub fn app_config() -> config::Reader<OlCliApp> {
+pub fn app_config() -> config::Reader<BridgeAgentApp> {
     config::Reader::new(&APPLICATION)
 }
 
 /// OlCli Application
 #[derive(Debug)]
-pub struct OlCliApp {
+pub struct BridgeAgentApp {
     /// Application configuration.
     config: Option<AppCfg>,
 
@@ -42,7 +42,7 @@ pub struct OlCliApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for OlCliApp {
+impl Default for BridgeAgentApp {
     fn default() -> Self {
         Self {
             config: None,
@@ -51,7 +51,7 @@ impl Default for OlCliApp {
     }
 }
 
-impl Application for OlCliApp {
+impl Application for BridgeAgentApp {
     /// Entrypoint command for this application.
     type Cmd = EntryPoint<OlCliCmd>;
 

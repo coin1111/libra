@@ -21,9 +21,6 @@ pub struct QueryCmd {
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
 
-    #[options(help = "sync delay from upstream")]
-    sync: bool,
-
     #[options(help = "resources")]
     resources: bool,
 
