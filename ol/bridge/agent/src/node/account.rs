@@ -65,29 +65,6 @@ impl OwnerAccountView {
 }
 
 impl Node {
-    /// fetch new account info
-    pub fn refresh_account_info(&mut self) -> Option<&OwnerAccountView>{
-        match self.get_account_view() {
-            Some(av) => {
-                self.vitals.account_view.balance = get_balance(av);
-                self.vitals.account_view.is_in_validator_set = 
-                    self.is_in_validator_set();
-                self.vitals.account_view.autopay = 
-                    self.get_autopay_view(self.vitals.account_view.address);
-                let operator = 
-                    self.get_validator_operator_account(
-                        self.vitals.account_view.address
-                    );
-                self.vitals.account_view.operator_account = operator;
-                if let Some(a) = operator {
-                    self.vitals.account_view.operator_balance = 
-                        self.get_account_balance(a);
-                }
-                Some(&self.vitals.account_view)
-            }
-            None => None
-        }
-    }
 
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {

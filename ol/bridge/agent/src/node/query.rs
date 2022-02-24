@@ -46,8 +46,6 @@ pub enum QueryType {
         /// move key name
         key_name: String,
     },
-    /// How far behind the local is from the upstream nodes
-    SyncDelay,
     /// Get transaction history
     Txs {
         /// account to query txs of
@@ -113,13 +111,7 @@ impl Node {
                     &c.0.waypoint.unwrap_or_default().to_string()
                 )
             }
-            SyncDelay => match self.check_sync() {
-                Ok(sync) => format!(
-                    "is synced: {}, local height: {}, upstream delay: {}",
-                    sync.is_synced, sync.sync_height, sync.sync_delay
-                ),
-                Err(e) => e.to_string(),
-            },
+
             Resources { account } => {
                 // account
                 match self.get_annotate_account_blob(account) {

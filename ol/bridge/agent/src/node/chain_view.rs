@@ -241,8 +241,6 @@ impl Node {
       cs.validators_stats = Some(validators_stats);
       cs.vals_config_stats = Some(calc_config_stats(cs.validator_view.clone().unwrap()));
       cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
-            
-      self.vitals.chain_view = Some(cs.clone());
 
       return Ok((cs, validators));
     }

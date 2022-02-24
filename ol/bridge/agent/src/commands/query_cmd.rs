@@ -89,9 +89,6 @@ impl Runnable for QueryCmd {
         } else if self.blockheight {
             query_type = QueryType::BlockHeight;
             display = "BLOCK HEIGHT";
-        } else if self.sync {
-            query_type = QueryType::SyncDelay;
-            display = "SYNC";
         } else if self.resources {
             query_type = QueryType::Resources { account };
             display = "RESOURCES";
