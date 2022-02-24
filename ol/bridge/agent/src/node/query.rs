@@ -240,6 +240,36 @@ impl Node {
         };
         Ok(print)
     }
+
+    pub fn query_locked(&mut self, query_type: QueryType) -> Result<String, Error> {
+        use QueryType::*;
+        let print = match query_type {
+            MoveValue {
+                account,
+                module_name,
+                struct_name,
+                key_name,
+            } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                        let value = find_value_from_state(&r, module_name, struct_name, key_name);
+                        match value {
+                            Some(v) => {
+                                format!("{}", v)
+                            }
+                            _ => format!("{:#?}", value)
+                        }
+                    }
+                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
+                }
+            }
+
+        _ => String::from("")
+        };
+        Ok(print)
+    }
 }
 
 fn format_event_view(e: EventView) -> String {

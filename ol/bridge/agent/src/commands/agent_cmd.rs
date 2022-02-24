@@ -41,13 +41,12 @@ impl Runnable for AgentCmd {
         };
         let display = "RESOURCES";
 
-        match node.query(query_type) {
+        match node.query_locked(query_type) {
             Ok(info) => {
                 status_info!(display, format!("{}", info));
             }
             Err(e) => {
                 println!("could not query node, exiting. Message: {:?}", e);
-                exit(1);
             }
         };
     }
