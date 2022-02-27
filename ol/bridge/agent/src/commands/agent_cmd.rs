@@ -5,6 +5,7 @@ use crate::{
 };
 use abscissa_core::{status_info, Command, Options, Runnable};
 use std::process::exit;
+use serde_json::json;
 
 /// `bal` subcommand
 ///
@@ -16,6 +17,17 @@ use std::process::exit;
 #[derive(Command, Debug, Default, Options)]
 pub struct AgentCmd {
 }
+
+// {
+// "modifiers":["copy","drop","store"],
+// "struct":{"0x1::BridgeEscrow::AccountInfo":{
+// "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
+// "sender_other": "",
+// "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
+// "receiver_other": "",
+// "balance": 100,
+// "transfer_id": "1111",
+// }}},
 
 impl Runnable for AgentCmd {
     fn run(&self) {
@@ -43,8 +55,10 @@ impl Runnable for AgentCmd {
 
         match node.query_locked(query_type) {
             Ok(info) => {
-                status_info!(display, format!("{}", info));
-            }
+                let js = info.replace(r#"\n"#,"");
+                let value = json!(js);
+                println!("info: {:?}",value);
+            },
             Err(e) => {
                 println!("could not query node, exiting. Message: {:?}", e);
             }
