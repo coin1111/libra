@@ -55,9 +55,9 @@ impl Runnable for AgentCmd {
 
         match node.query_locked(query_type) {
             Ok(info) => {
-                let js = info.replace(r#"\n"#,"");
+                let js = info.replace('\n',"");
                 let value = json!(js);
-                println!("info: {:?}",value);
+                println!("info: {:?}",value.get(0));
             },
             Err(e) => {
                 println!("could not query node, exiting. Message: {:?}", e);

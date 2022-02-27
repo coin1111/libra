@@ -239,10 +239,15 @@ fn pretty_print_value(
         AnnotatedMoveValue::Address(a) => write!(f, r#""{}""#, a.short_str_lossless()),
         AnnotatedMoveValue::Vector(_, v) => {
             writeln!(f, "[")?;
+            let mut first = true;
             for value in v.iter() {
+                if first {
+                    first = false;
+                } else {
+                    writeln!(f, ",")?;
+                }
                 write_indent(f, indent + 4)?;
                 pretty_print_value(f, value, indent + 4)?;
-                writeln!(f, ",")?;
             }
             write_indent(f, indent)?;
             write!(f, "]")
@@ -263,11 +268,16 @@ fn pretty_print_struct(
     writeln!(f, ",")?;
     write_indent(f, indent + 4)?;
     writeln!(f, r#""struct":{{"{}":{{"#, value.type_)?;
+    let mut first = true;
     for (field_name, v) in value.value.iter() {
+        if first {
+            first = false;
+        } else {
+            writeln!(f, ",")?;
+        }
         write_indent(f, indent + 8)?;
         write!(f, r#""{}": "#, field_name)?;
         pretty_print_value(f, v, indent + 8)?;
-        writeln!(f, ",")?;
     }
     write_indent(f, indent)?;
     write!(f, "}}}}}}")
