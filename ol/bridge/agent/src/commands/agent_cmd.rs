@@ -4,10 +4,13 @@ use crate::{
     entrypoint, node::client, node::node::Node, node::query::QueryType, prelude::app_config,
 };
 use abscissa_core::{status_info, Command, Options, Runnable};
-use std::process::exit;
-use serde_json::{Result,Value,json};
-use serde::{Serialize, Deserialize};
+use core::fmt::Error;
 use move_core_types::account_address::AccountAddress;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Result, Value};
+use std::fmt::format;
+use std::fmt::Display;
+use std::process::exit;
 
 /// `bal` subcommand
 ///
@@ -17,8 +20,7 @@ use move_core_types::account_address::AccountAddress;
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Default, Options)]
-pub struct AgentCmd {
-}
+pub struct AgentCmd {}
 
 // {
 // "modifiers":["copy","drop","store"],
@@ -33,7 +35,7 @@ pub struct AgentCmd {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AccountInfo {
-    sender_this:String,
+    sender_this: String,
 }
 
 impl Runnable for AgentCmd {
@@ -52,12 +54,17 @@ impl Runnable for AgentCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        Self::query_locked(account, &mut node);
+        Self::query_locked(account, &mut node).and_then(|o| {
+            for ai in o {
+                println!("info: {:?}", ai);
+            }
+            Some({})
+        });
     }
 }
 
 impl AgentCmd {
-    fn query_locked(account: AccountAddress, node: &mut Node) {
+    fn query_locked(account: AccountAddress, node: &mut Node) -> Option<Vec<AccountInfo>> {
         let query_type = QueryType::MoveValue {
             account,
             module_name: String::from("BridgeEscrow"),
@@ -66,7 +73,7 @@ impl AgentCmd {
         };
         let display = "RESOURCES";
 
-        match node.query_locked(query_type) {
+        return match node.query_locked(query_type) {
             Ok(info) => {
                 let res: Result<Value> = serde_json::from_str(info.as_str());
                 let mut ais: Vec<AccountInfo> = Vec::new();
@@ -74,15 +81,16 @@ impl AgentCmd {
                     Ok(v) => {
                         let mut i = 0;
                         while (true) {
-                            let r = v.get(i)
-                                .and_then(|o| { o.as_object() })
-                                .and_then(|o| { o.get("struct") })
-                                .and_then(|o| { o.get("0x1::BridgeEscrow::AccountInfo") })
+                            let r = v
+                                .get(i)
+                                .and_then(|o| o.as_object())
+                                .and_then(|o| o.get("struct"))
+                                .and_then(|o| o.get("0x1::BridgeEscrow::AccountInfo"))
                                 .and_then(|o| {
                                     let ai: Result<AccountInfo> = serde_json::from_value(o.clone());
                                     match ai {
                                         Ok(i) => ais.push(i),
-                                        _ => {},
+                                        _ => {}
                                     }
                                     Some({})
                                 });
@@ -91,17 +99,18 @@ impl AgentCmd {
                             }
                             i += 1;
                         }
-                        for ai in ais {
-                            println!("info: {:?}",
-                                     ai);
-                        }
-                    },
+                        return Some(ais);
+                    }
 
-                    Err(e) => println!("erro: {}", e),
+                    Err(e) => {
+                        eprintln!("error: {}", e);
+                        return None;
+                    }
                 }
-            },
+            }
             Err(e) => {
-                println!("could not query node, exiting. Message: {:?}", e);
+                eprintln!("error: {}", e);
+                return None;
             }
         };
     }
