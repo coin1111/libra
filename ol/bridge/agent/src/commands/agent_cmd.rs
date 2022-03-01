@@ -5,7 +5,9 @@ use crate::{
 };
 use abscissa_core::{status_info, Command, Options, Runnable};
 use std::process::exit;
-use serde_json::json;
+use serde_json::{Result,Value,json};
+use serde::{Serialize, Deserialize};
+use move_core_types::account_address::AccountAddress;
 
 /// `bal` subcommand
 ///
@@ -29,6 +31,11 @@ pub struct AgentCmd {
 // "transfer_id": "1111",
 // }}},
 
+#[derive(Serialize, Deserialize, Debug)]
+struct AccountInfo {
+    sender_this:String,
+}
+
 impl Runnable for AgentCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
@@ -45,7 +52,13 @@ impl Runnable for AgentCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        let query_type =  QueryType::MoveValue {
+        Self::query_locked(account, &mut node);
+    }
+}
+
+impl AgentCmd {
+    fn query_locked(account: AccountAddress, node: &mut Node) {
+        let query_type = QueryType::MoveValue {
             account,
             module_name: String::from("BridgeEscrow"),
             struct_name: String::from("EscrowState"),
@@ -55,9 +68,37 @@ impl Runnable for AgentCmd {
 
         match node.query_locked(query_type) {
             Ok(info) => {
-                let js = info.replace('\n',"");
-                let value = json!(js);
-                println!("info: {:?}",value.get(0));
+                let res: Result<Value> = serde_json::from_str(info.as_str());
+                let mut ais: Vec<AccountInfo> = Vec::new();
+                match res {
+                    Ok(v) => {
+                        let mut i = 0;
+                        while (true) {
+                            let r = v.get(i)
+                                .and_then(|o| { o.as_object() })
+                                .and_then(|o| { o.get("struct") })
+                                .and_then(|o| { o.get("0x1::BridgeEscrow::AccountInfo") })
+                                .and_then(|o| {
+                                    let ai: Result<AccountInfo> = serde_json::from_value(o.clone());
+                                    match ai {
+                                        Ok(i) => ais.push(i),
+                                        _ => {},
+                                    }
+                                    Some({})
+                                });
+                            if r.is_none() {
+                                break;
+                            }
+                            i += 1;
+                        }
+                        for ai in ais {
+                            println!("info: {:?}",
+                                     ai);
+                        }
+                    },
+
+                    Err(e) => println!("erro: {}", e),
+                }
             },
             Err(e) => {
                 println!("could not query node, exiting. Message: {:?}", e);
