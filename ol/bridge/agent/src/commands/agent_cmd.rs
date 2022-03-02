@@ -8,6 +8,7 @@ use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::exit;
+use std::{thread, time::Duration};
 
 /// `bal` subcommand
 ///
@@ -45,11 +46,10 @@ impl Runnable for AgentCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        let ai = Self::query_locked(account, &mut node).and_then(|mut o| {
-            let v = o.remove(0);
-            Ok(v)
-        });
-        println!("ai: {:?}", ai);
+        loop {
+            Self::process_transfers(account, &mut node);
+            thread::sleep(Duration::from_millis(1000));
+        }
     }
 }
 
@@ -114,5 +114,13 @@ impl AgentCmd {
                 return Err(format!("query error: {:?}", e));
             }
         }
+    }
+
+    fn process_transfers(account: AccountAddress, mut node: &mut Node) {
+        let ai = Self::query_locked(account, &mut node).and_then(|mut o| {
+            let v = o.remove(0);
+            Ok(v)
+        });
+        println!("ai: {:?}", ai);
     }
 }
