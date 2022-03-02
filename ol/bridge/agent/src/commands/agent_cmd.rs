@@ -3,13 +3,10 @@
 use crate::{
     entrypoint, node::client, node::node::Node, node::query::QueryType, prelude::app_config,
 };
-use abscissa_core::{status_info, Command, Options, Runnable};
-use core::fmt::Error;
+use abscissa_core::{Command, Options, Runnable};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Result, Value};
-use std::fmt::format;
-use std::fmt::Display;
+use serde_json::Value;
 use std::process::exit;
 
 /// `bal` subcommand
@@ -54,40 +51,40 @@ impl Runnable for AgentCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        Self::query_locked(account, &mut node).and_then(|o| {
+        let _ = Self::query_locked(account, &mut node).and_then(|o| {
             for ai in o {
                 println!("info: {:?}", ai);
             }
-            Some({})
+            Ok(())
         });
     }
 }
 
 impl AgentCmd {
-    fn query_locked(account: AccountAddress, node: &mut Node) -> Option<Vec<AccountInfo>> {
+    fn query_locked(account: AccountAddress, node: &mut Node) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
             account,
             module_name: String::from("BridgeEscrow"),
             struct_name: String::from("EscrowState"),
             key_name: String::from("locked"),
         };
-        let display = "RESOURCES";
 
-        return match node.query_locked(query_type) {
+        match node.query_locked(query_type) {
             Ok(info) => {
-                let res: Result<Value> = serde_json::from_str(info.as_str());
+                let res: serde_json::Result<Value> = serde_json::from_str(info.as_str());
                 let mut ais: Vec<AccountInfo> = Vec::new();
                 match res {
                     Ok(v) => {
                         let mut i = 0;
-                        while (true) {
+                        loop {
                             let r = v
                                 .get(i)
                                 .and_then(|o| o.as_object())
                                 .and_then(|o| o.get("struct"))
                                 .and_then(|o| o.get("0x1::BridgeEscrow::AccountInfo"))
                                 .and_then(|o| {
-                                    let ai: Result<AccountInfo> = serde_json::from_value(o.clone());
+                                    let ai: serde_json::Result<AccountInfo> =
+                                        serde_json::from_value(o.clone());
                                     match ai {
                                         Ok(i) => ais.push(i),
                                         _ => {}
@@ -99,19 +96,19 @@ impl AgentCmd {
                             }
                             i += 1;
                         }
-                        return Some(ais);
+                        return Ok(ais);
                     }
 
                     Err(e) => {
                         eprintln!("error: {}", e);
-                        return None;
+                        return Err(format!("parse error: {:?}", e));
                     }
                 }
             }
             Err(e) => {
                 eprintln!("error: {}", e);
-                return None;
+                return Err(format!("query error: {:?}", e));
             }
-        };
+        }
     }
 }
