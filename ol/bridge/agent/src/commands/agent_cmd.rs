@@ -19,20 +19,14 @@ use std::process::exit;
 #[derive(Command, Debug, Default, Options)]
 pub struct AgentCmd {}
 
-// {
-// "modifiers":["copy","drop","store"],
-// "struct":{"0x1::BridgeEscrow::AccountInfo":{
-// "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
-// "sender_other": "",
-// "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
-// "receiver_other": "",
-// "balance": 100,
-// "transfer_id": "1111",
-// }}},
-
 #[derive(Serialize, Deserialize, Debug)]
 struct AccountInfo {
     sender_this: String,
+    sender_other: String,
+    receiver_this: String,
+    receiver_other: String,
+    balance: u64,
+    transfer_id: String,
 }
 
 impl Runnable for AgentCmd {
@@ -61,6 +55,17 @@ impl Runnable for AgentCmd {
 }
 
 impl AgentCmd {
+    // Example locked
+    // {
+    // "modifiers":["copy","drop","store"],
+    // "struct":{"0x1::BridgeEscrow::AccountInfo":{
+    // "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
+    // "sender_other": "",
+    // "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
+    // "receiver_other": "",
+    // "balance": 100,
+    // "transfer_id": "1111",
+    // }}},
     fn query_locked(account: AccountAddress, node: &mut Node) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
             account,
