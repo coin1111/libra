@@ -45,12 +45,11 @@ impl Runnable for AgentCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        let _ = Self::query_locked(account, &mut node).and_then(|o| {
-            for ai in o {
-                println!("info: {:?}", ai);
-            }
-            Ok(())
+        let ai = Self::query_locked(account, &mut node).and_then(|mut o| {
+            let v = o.remove(0);
+            Ok(v)
         });
+        println!("ai: {:?}", ai);
     }
 }
 
