@@ -18,7 +18,13 @@ use std::{thread, time::Duration};
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Default, Options)]
-pub struct AgentCmd {}
+pub struct AgentCmd {
+}
+
+pub struct Agent {
+    node: Node,
+    escrow: AccountAddress,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AccountInfo {
@@ -31,7 +37,7 @@ struct AccountInfo {
 }
 
 impl Runnable for AgentCmd {
-    fn run(&self) {
+    fn run(& self) {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
@@ -45,16 +51,55 @@ impl Runnable for AgentCmd {
             println!("ERROR: Cannot connect to a client. Message: {}", e);
             exit(1);
         });
-        let mut node = Node::new(client, &cfg, is_swarm);
+        let agent = Agent{
+            node: Node::new(  client, &cfg, is_swarm),
+            escrow: account,
+        };
         loop {
-            Self::process_transfers(account, &mut node);
+            agent.process_transfers();
             thread::sleep(Duration::from_millis(1000));
         }
     }
 }
 
-impl AgentCmd {
-    // Example locked
+impl Agent {
+    pub fn process_transfers(&self) {
+        let ais = self.query_locked();
+        if ais.is_err() {
+            println!("WARN: Failed to get locked: {}",ais.unwrap_err());
+            return
+        }
+        for ai in ais.unwrap() {
+            match self.process_transfer( &ai)  {
+                Ok(()) => println!("INFO: Succesfully processed transfer: {}",ai.transfer_id),
+                Err(err) => println!("ERROR: Failed to process transfer: {}, error: {}", ai.transfer_id, err)
+            }
+        }
+    }
+
+    // Process transfer as follows
+    // 1. Check transfer_id entry in unlocked. If this entry exists that means that withdrawal
+    // has been made already. At this point we can close locked entry and remove transfer_id
+    // from pending transfers in locked_idx
+    // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
+    // to withdraw funds into user account and then repeat step 1. above
+    fn process_transfer(&self,ai:&AccountInfo) ->Result<(),String> {
+        println!("INFO: Processing transfer: {:?}",ai);
+        // Query unlocked
+        let unlocked = self.query_unlocked();
+        if unlocked.is_err() {
+            return Err(format!("ERROR: Failed to get unlocked: {}",unlocked.unwrap_err()))
+        }
+        Ok(())
+    }
+    fn query_locked(&self) -> Result<Vec<AccountInfo>, String> {
+        return self.query_account_info("locked")
+    }
+    fn query_unlocked(&self) -> Result<Vec<AccountInfo>, String> {
+        return self.query_account_info("unlocked")
+    }
+
+    // Example of account info
     // {
     // "modifiers":["copy","drop","store"],
     // "struct":{"0x1::BridgeEscrow::AccountInfo":{
@@ -65,15 +110,15 @@ impl AgentCmd {
     // "balance": 100,
     // "transfer_id": "1111",
     // }}},
-    fn query_locked(account: AccountAddress, node: &mut Node) -> Result<Vec<AccountInfo>, String> {
+    fn query_account_info(&self,field_name: &str) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
-            account,
+            account: self.escrow.clone(),
             module_name: String::from("BridgeEscrow"),
             struct_name: String::from("EscrowState"),
-            key_name: String::from("locked"),
+            key_name:  String::from(field_name),
         };
 
-        match node.query_locked(query_type) {
+        match self.node.query_locked(query_type) {
             Ok(info) => {
                 let res: serde_json::Result<Value> = serde_json::from_str(info.as_str());
                 let mut ais: Vec<AccountInfo> = Vec::new();
@@ -104,23 +149,17 @@ impl AgentCmd {
                     }
 
                     Err(e) => {
-                        eprintln!("error: {}", e);
+                        println!("ERROR: {}", e);
                         return Err(format!("parse error: {:?}", e));
                     }
                 }
             }
             Err(e) => {
-                eprintln!("error: {}", e);
+                println!("ERROR: {}", e);
                 return Err(format!("query error: {:?}", e));
             }
         }
     }
 
-    fn process_transfers(account: AccountAddress, mut node: &mut Node) {
-        let ai = Self::query_locked(account, &mut node).and_then(|mut o| {
-            let v = o.remove(0);
-            Ok(v)
-        });
-        println!("ai: {:?}", ai);
-    }
+
 }

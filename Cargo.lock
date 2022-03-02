@@ -661,6 +661,7 @@ dependencies = [
  "gumdrop 0.7.0",
  "handlebars",
  "hex 0.4.3",
+ "log",
  "machine-ip",
  "move-binary-format",
  "move-core-types",

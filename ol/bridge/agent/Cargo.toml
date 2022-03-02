@@ -62,6 +62,7 @@ move-core-types = { path = "../../../language/move-core/types" }
 walkdir = "2.3"
 rand = "0.8"
 bcs = "0.1.2"
+log = "0.4.14"
 move-vm-types = { path = "../../../language/move-vm/types" } # 0L todo: which move-vm/ path?
 move-binary-format = { path = "../../../language/move-binary-format" }
 dialoguer = "0.8.0"
