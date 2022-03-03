@@ -15,4 +15,5 @@ pub mod entrypoint;
 pub mod error;
 pub mod prelude;
 pub mod node;
+pub mod agent;
 
