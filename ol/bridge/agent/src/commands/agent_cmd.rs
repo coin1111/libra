@@ -35,7 +35,8 @@ impl Runnable for AgentCmd {
             escrow: account,
         };
         loop {
-            agent.process_transfers();
+            agent.process_deposits();
+            agent.process_withdrawals();
             thread::sleep(Duration::from_millis(10000));
         }
     }

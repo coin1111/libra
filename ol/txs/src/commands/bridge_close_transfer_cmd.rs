@@ -74,7 +74,7 @@ impl Runnable for BridgeCloseTransferCmd {
     }
 }
 
-/// withdraw into escrow account
+/// close escrow account
 pub fn bridge_close_transfer(
     escrow: AccountAddress,
     transfer_id: Vec<u8>,

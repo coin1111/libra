@@ -25,14 +25,14 @@ pub struct Agent {
 
 impl Agent {
     /// Process autstanding transfers
-    pub fn process_transfers(&self) {
+    pub fn process_deposits(&self) {
         let ais = self.query_locked();
         if ais.is_err() {
             println!("WARN: Failed to get locked: {}", ais.unwrap_err());
             return;
         }
         for ai in ais.unwrap() {
-            match self.process_transfer(&ai) {
+            match self.process_deposit(&ai) {
                 Ok(()) => println!("INFO: Succesfully processed transfer: {}", ai.transfer_id),
                 Err(err) => println!(
                     "ERROR: Failed to process transfer: {}, error: {}",
@@ -48,11 +48,11 @@ impl Agent {
     // from pending transfers in locked_idx
     // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
     // to withdraw funds into user account and then repeat step 1. above
-    fn process_transfer(&self, ai: &AccountInfo) -> Result<(), String> {
+    fn process_deposit(&self, ai: &AccountInfo) -> Result<(), String> {
         use std::str::FromStr;
-        println!("INFO: Processing transfer: {:?}", ai);
+        println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
-            return Err(format!("Empty transfer id: {:?}", ai));
+            return Err(format!("Empty deposit id: {:?}", ai));
         }
         // Query unlocked
         let unlocked = self.query_unlocked();
@@ -107,6 +107,92 @@ impl Agent {
 
         Ok(())
     }
+
+    /// Process autstanding transfers
+    pub fn process_withdrawals(&self) {
+        let ais = self.query_unlocked();
+        if ais.is_err() {
+            println!("WARN: Failed to get unlocked: {}", ais.unwrap_err());
+            return;
+        }
+        for ai in ais.unwrap() {
+            match self.process_withdrawal(&ai) {
+                Ok(()) => println!("INFO: Succesfully processed withdrawal: {}", ai.transfer_id),
+                Err(err) => println!(
+                    "ERROR: Failed to process withdrawal: {}, error: {}",
+                    ai.transfer_id, err
+                ),
+            }
+        }
+    }
+
+    // Process transfer as follows
+    // 1. Check transfer_id entry in unlocked. If this entry exists that means that withdrawal
+    // has been made already. At this point we can close locked entry and remove transfer_id
+    // from pending transfers in locked_idx
+    // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
+    // to withdraw funds into user account and then repeat step 1. above
+    fn process_withdrawal(&self, ai: &AccountInfo) -> Result<(), String> {
+        println!("INFO: Processing withdrawal: {:?}", ai);
+        if ai.transfer_id.is_empty() {
+            return Err(format!("Empty transfer id: {:?}", ai));
+        }
+        // Query locked
+        let locked = self.query_locked();
+        if locked.is_err() {
+            return Err(format!("Failed to get unlocked: {}", locked.unwrap_err()));
+        }
+        // // Transfer happened , remove locked
+        // let locked_ai = locked
+        //     .unwrap()
+        //     .iter()
+        //     .find(|x| x.transfer_id == ai.transfer_id)
+        //     .and_then(|x| Some(x.clone()));
+        // if locked_ai.is_none() {
+        //     let sender_this = AccountAddress::from_str(&ai.sender_this);
+        //     if sender_this.is_err() {
+        //         return Err(format!(
+        //             "Failed to parse sender address: {}",
+        //             sender_this.unwrap_err()
+        //         ));
+        //     }
+        //
+        //     let receiver_this = AccountAddress::from_str(&ai.receiver_this);
+        //     if receiver_this.is_err() {
+        //         return Err(format!(
+        //             "Failed to parse receiver address: {}",
+        //             receiver_this.unwrap_err()
+        //         ));
+        //     }
+        //
+        //     let transfer_id = hex_to_bytes(&ai.transfer_id);
+        //     if transfer_id.is_none() {
+        //         return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
+        //     }
+        //     // Transfer is not happened transfer funds
+        //     println!("INFO: withdraw from bridge, ai: {:?}", ai);
+        //     let res = bridge_withdraw(
+        //         self.escrow,
+        //         sender_this.unwrap(),
+        //         Vec::new(),
+        //         receiver_this.unwrap(),
+        //         ai.balance,
+        //         transfer_id.unwrap(),
+        //         None,
+        //     );
+        //     if res.is_err() {
+        //         return Err(format!(
+        //             "Failed to withdraw from escrow: {:?}",
+        //             res.unwrap_err()
+        //         ));
+        //     }
+        //     println!("INFO: withdraw from bridge: {:?}", res.unwrap());
+        // }
+
+        Ok(())
+    }
+
+
     fn query_locked(&self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("locked");
     }
