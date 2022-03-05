@@ -3,6 +3,7 @@ use crate::{node::node::Node, node::query::QueryType};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use crate::bridge::bridge_withdraw;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -48,6 +49,7 @@ impl Agent {
     // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
     // to withdraw funds into user account and then repeat step 1. above
     fn process_transfer(&self, ai: &AccountInfo) -> Result<(), String> {
+        use std::str::FromStr;
         println!("INFO: Processing transfer: {:?}", ai);
         if ai.transfer_id.is_empty() {
             return Err(format!("Empty transfer id: {:?}", ai));
@@ -63,8 +65,34 @@ impl Agent {
             .find(|x| x.transfer_id == ai.transfer_id)
             .and_then(|x| Some(x.clone()));
         if unlocked_ai.is_none() {
+            let sender_this = AccountAddress::from_str(&ai.sender_this);
+            if sender_this.is_err() {
+                return Err(format!("Failed to parse sender address: {}", sender_this.unwrap_err()));
+            }
+
+            let receiver_this = AccountAddress::from_str(&ai.receiver_this);
+            if receiver_this.is_err() {
+                return Err(format!("Failed to parse receiver address: {}", receiver_this.unwrap_err()));
+            }
+
+            let transfer_id =  hex_to_bytes(&ai.transfer_id);
+            if transfer_id.is_none() {
+                return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
+            }
             // Transfer is not happened transfer funds
-            return Ok(());
+            let res = bridge_withdraw(
+                self.escrow,
+                sender_this.unwrap(),
+                Vec::new(),
+                receiver_this.unwrap(),
+                ai.balance,
+                transfer_id.unwrap(),
+                None,
+            );
+            if res.is_err() {
+                return Err(format!("Failed to withdraw from escrow: {:?}", res.unwrap_err()));
+            }
+            println!("INFO: withdraw from bridge: {:?}",res.unwrap());
         }
 
         Ok(())
@@ -136,5 +164,19 @@ impl Agent {
                 return Err(format!("query error: {:?}", e));
             }
         }
+    }
+}
+
+fn hex_to_bytes(s: &String) -> Option<Vec<u8>> {
+    if s.len() % 2 == 0 {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| {
+                s.get(i..i + 2)
+                    .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+            })
+            .collect()
+    } else {
+        None
     }
 }

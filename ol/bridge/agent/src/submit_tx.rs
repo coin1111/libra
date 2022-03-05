@@ -225,8 +225,6 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         waypoint,
         swarm_path,
         swarm_persona,
-        is_operator,
-        use_upstream_url,
         ..
     } = entrypoint::get_args();
     let app_config = app_config().clone();
@@ -237,8 +235,8 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         swarm_path,
         swarm_persona,
         tx_type,
-        is_operator,
-        use_upstream_url,
+        false,//is_operator,
+        false, //use_upstream_url,
         None,
     )
 }
