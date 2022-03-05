@@ -1,9 +1,9 @@
 //! Bridge agent
+use crate::bridge::bridge_withdraw;
 use crate::{node::node::Node, node::query::QueryType};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::bridge::bridge_withdraw;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -67,19 +67,26 @@ impl Agent {
         if unlocked_ai.is_none() {
             let sender_this = AccountAddress::from_str(&ai.sender_this);
             if sender_this.is_err() {
-                return Err(format!("Failed to parse sender address: {}", sender_this.unwrap_err()));
+                return Err(format!(
+                    "Failed to parse sender address: {}",
+                    sender_this.unwrap_err()
+                ));
             }
 
             let receiver_this = AccountAddress::from_str(&ai.receiver_this);
             if receiver_this.is_err() {
-                return Err(format!("Failed to parse receiver address: {}", receiver_this.unwrap_err()));
+                return Err(format!(
+                    "Failed to parse receiver address: {}",
+                    receiver_this.unwrap_err()
+                ));
             }
 
-            let transfer_id =  hex_to_bytes(&ai.transfer_id);
+            let transfer_id = hex_to_bytes(&ai.transfer_id);
             if transfer_id.is_none() {
                 return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
             }
             // Transfer is not happened transfer funds
+            println!("INFO: withdraw from bridge, ai: {:?}", ai);
             let res = bridge_withdraw(
                 self.escrow,
                 sender_this.unwrap(),
@@ -90,9 +97,12 @@ impl Agent {
                 None,
             );
             if res.is_err() {
-                return Err(format!("Failed to withdraw from escrow: {:?}", res.unwrap_err()));
+                return Err(format!(
+                    "Failed to withdraw from escrow: {:?}",
+                    res.unwrap_err()
+                ));
             }
-            println!("INFO: withdraw from bridge: {:?}",res.unwrap());
+            println!("INFO: withdraw from bridge: {:?}", res.unwrap());
         }
 
         Ok(())

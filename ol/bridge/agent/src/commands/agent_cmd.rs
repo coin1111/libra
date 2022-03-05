@@ -36,7 +36,7 @@ impl Runnable for AgentCmd {
         };
         loop {
             agent.process_transfers();
-            thread::sleep(Duration::from_millis(1000));
+            thread::sleep(Duration::from_millis(10000));
         }
     }
 }
