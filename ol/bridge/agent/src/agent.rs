@@ -1,5 +1,5 @@
 //! Bridge agent
-use crate::bridge::bridge_withdraw;
+use crate::bridge::{bridge_withdraw,bridge_close_transfer};
 use crate::{node::node::Node, node::query::QueryType};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
@@ -140,55 +140,66 @@ impl Agent {
         // Query locked
         let locked = self.query_locked();
         if locked.is_err() {
-            return Err(format!("Failed to get unlocked: {}", locked.unwrap_err()));
+            return Err(format!("Failed to get locked: {}", locked.unwrap_err()));
         }
-        // // Transfer happened , remove locked
-        // let locked_ai = locked
-        //     .unwrap()
-        //     .iter()
-        //     .find(|x| x.transfer_id == ai.transfer_id)
-        //     .and_then(|x| Some(x.clone()));
-        // if locked_ai.is_none() {
-        //     let sender_this = AccountAddress::from_str(&ai.sender_this);
-        //     if sender_this.is_err() {
-        //         return Err(format!(
-        //             "Failed to parse sender address: {}",
-        //             sender_this.unwrap_err()
-        //         ));
-        //     }
-        //
-        //     let receiver_this = AccountAddress::from_str(&ai.receiver_this);
-        //     if receiver_this.is_err() {
-        //         return Err(format!(
-        //             "Failed to parse receiver address: {}",
-        //             receiver_this.unwrap_err()
-        //         ));
-        //     }
-        //
-        //     let transfer_id = hex_to_bytes(&ai.transfer_id);
-        //     if transfer_id.is_none() {
-        //         return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
-        //     }
-        //     // Transfer is not happened transfer funds
-        //     println!("INFO: withdraw from bridge, ai: {:?}", ai);
-        //     let res = bridge_withdraw(
-        //         self.escrow,
-        //         sender_this.unwrap(),
-        //         Vec::new(),
-        //         receiver_this.unwrap(),
-        //         ai.balance,
-        //         transfer_id.unwrap(),
-        //         None,
-        //     );
-        //     if res.is_err() {
-        //         return Err(format!(
-        //             "Failed to withdraw from escrow: {:?}",
-        //             res.unwrap_err()
-        //         ));
-        //     }
-        //     println!("INFO: withdraw from bridge: {:?}", res.unwrap());
-        // }
+        // Transfer happened , remove locked
+        let locked_ai = locked
+            .unwrap()
+            .iter()
+            .find(|x| x.transfer_id == ai.transfer_id)
+            .and_then(|x| Some(x.clone()));
+        if locked_ai.is_some() {
+            let transfer_id = hex_to_bytes(&ai.transfer_id);
+            if transfer_id.is_none() {
+                return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
+            }
+            println!("INFO: remove locked: {:?}", locked_ai);
+            let res = bridge_close_transfer(
+                self.escrow,
+                transfer_id.unwrap(),
+                false, //close_other
+                None,
+            ) ;
+            if res.is_err() {
+                return Err(format!(
+                    "Failed to remove locked: {:?}",
+                    res.unwrap_err()
+                ));
+            }
+            println!("INFO: removed locked: {:?}", res.unwrap());
+        }
 
+        // Locked is removed , remove unlocked
+        // Query locked
+        let unlocked = self.query_unlocked();
+        if unlocked.is_err() {
+            return Err(format!("Failed to get unlocked: {}", unlocked.unwrap_err()));
+        }
+        let unlocked_ai = unlocked
+            .unwrap()
+            .iter()
+            .find(|x| x.transfer_id == ai.transfer_id)
+            .and_then(|x| Some(x.clone()));
+        if unlocked_ai.is_some() {
+            let transfer_id = hex_to_bytes(&ai.transfer_id);
+            if transfer_id.is_none() {
+                return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
+            }
+            println!("INFO: remove unlocked: {:?}", unlocked_ai);
+            let res = bridge_close_transfer(
+                self.escrow,
+                transfer_id.unwrap(),
+                true, //close_other
+                None,
+            ) ;
+            if res.is_err() {
+                return Err(format!(
+                    "Failed to remove unlocked: {:?}",
+                    res.unwrap_err()
+                ));
+            }
+            println!("INFO: removed unlocked: {:?}", res.unwrap());
+        }
         Ok(())
     }
 
