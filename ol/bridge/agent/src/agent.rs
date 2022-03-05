@@ -26,6 +26,7 @@ pub struct Agent {
 impl Agent {
     /// Process autstanding transfers
     pub fn process_deposits(&self) {
+        println!("INFO: process deposits");
         let ais = self.query_locked();
         if ais.is_err() {
             println!("WARN: Failed to get locked: {}", ais.unwrap_err());
@@ -110,6 +111,7 @@ impl Agent {
 
     /// Process autstanding transfers
     pub fn process_withdrawals(&self) {
+        println!("INFO: process withdrawals");
         let ais = self.query_unlocked();
         if ais.is_err() {
             println!("WARN: Failed to get unlocked: {}", ais.unwrap_err());
@@ -137,6 +139,11 @@ impl Agent {
         if ai.transfer_id.is_empty() {
             return Err(format!("Empty transfer id: {:?}", ai));
         }
+        let _transfer_id = hex_to_bytes(&ai.transfer_id);
+        if _transfer_id.is_none() {
+            return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
+        }
+        let transfer_id = _transfer_id.unwrap();
         // Query locked
         let locked = self.query_locked();
         if locked.is_err() {
@@ -149,14 +156,10 @@ impl Agent {
             .find(|x| x.transfer_id == ai.transfer_id)
             .and_then(|x| Some(x.clone()));
         if locked_ai.is_some() {
-            let transfer_id = hex_to_bytes(&ai.transfer_id);
-            if transfer_id.is_none() {
-                return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
-            }
             println!("INFO: remove locked: {:?}", locked_ai);
             let res = bridge_close_transfer(
                 self.escrow,
-                transfer_id.unwrap(),
+                &transfer_id,
                 false, //close_other
                 None,
             ) ;
@@ -181,14 +184,10 @@ impl Agent {
             .find(|x| x.transfer_id == ai.transfer_id)
             .and_then(|x| Some(x.clone()));
         if unlocked_ai.is_some() {
-            let transfer_id = hex_to_bytes(&ai.transfer_id);
-            if transfer_id.is_none() {
-                return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
-            }
             println!("INFO: remove unlocked: {:?}", unlocked_ai);
             let res = bridge_close_transfer(
                 self.escrow,
-                transfer_id.unwrap(),
+                &transfer_id,
                 true, //close_other
                 None,
             ) ;

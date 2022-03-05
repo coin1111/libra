@@ -33,7 +33,7 @@ pub fn bridge_withdraw(
 /// withdraw into escrow account
 pub fn bridge_close_transfer(
     escrow: AccountAddress,
-    transfer_id: Vec<u8>,
+    transfer_id: &Vec<u8>,
     close_other: bool,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
@@ -41,7 +41,7 @@ pub fn bridge_close_transfer(
     // coins are scaled
     let script = transaction_builder::encode_bridge_close_transfer_script_function(
         escrow,
-        transfer_id,
+        transfer_id.clone(),
         close_other,
     );
     maybe_submit(script, &tx_params, save_path)
