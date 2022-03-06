@@ -1,5 +1,5 @@
 //! Bridge agent
-use crate::bridge::{bridge_withdraw,bridge_close_transfer};
+use crate::bridge_escrow::BridgeEscrow;
 use crate::{node::node::Node, node::query::QueryType};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,9 @@ pub struct Agent {
     pub node: Node,
     /// Escrow address of BridgeEscrow
     pub escrow: AccountAddress,
+
+    /// BridgeEscrow contract
+    pub bridge_escrow: BridgeEscrow,
 }
 
 impl Agent {
@@ -43,12 +46,10 @@ impl Agent {
         }
     }
 
-    // Process transfer as follows
-    // 1. Check transfer_id entry in unlocked. If this entry exists that means that withdrawal
-    // has been made already. At this point we can close locked entry and remove transfer_id
-    // from pending transfers in locked_idx
-    // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
-    // to withdraw funds into user account and then repeat step 1. above
+    /// Process individual transfer
+    // Transfer deposit from escrow to destination receiver
+    // Ensure that unlocked doesn't have an entry for this transfer
+    // This indicates that transfer has not been made, thus proceed with transfer
     fn process_deposit(&self, ai: &AccountInfo) -> Result<(), String> {
         use std::str::FromStr;
         println!("INFO: Processing deposit: {:?}", ai);
@@ -86,10 +87,9 @@ impl Agent {
             if transfer_id.is_none() {
                 return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
             }
-            // Transfer is not happened transfer funds
+            // Transfer is not happened => transfer funds
             println!("INFO: withdraw from bridge, ai: {:?}", ai);
-            let res = bridge_withdraw(
-                self.escrow,
+            let res = self.bridge_escrow.bridge_withdraw(
                 sender_this.unwrap(),
                 Vec::new(),
                 receiver_this.unwrap(),
@@ -109,7 +109,7 @@ impl Agent {
         Ok(())
     }
 
-    /// Process autstanding transfers
+    /// For compeleted transfers, remove locked and unlocked entries in this  porder
     pub fn process_withdrawals(&self) {
         println!("INFO: process withdrawals");
         let ais = self.query_unlocked();
@@ -128,12 +128,8 @@ impl Agent {
         }
     }
 
-    // Process transfer as follows
-    // 1. Check transfer_id entry in unlocked. If this entry exists that means that withdrawal
-    // has been made already. At this point we can close locked entry and remove transfer_id
-    // from pending transfers in locked_idx
-    // 2. If unlocked has no entry for given transfer_id, that means that withdrawal didn't happen. Thus we need
-    // to withdraw funds into user account and then repeat step 1. above
+    /// Process individual transfer
+    // If unlocked exists, remove locked and then unlocked in this order
     fn process_withdrawal(&self, ai: &AccountInfo) -> Result<(), String> {
         println!("INFO: Processing withdrawal: {:?}", ai);
         if ai.transfer_id.is_empty() {
@@ -157,8 +153,7 @@ impl Agent {
             .and_then(|x| Some(x.clone()));
         if locked_ai.is_some() {
             println!("INFO: remove locked: {:?}", locked_ai);
-            let res = bridge_close_transfer(
-                self.escrow,
+            let res = self.bridge_escrow.bridge_close_transfer(
                 &transfer_id,
                 false, //close_other
                 None,
@@ -185,8 +180,7 @@ impl Agent {
             .and_then(|x| Some(x.clone()));
         if unlocked_ai.is_some() {
             println!("INFO: remove unlocked: {:?}", unlocked_ai);
-            let res = bridge_close_transfer(
-                self.escrow,
+            let res = self.bridge_escrow.bridge_close_transfer(
                 &transfer_id,
                 true, //close_other
                 None,

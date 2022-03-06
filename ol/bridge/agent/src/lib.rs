@@ -16,7 +16,7 @@ pub mod error;
 pub mod prelude;
 pub mod node;
 pub mod agent;
-pub mod bridge;
+pub mod bridge_escrow;
 pub mod sign_tx;
 pub mod submit_tx;
 pub mod save_tx;

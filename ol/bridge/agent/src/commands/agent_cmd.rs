@@ -4,6 +4,7 @@ use crate::{agent, entrypoint, node::client, node::node::Node, prelude::app_conf
 use abscissa_core::{Command, Options, Runnable};
 use std::process::exit;
 use std::{thread, time::Duration};
+use crate::bridge_escrow::BridgeEscrow;
 
 /// `agent` subcommand
 ///
@@ -33,6 +34,9 @@ impl Runnable for AgentCmd {
         let agent = agent::Agent {
             node: Node::new(client, &cfg, is_swarm),
             escrow: account,
+            bridge_escrow: BridgeEscrow{
+                escrow: account,
+            },
         };
         loop {
             agent.process_deposits();
