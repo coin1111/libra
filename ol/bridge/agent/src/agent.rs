@@ -75,12 +75,13 @@ impl Agent {
                 ));
             }
 
+            // try to parse receiver address on 0L chain
             let receiver_this = if ai.receiver_this.len() != 32 {
                 let p = AccountAddress::from_str(&ai.receiver_this);
                 if p.is_err() {
                     return Err(format!(
                         "Failed to parse receiver address: {}",
-                        receiver_this.unwrap_err()
+                        p.unwrap_err()
                     ));
                 } else {
                     p.unwrap()
@@ -88,6 +89,8 @@ impl Agent {
             } else {
                 AccountAddress::new([0;16])
             };
+
+            // try to parse receiver address on ETH chain
 
             let transfer_id = hex_to_bytes(&ai.transfer_id);
             if transfer_id.is_none() {
@@ -98,7 +101,7 @@ impl Agent {
             let res = self.bridge_escrow.bridge_withdraw(
                 sender_this.unwrap(),
                 Vec::new(),
-                receiver_this.unwrap(),
+                receiver_this,
                 ai.balance,
                 transfer_id.unwrap(),
                 None,
