@@ -8,6 +8,7 @@
 ## Run bridge in dev mode on 0L
 run swarm:
 ```
+cd ~/libra
 NODE_ENV="test" cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c $HOME/swarm_temp -n 2 -s --cli-path target/debug/cli
 ```
 
@@ -21,11 +22,15 @@ talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep 
 ./setup-accounts.sh
 ```
 
+## Create Test Account
+```asm
+./create-accounts.sh
+```
+
 
 ## Test Bridge Contracts
 ```
-# create test accounts
-./create-accounts.sh
+
 # run tests
 ./test-bridge.sh
 ```

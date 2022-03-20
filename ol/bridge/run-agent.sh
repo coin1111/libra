@@ -1,0 +1,1 @@
+cargo run -p bridge-agent -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=alice  -a 708B1D23219EB737035CB29A68F0F3A8 agent
