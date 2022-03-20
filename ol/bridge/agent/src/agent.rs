@@ -27,6 +27,16 @@ pub struct Agent {
 }
 
 impl Agent {
+    /// Create a new bridge agent
+    pub fn new_agent(account: AccountAddress,  node: Node) -> Agent {
+        Agent {
+            node,
+            escrow: account,
+            bridge_escrow: BridgeEscrow {
+                escrow: account,
+            },
+        }
+    }
     /// Process autstanding transfers
     pub fn process_deposits(&self) {
         println!("INFO: process deposits");
