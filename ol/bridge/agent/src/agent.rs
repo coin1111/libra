@@ -28,12 +28,13 @@ pub struct Agent {
 
 impl Agent {
     /// Create a new bridge agent
-    pub fn new_agent(account: AccountAddress,  node: Node) -> Agent {
+    pub fn new(ol_escrow: AccountAddress,  node: Node,
+               config_eth:Option<bridge_ethers::config::Config>) -> Agent {
         Agent {
             node,
-            escrow: account,
+            escrow: ol_escrow,
             bridge_escrow: BridgeEscrow {
-                escrow: account,
+                escrow: ol_escrow,
             },
         }
     }

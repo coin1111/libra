@@ -66,8 +66,8 @@ impl Runnable for QueryCmd {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
-        let account = if args.account.is_some() {
-            args.account.unwrap()
+        let account = if args.ol_escrow_account.is_some() {
+            args.ol_escrow_account.unwrap()
         } else {
             cfg.profile.account
         };

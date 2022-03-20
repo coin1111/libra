@@ -40,9 +40,9 @@ where
 
     /// --- Customizing EntryPoint --- ///
 
-    /// Account Address
-    #[options(short = "a", help = "account address")]
-    pub account: Option<AccountAddress>,
+    /// 0L Account Address
+    #[options(short = "a", help = "0L account address")]
+    pub ol_escrow_account: Option<AccountAddress>,
 
     /// URL to send tx
     #[options(help = "URL to send tx")]    
@@ -59,6 +59,10 @@ where
     /// Swarm persona - what fixtures to use
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
+
+    /// ETH escrow Account Address
+    #[options(short = "e", help = "ETH escrow account config")]
+    pub eth_escrow_config: Option<String>,
 }
 
 impl<Cmd> EntryPoint<Cmd>
