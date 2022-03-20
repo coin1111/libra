@@ -55,16 +55,20 @@ impl Runnable for BridgeDepositCmd {
                 exit(1);
             }
         };
-        let receiver_this = match self.receiver_this.parse::<AccountAddress>() {
-            Ok(a) => a,
-            Err(e) => {
-                println!(
-                    "ERROR: could not parse this account address: {}, message: {}",
-                    self.receiver_this,
-                    &e.to_string()
-                );
-                exit(1);
+        let receiver_this = if  !self.receiver_this.is_empty() {
+            match self.receiver_this.parse::<AccountAddress>() {
+                Ok(a) => a,
+                Err(e) => {
+                    println!(
+                        "ERROR: could not parse this account address: {}, message: {}",
+                        self.receiver_this,
+                        &e.to_string()
+                    );
+                    exit(1);
+                }
             }
+        } else {
+            AccountAddress::new([0;16])
         };
 
         let receiver = if !self.receiver.is_empty() {
