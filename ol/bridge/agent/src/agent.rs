@@ -1,9 +1,11 @@
 //! Bridge agent
 use crate::bridge_escrow::BridgeEscrow;
 use crate::{node::node::Node, node::query::QueryType};
+use ethers::providers::{Http, Provider};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -18,24 +20,48 @@ struct AccountInfo {
 /// Bridge agent struct
 pub struct Agent {
     /// Node to connect to blockchain
-    pub node: Node,
-    /// Escrow address of BridgeEscrow
-    pub escrow: AccountAddress,
+    pub node_ol: Node,
 
-    /// BridgeEscrow contract
-    pub bridge_escrow: BridgeEscrow,
+    /// BridgeEscrow contract for 0L
+    pub bridge_escrow_ol: BridgeEscrow,
+
+    /// Provider for ETH
+    pub provider_ol: Option<Provider<Http>>,
+
+    /// Agent account for EETH
+    agent_eth: Option<ethers::signers::Wallet>,
 }
 
 impl Agent {
     /// Create a new bridge agent
-    pub fn new(ol_escrow: AccountAddress,  node: Node,
-               config_eth:Option<bridge_ethers::config::Config>) -> Agent {
-        Agent {
-            node,
-            escrow: ol_escrow,
-            bridge_escrow: BridgeEscrow {
-                escrow: ol_escrow,
+    pub fn new(
+        ol_escrow: AccountAddress,
+        node_ol: Node,
+        config_eth: Option<bridge_ethers::config::Config>,
+        agent_eth: Option<ethers::signers::Wallet>,
+    ) -> Agent {
+        let provider_ol = match config_eth {
+            Some(c) => match c.get_provider_url() {
+                Ok(url) => match Provider::<Http>::try_from(url.as_str()) {
+                    Ok(p) => Some(p),
+                    Err(e) => {
+                        println!("WARN: can't create ETH provider: {:?}", e);
+                        None
+                    }
+                },
+                Err(e) => {
+                    println!("WARN: can't parse url: {:?}", e);
+                    None
+                }
             },
+            _ => None,
+        };
+
+        Agent {
+            node_ol,
+            bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
+            provider_ol,
+            agent_eth,
         }
     }
     /// Process autstanding transfers
@@ -98,7 +124,7 @@ impl Agent {
                     p.unwrap()
                 }
             } else {
-                AccountAddress::new([0;16])
+                AccountAddress::new([0; 16])
             };
 
             // try to parse receiver address on ETH chain
@@ -109,7 +135,7 @@ impl Agent {
             }
             // Transfer is not happened => transfer funds
             println!("INFO: withdraw from bridge, ai: {:?}", ai);
-            let res = self.bridge_escrow.bridge_withdraw(
+            let res = self.bridge_escrow_ol.bridge_withdraw(
                 sender_this.unwrap(),
                 Vec::new(),
                 receiver_this,
@@ -173,16 +199,13 @@ impl Agent {
             .and_then(|x| Some(x.clone()));
         if locked_ai.is_some() {
             println!("INFO: remove locked: {:?}", locked_ai);
-            let res = self.bridge_escrow.bridge_close_transfer(
+            let res = self.bridge_escrow_ol.bridge_close_transfer(
                 &transfer_id,
                 false, //close_other
                 None,
-            ) ;
+            );
             if res.is_err() {
-                return Err(format!(
-                    "Failed to remove locked: {:?}",
-                    res.unwrap_err()
-                ));
+                return Err(format!("Failed to remove locked: {:?}", res.unwrap_err()));
             }
             println!("INFO: removed locked: {:?}", res.unwrap());
         }
@@ -200,22 +223,18 @@ impl Agent {
             .and_then(|x| Some(x.clone()));
         if unlocked_ai.is_some() {
             println!("INFO: remove unlocked: {:?}", unlocked_ai);
-            let res = self.bridge_escrow.bridge_close_transfer(
+            let res = self.bridge_escrow_ol.bridge_close_transfer(
                 &transfer_id,
                 true, //close_other
                 None,
-            ) ;
+            );
             if res.is_err() {
-                return Err(format!(
-                    "Failed to remove unlocked: {:?}",
-                    res.unwrap_err()
-                ));
+                return Err(format!("Failed to remove unlocked: {:?}", res.unwrap_err()));
             }
             println!("INFO: removed unlocked: {:?}", res.unwrap());
         }
         Ok(())
     }
-
 
     fn query_locked(&self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("locked");
@@ -237,13 +256,13 @@ impl Agent {
     // }}},
     fn query_account_info(&self, field_name: &str) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
-            account: self.escrow.clone(),
+            account: self.bridge_escrow_ol.escrow.clone(),
             module_name: String::from("BridgeEscrow"),
             struct_name: String::from("EscrowState"),
             key_name: String::from(field_name),
         };
 
-        match self.node.query_locked(query_type) {
+        match self.node_ol.query_locked(query_type) {
             Ok(info) => {
                 let res: serde_json::Result<Value> = serde_json::from_str(info.as_str());
                 let mut ais: Vec<AccountInfo> = Vec::new();

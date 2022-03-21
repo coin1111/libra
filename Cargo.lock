@@ -718,7 +718,7 @@ dependencies = [
 [[package]]
 name = "bridge-ethers"
 version = "0.1.0"
-source = "git+https://github.com/coin1111/eth-bridge-rs#4a9dd94d90688e326d9a2cdfc8e4cbaa9e93d6e0"
+source = "git+https://github.com/coin1111/eth-bridge-rs?rev=7c628013085b3afbe937e2bb28b81456cc61c25e#7c628013085b3afbe937e2bb28b81456cc61c25e"
 dependencies = [
  "ethers",
  "ethers-core",

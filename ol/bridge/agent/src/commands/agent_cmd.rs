@@ -6,6 +6,7 @@ use std::process::exit;
 use std::{thread, time::Duration};
 use crate::agent::Agent;
 use std::env;
+use std::str::FromStr;
 
 /// `agent` subcommand
 ///
@@ -43,9 +44,27 @@ impl Runnable for AgentCmd {
                     .and_then(|x|bridge_ethers::config::Config::new(x.as_str())),
         }).map_err(|e|{println!("WARN: cannot read read ETH config: {:?}. Will run in 0L mode",e);e});
 
+        // ETH agent account
+        let account_eth = match env::var("ETH_BRIDGE_ESCROW_ACCOUNT")
+            .map_err(|e|format!("cannot read eth account from env var ETH_BRIDGE_ESCROW_ACCOUNT, err: {:?}",e))
+            .and_then(|account_str| {
+                bridge_ethers::signers::get_private_key(&format!("{}/alice.txt", account_str))
+                    .and_then(|x|{
+                        ethers::signers::Wallet::from_str(&x[2..])
+                            .map_err(|e| e.to_string())
+                    })
+            } ) {
+            Ok(a) =>Some(a),
+            Err(err) => {
+                println!("WARN: failed to create ETH account wallet: {:?}",err);
+                None
+            },
+        };
+
         let agent = Agent::new(ol_escrow,
                                Node::new(ol_client, &cfg, is_swarm),
-                               config_eth.map_or_else(|_|None,|x| Some(x)));
+                               config_eth.map_or_else(|_|None,|x| Some(x)),
+                               account_eth);
 
         loop {
             agent.process_deposits();
