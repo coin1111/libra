@@ -1,11 +1,15 @@
 //! Bridge agent
 use crate::bridge_escrow::BridgeEscrow;
+use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
 use crate::{node::node::Node, node::query::QueryType};
 use ethers::providers::{Http, Provider};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
+use ethers::prelude::Client as ClientEth;
+use ethers::prelude::Wallet as WalletEth;
+use ethers::types::Address;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -25,11 +29,17 @@ pub struct Agent {
     /// BridgeEscrow contract for 0L
     pub bridge_escrow_ol: BridgeEscrow,
 
-    /// Provider for ETH
-    pub provider_eth: Option<Provider<Http>>,
-
-    /// Agent account for EETH
+    /// Agent account for ETH
     agent_eth: Option<ethers::signers::Wallet>,
+
+    /// ETH Escrow Contract Address
+    escrow_addr_eth: Option<Address>,
+
+    /// ETH provider
+    //provider_eth: Option<Provider<Http>>,
+
+    /// ETH client
+    client_eth: Option<ClientEth<Http,WalletEth>>,
 }
 
 impl Agent {
@@ -40,7 +50,17 @@ impl Agent {
         config_eth: Option<bridge_ethers::config::Config>,
         agent_eth: Option<ethers::signers::Wallet>,
     ) -> Agent {
-        let provider_eth = match config_eth {
+        let escrow_addr_eth = config_eth.clone().and_then(|x|{
+            match x.get_escrow_contract_address() {
+                Ok(a) => Some(a),
+                Err(err) => {
+                    println!("WARN: failed to get eth escrow address: {:?}", err);
+                    None
+                },
+            }
+        });
+
+        let provider_eth = match config_eth.clone() {
             Some(c) => match c.get_provider_url() {
                 Ok(url) => match Provider::<Http>::try_from(url.as_str()) {
                     Ok(p) => Some(p),
@@ -57,11 +77,22 @@ impl Agent {
             _ => None,
         };
 
+        let client_eth =
+            match &agent_eth{
+                Some(w) => match &provider_eth {
+                    Some(p) => Some(w.clone().connect(p.clone())),
+                    _ =>None,
+                }
+                _ => None,
+            };
+
         Agent {
             node_ol,
             bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
-            provider_eth,
             agent_eth,
+            escrow_addr_eth,
+            //provider_eth,
+            client_eth,
         }
     }
     /// Process autstanding transfers
@@ -114,42 +145,66 @@ impl Agent {
 
             // try to parse receiver address on 0L chain
             let receiver_this = if ai.receiver_this.len() != 32 {
-                let p = AccountAddress::from_str(&ai.receiver_this);
-                if p.is_err() {
-                    return Err(format!(
-                        "Failed to parse receiver address: {}",
-                        p.unwrap_err()
-                    ));
-                } else {
-                    p.unwrap()
+                match AccountAddress::from_str(&ai.receiver_this) {
+                    Ok(r) => Some(r),
+                    Err(err) => {
+                        println!("WARN: cannot parse receiver_this address: {:?}", err.to_string());
+                        None
+                    }
                 }
             } else {
-                AccountAddress::new([0; 16])
+                None
             };
 
             // try to parse receiver address on ETH chain
+            let receiver_eth = hex_to_bytes(&ai.receiver_other)
+                .and_then(|x|{
+                    match bridge_ethers::util::vec_to_array::<u8,20>(x)
+                        .and_then(|a|{Ok(ethers::types::Address::from(a))}) {
+                        Ok(r) => Some(r),
+                        Err(err) => {
+                            println!("WARN: failed to parse receiver_eth, error: {:?}",err);
+                            None
+                        }
+                    }
+                });
 
             let transfer_id = hex_to_bytes(&ai.transfer_id);
             if transfer_id.is_none() {
                 return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
             }
             // Transfer is not happened => transfer funds
-            println!("INFO: withdraw from bridge, ai: {:?}", ai);
-            let res = self.bridge_escrow_ol.bridge_withdraw(
-                sender_this.unwrap(),
-                Vec::new(),
-                receiver_this,
-                ai.balance,
-                transfer_id.unwrap(),
-                None,
-            );
-            if res.is_err() {
-                return Err(format!(
-                    "Failed to withdraw from escrow: {:?}",
-                    res.unwrap_err()
-                ));
+            if receiver_this.is_some() {
+                println!("INFO: withdraw from bridge, ai: {:?}", ai);
+                let res = self.bridge_escrow_ol.bridge_withdraw(
+                    sender_this.unwrap(),
+                    Vec::new(),
+                    receiver_this.unwrap(),
+                    ai.balance,
+                    transfer_id.unwrap(),
+                    None,
+                );
+                if res.is_err() {
+                    return Err(format!(
+                        "Failed to withdraw from escrow: {:?}",
+                        res.unwrap_err()
+                    ));
+                }
+                println!("INFO: withdraw from bridge: {:?}", res.unwrap());
+            } else if receiver_eth.is_some() {
+                match &self.client_eth {
+                    Some(cli) => match &self.escrow_addr_eth {
+                        Some(addr) => {
+                            let b = BridgeEscrowEth::new(*addr, &cli);
+                            ()
+                        },
+                        _ => (),
+                    },
+                    _ => (),
+                }
+            } else {
+                println!("ERROR: receiver_this and receiver_eth are both empty, skip transfer");
             }
-            println!("INFO: withdraw from bridge: {:?}", res.unwrap());
         }
 
         Ok(())
