@@ -26,7 +26,7 @@ pub struct Agent {
     pub bridge_escrow_ol: BridgeEscrow,
 
     /// Provider for ETH
-    pub provider_ol: Option<Provider<Http>>,
+    pub provider_eth: Option<Provider<Http>>,
 
     /// Agent account for EETH
     agent_eth: Option<ethers::signers::Wallet>,
@@ -40,7 +40,7 @@ impl Agent {
         config_eth: Option<bridge_ethers::config::Config>,
         agent_eth: Option<ethers::signers::Wallet>,
     ) -> Agent {
-        let provider_ol = match config_eth {
+        let provider_eth = match config_eth {
             Some(c) => match c.get_provider_url() {
                 Ok(url) => match Provider::<Http>::try_from(url.as_str()) {
                     Ok(p) => Some(p),
@@ -60,7 +60,7 @@ impl Agent {
         Agent {
             node_ol,
             bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
-            provider_ol,
+            provider_eth,
             agent_eth,
         }
     }

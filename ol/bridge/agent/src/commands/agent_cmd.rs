@@ -48,7 +48,7 @@ impl Runnable for AgentCmd {
         let account_eth = match env::var("ETH_BRIDGE_ESCROW_ACCOUNT")
             .map_err(|e|format!("cannot read eth account from env var ETH_BRIDGE_ESCROW_ACCOUNT, err: {:?}",e))
             .and_then(|account_str| {
-                bridge_ethers::signers::get_private_key(&format!("{}/alice.txt", account_str))
+                bridge_ethers::signers::get_private_key(&account_str)
                     .and_then(|x|{
                         ethers::signers::Wallet::from_str(&x[2..])
                             .map_err(|e| e.to_string())
