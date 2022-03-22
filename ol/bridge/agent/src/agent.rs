@@ -30,7 +30,7 @@ pub struct Agent {
     pub bridge_escrow_ol: BridgeEscrow,
 
     /// Agent account for ETH
-    agent_eth: Option<ethers::signers::Wallet>,
+    //agent_eth: Option<ethers::signers::Wallet>,
 
     /// ETH Escrow Contract Address
     escrow_addr_eth: Option<Address>,
@@ -40,6 +40,9 @@ pub struct Agent {
 
     /// ETH client
     client_eth: Option<ClientEth<Http,WalletEth>>,
+
+    /// ETH gas price
+    gas_price_eth: Option<u64>,
 }
 
 impl Agent {
@@ -86,13 +89,22 @@ impl Agent {
                 _ => None,
             };
 
+        let gas_price_eth = match &config_eth {
+            Some(config) => match config.get_gas_price() {
+                Ok(g) => Some(g),
+                Err(err) => {println!("WARN: cannot get gas price, error: {:?}",err);None},
+            },
+            _ => None,
+        };
+
         Agent {
             node_ol,
             bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
-            agent_eth,
+            //agent_eth,
             escrow_addr_eth,
             //provider_eth,
             client_eth,
+            gas_price_eth,
         }
     }
     /// Process autstanding transfers
@@ -169,7 +181,14 @@ impl Agent {
                     }
                 });
 
-            let transfer_id = hex_to_bytes(&ai.transfer_id);
+            let transfer_id = hex_to_bytes(&ai.transfer_id).and_then(|v|{
+                match bridge_ethers::util::vec_to_array::<u8,16>(v).map_err(|err|{
+                    println!("ERROR: cant get transfer_id, error: {:?}", err)
+                }) {
+                    Ok(tid) => Some(tid),
+                    _ => None,
+                }
+            });
             if transfer_id.is_none() {
                 return Err(format!("Failed to parse transfer_id: {}", ai.transfer_id));
             }
@@ -181,7 +200,7 @@ impl Agent {
                     Vec::new(),
                     receiver_this.unwrap(),
                     ai.balance,
-                    transfer_id.unwrap(),
+                    transfer_id.unwrap().to_vec(),
                     None,
                 );
                 if res.is_err() {
@@ -195,8 +214,27 @@ impl Agent {
                 match &self.client_eth {
                     Some(cli) => match &self.escrow_addr_eth {
                         Some(addr) => {
-                            let b = BridgeEscrowEth::new(*addr, &cli);
-                            ()
+                            let contract = BridgeEscrowEth::new(*addr, &cli);
+                            match &self.gas_price_eth {
+                                Some(gp) => {
+                                    let data = contract
+                                        .withdraw_from_escrow(
+                                            sender_this.unwrap().to_u8(),
+                                            receiver_eth.unwrap(),
+                                            ai.balance,
+                                            transfer_id.unwrap(),
+                                        ).gas_price(*gp);
+                                    async {
+                                        let pending_tx = data
+                                            .send()
+                                            .await
+                                            .map_err(|e| println!("Error pending: {}", e))
+                                            .unwrap();
+                                        println!("pending_tx: {:?}", pending_tx);
+                                    };
+                                },
+                                _ => (),
+                            }
                         },
                         _ => (),
                     },
