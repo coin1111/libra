@@ -12,6 +12,11 @@ use ethers::prelude::{Client as ClientEth, Wallet};
 use ethers::prelude::Wallet as WalletEth;
 use ethers::types::Address;
 
+use std::error::Error;
+use tokio::runtime::Handle;
+use crossbeam::channel;
+use tokio::runtime::Runtime;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
     sender_this: String,
@@ -182,6 +187,7 @@ impl Agent {
             }
             // Transfer is not happened => transfer funds
             if receiver_this.is_some() {
+                // transfer 0L->0L
                 println!("INFO: withdraw from bridge, ai: {:?}", ai);
                 let res = self.bridge_escrow_ol.bridge_withdraw(
                     sender_this.unwrap(),
@@ -199,8 +205,15 @@ impl Agent {
                 }
                 println!("INFO: withdraw from bridge: {:?}", res.unwrap());
             } else if receiver_eth.is_some() {
+                // transfer 0L -> ETH
                 match &self.agent_eth {
                     Some(a) => {
+                        let rt = Runtime::new().unwrap();
+                        let handle = rt.handle();
+                        match get_score_sync(handle) {
+                            Ok(r) => println!("async ret: {:?}", r),
+                            Err(err) => println!("ERROR: {:?}",err.to_string()) ,
+                        }
                         let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
                         let data = contract
                             .withdraw_from_escrow(
@@ -209,14 +222,14 @@ impl Agent {
                                 ai.balance,
                                 transfer_id.unwrap(),
                             ).gas_price(a.gas_price);
-                        async {
-                            let pending_tx = data
-                                .send()
-                                .await
-                                .map_err(|e| println!("Error pending: {}", e))
-                                .unwrap();
-                            println!("pending_tx: {:?}", pending_tx);
-                        };
+                        // tokio::task::spawn( async move {
+                        //         let pending_tx = data
+                        //             .send()
+                        //             .await
+                        //             .map_err(|e| println!("Error pending: {}", e))
+                        //             .unwrap();
+                        //         println!("pending_tx: {:?}", pending_tx);
+                        // });
                     }
                     _ => println!("Warn: agent_eth is not initialized"),
                 }
@@ -391,4 +404,20 @@ fn hex_to_bytes(s: &String) -> Option<Vec<u8>> {
     } else {
         None
     }
+}
+
+use std::thread;
+use std::time::Duration;
+async fn get_score_async() -> Result<u32, Box<dyn Error + Send + Sync>> {
+    //thread::sleep(Duration::from_secs(1));
+    Ok(10)
+}
+
+fn get_score_sync(handle: &Handle) -> Result<u32, Box<dyn Error + Send + Sync>> {
+    let (tx, rx) = channel::bounded(1);
+    handle.spawn(async move {
+        let score_res = get_score_async().await;
+        let _ = tx.send(score_res);
+    });
+    Ok(rx.recv()??)
 }

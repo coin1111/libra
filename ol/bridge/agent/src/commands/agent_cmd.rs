@@ -7,6 +7,7 @@ use std::{thread, time::Duration};
 use crate::agent::Agent;
 use std::env;
 use std::str::FromStr;
+use tokio::runtime::Runtime;
 
 /// `agent` subcommand
 ///
@@ -20,6 +21,8 @@ pub struct AgentCmd {}
 
 impl Runnable for AgentCmd {
     fn run(&self) {
+        let _ = Runtime::new()
+            .unwrap();
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
