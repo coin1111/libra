@@ -7,7 +7,8 @@ use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
-use ethers::prelude::Client as ClientEth;
+use bridge_ethers::config::Config;
+use ethers::prelude::{Client as ClientEth, Wallet};
 use ethers::prelude::Wallet as WalletEth;
 use ethers::types::Address;
 
@@ -29,20 +30,49 @@ pub struct Agent {
     /// BridgeEscrow contract for 0L
     pub bridge_escrow_ol: BridgeEscrow,
 
-    /// Agent account for ETH
-    //agent_eth: Option<ethers::signers::Wallet>,
+    agent_eth : Option<AgentEth>,
+}
 
+struct AgentEth {
     /// ETH Escrow Contract Address
-    escrow_addr_eth: Option<Address>,
-
-    /// ETH provider
-    //provider_eth: Option<Provider<Http>>,
+    escrow_addr: Address,
 
     /// ETH client
-    client_eth: Option<ClientEth<Http,WalletEth>>,
+    client: ClientEth<Http,WalletEth>,
 
     /// ETH gas price
-    gas_price_eth: Option<u64>,
+    gas_price: u64,
+}
+
+
+impl AgentEth {
+    pub fn new(config_eth: &Option<Config>, agent_eth: &Option<Wallet>) -> Result<AgentEth, String> {
+        let escrow_addr = match &config_eth{
+            Some(c) => c.get_escrow_contract_address(),
+            None => Err(String::from("cannot get eth config")),
+        }?;
+
+        let provider_eth = match &config_eth{
+            Some(c) => c.get_provider_url()
+                .and_then(|url|Provider::<Http>::try_from(url.as_str()).map_err(|e|e.to_string())),
+            None => Err(String::from("cannot get eth config")),
+        }?;
+
+        let gas_price = match &config_eth{
+            Some(c) => c.get_gas_price(),
+            None => Err(String::from("cannot get eth config")),
+        }?;
+
+        let client = match &agent_eth {
+            Some(w) => Ok(w.clone().connect(provider_eth.clone())),
+            _ => Err(format!("wallet is not provided")),
+        }?;
+        Ok(AgentEth{
+            escrow_addr,
+            client,
+            gas_price,
+        })
+    }
 }
 
 impl Agent {
@@ -50,64 +80,22 @@ impl Agent {
     pub fn new(
         ol_escrow: AccountAddress,
         node_ol: Node,
-        config_eth: Option<bridge_ethers::config::Config>,
-        agent_eth: Option<ethers::signers::Wallet>,
+        config_eth: Option<Config>,
+        agent_eth: Option<Wallet>,
     ) -> Agent {
-        let escrow_addr_eth = config_eth.clone().and_then(|x|{
-            match x.get_escrow_contract_address() {
-                Ok(a) => Some(a),
-                Err(err) => {
-                    println!("WARN: failed to get eth escrow address: {:?}", err);
-                    None
-                },
-            }
-        });
-
-        let provider_eth = match config_eth.clone() {
-            Some(c) => match c.get_provider_url() {
-                Ok(url) => match Provider::<Http>::try_from(url.as_str()) {
-                    Ok(p) => Some(p),
-                    Err(e) => {
-                        println!("WARN: can't create ETH provider: {:?}", e);
-                        None
-                    }
-                },
-                Err(e) => {
-                    println!("WARN: can't parse url: {:?}", e);
-                    None
-                }
-            },
-            _ => None,
-        };
-
-        let client_eth =
-            match &agent_eth{
-                Some(w) => match &provider_eth {
-                    Some(p) => Some(w.clone().connect(p.clone())),
-                    _ =>None,
-                }
-                _ => None,
-            };
-
-        let gas_price_eth = match &config_eth {
-            Some(config) => match config.get_gas_price() {
-                Ok(g) => Some(g),
-                Err(err) => {println!("WARN: cannot get gas price, error: {:?}",err);None},
-            },
+        let agent_eth = match AgentEth::new(&config_eth, &agent_eth) {
+            Ok(a) => Some(a),
             _ => None,
         };
 
         Agent {
             node_ol,
             bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
-            //agent_eth,
-            escrow_addr_eth,
-            //provider_eth,
-            client_eth,
-            gas_price_eth,
+            agent_eth,
         }
     }
-    /// Process autstanding transfers
+
+     /// Process autstanding transfers
     pub fn process_deposits(&self) {
         println!("INFO: process deposits");
         let ais = self.query_locked();
@@ -211,34 +199,26 @@ impl Agent {
                 }
                 println!("INFO: withdraw from bridge: {:?}", res.unwrap());
             } else if receiver_eth.is_some() {
-                match &self.client_eth {
-                    Some(cli) => match &self.escrow_addr_eth {
-                        Some(addr) => {
-                            let contract = BridgeEscrowEth::new(*addr, &cli);
-                            match &self.gas_price_eth {
-                                Some(gp) => {
-                                    let data = contract
-                                        .withdraw_from_escrow(
-                                            sender_this.unwrap().to_u8(),
-                                            receiver_eth.unwrap(),
-                                            ai.balance,
-                                            transfer_id.unwrap(),
-                                        ).gas_price(*gp);
-                                    async {
-                                        let pending_tx = data
-                                            .send()
-                                            .await
-                                            .map_err(|e| println!("Error pending: {}", e))
-                                            .unwrap();
-                                        println!("pending_tx: {:?}", pending_tx);
-                                    };
-                                },
-                                _ => (),
-                            }
-                        },
-                        _ => (),
-                    },
-                    _ => (),
+                match &self.agent_eth {
+                    Some(a) => {
+                        let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                        let data = contract
+                            .withdraw_from_escrow(
+                                sender_this.unwrap().to_u8(),
+                                receiver_eth.unwrap(),
+                                ai.balance,
+                                transfer_id.unwrap(),
+                            ).gas_price(a.gas_price);
+                        async {
+                            let pending_tx = data
+                                .send()
+                                .await
+                                .map_err(|e| println!("Error pending: {}", e))
+                                .unwrap();
+                            println!("pending_tx: {:?}", pending_tx);
+                        };
+                    }
+                    _ => println!("Warn: agent_eth is not initialized"),
                 }
             } else {
                 println!("ERROR: receiver_this and receiver_eth are both empty, skip transfer");
