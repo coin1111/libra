@@ -214,34 +214,25 @@ impl Agent {
                 // transfer 0L -> ETH
                 match &self.agent_eth {
                     Some(a) => {
-                        let cli = a.client.clone();
-                        let contract = BridgeEscrowEth::new(a.escrow_addr, &cli);
-                        let data = contract
-                            .withdraw_from_escrow(
-                                sender_this.unwrap().to_u8(),
-                                receiver_eth.unwrap(),
-                                ai.balance,
-                                transfer_id.unwrap(),
-                            ).gas_price(a.gas_price);
-
-                        // let contractData = ContractData {
-                        //     client: cli,
-                        //     data,
-                        // };
-
                         let rt = Runtime::new().unwrap();
                         let handle = rt.handle();
-                        match send_eth_tx(handle,String::from("aaaa")) {
-                            Ok(r) => println!("async ret: {:?}", r),
-                            Err(err) => println!("ERROR: {:?}",err.to_string()) ,
-                        }
+                        handle.block_on(async move {
+                                let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                                let data = contract
+                                    .withdraw_from_escrow(
+                                        sender_this.unwrap().to_u8(),
+                                        receiver_eth.unwrap(),
+                                        ai.balance,
+                                        transfer_id.unwrap(),
+                                    ).gas_price(a.gas_price);
+                                let pending_tx = data
+                                    .send()
+                                    .await
+                                    .map_err(|e| println!("Error pending: {}", e))
+                                    .unwrap();
+                                println!("pending_tx: {:?}", pending_tx);
+                        });
 
-                        // let pending_tx = data
-                        //     .send()
-                        //     .await
-                        //     .map_err(|e| println!("Error pending: {}", e))
-                        //     .unwrap();
-                        // println!("pending_tx: {:?}", pending_tx);
                     }
                     _ => println!("Warn: agent_eth is not initialized"),
                 }
