@@ -11,11 +11,10 @@ use bridge_ethers::config::Config;
 use ethers::prelude::{Client as ClientEth, Wallet};
 use ethers::prelude::Wallet as WalletEth;
 use ethers::types::Address;
-
-use std::error::Error;
-use tokio::runtime::Handle;
-use crossbeam::channel;
 use tokio::runtime::Runtime;
+use crate::async_util::send_eth_tx;
+use ethers::prelude::builders::ContractCall;
+use ethers::types::H256;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -48,6 +47,13 @@ struct AgentEth {
     /// ETH gas price
     gas_price: u64,
 }
+
+// struct ContractData {
+//     /// ETH client
+//     client: ClientEth<Http,WalletEth>,
+//     /// Contract data
+//     data: ContractCall<Http, Wallet, H256>,
+// }
 
 
 impl AgentEth {
@@ -208,13 +214,8 @@ impl Agent {
                 // transfer 0L -> ETH
                 match &self.agent_eth {
                     Some(a) => {
-                        let rt = Runtime::new().unwrap();
-                        let handle = rt.handle();
-                        match get_score_sync(handle) {
-                            Ok(r) => println!("async ret: {:?}", r),
-                            Err(err) => println!("ERROR: {:?}",err.to_string()) ,
-                        }
-                        let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                        let cli = a.client.clone();
+                        let contract = BridgeEscrowEth::new(a.escrow_addr, &cli);
                         let data = contract
                             .withdraw_from_escrow(
                                 sender_this.unwrap().to_u8(),
@@ -222,14 +223,25 @@ impl Agent {
                                 ai.balance,
                                 transfer_id.unwrap(),
                             ).gas_price(a.gas_price);
-                        // tokio::task::spawn( async move {
-                        //         let pending_tx = data
-                        //             .send()
-                        //             .await
-                        //             .map_err(|e| println!("Error pending: {}", e))
-                        //             .unwrap();
-                        //         println!("pending_tx: {:?}", pending_tx);
-                        // });
+
+                        // let contractData = ContractData {
+                        //     client: cli,
+                        //     data,
+                        // };
+
+                        let rt = Runtime::new().unwrap();
+                        let handle = rt.handle();
+                        match send_eth_tx(handle,String::from("aaaa")) {
+                            Ok(r) => println!("async ret: {:?}", r),
+                            Err(err) => println!("ERROR: {:?}",err.to_string()) ,
+                        }
+
+                        // let pending_tx = data
+                        //     .send()
+                        //     .await
+                        //     .map_err(|e| println!("Error pending: {}", e))
+                        //     .unwrap();
+                        // println!("pending_tx: {:?}", pending_tx);
                     }
                     _ => println!("Warn: agent_eth is not initialized"),
                 }
@@ -406,18 +418,3 @@ fn hex_to_bytes(s: &String) -> Option<Vec<u8>> {
     }
 }
 
-use std::thread;
-use std::time::Duration;
-async fn get_score_async() -> Result<u32, Box<dyn Error + Send + Sync>> {
-    //thread::sleep(Duration::from_secs(1));
-    Ok(10)
-}
-
-fn get_score_sync(handle: &Handle) -> Result<u32, Box<dyn Error + Send + Sync>> {
-    let (tx, rx) = channel::bounded(1);
-    handle.spawn(async move {
-        let score_res = get_score_async().await;
-        let _ = tx.send(score_res);
-    });
-    Ok(rx.recv()??)
-}
