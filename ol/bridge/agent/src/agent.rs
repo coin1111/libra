@@ -3,18 +3,15 @@ use crate::bridge_escrow::BridgeEscrow;
 use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
 use crate::{node::node::Node, node::query::QueryType};
 use ethers::providers::{Http, Provider};
-use move_core_types::account_address::AccountAddress;
+use move_core_types::account_address::{AccountAddress, AccountAddressParseError};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
 use bridge_ethers::config::Config;
-use ethers::prelude::{Client as ClientEth, Wallet};
+use ethers::prelude::{Client as ClientEth, H160, Wallet};
 use ethers::prelude::Wallet as WalletEth;
 use ethers::types::Address;
 use tokio::runtime::Runtime;
-use crate::async_util::send_eth_tx;
-use ethers::prelude::builders::ContractCall;
-use ethers::types::H256;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -211,37 +208,40 @@ impl Agent {
                 }
                 println!("INFO: withdraw from bridge: {:?}", res.unwrap());
             } else if receiver_eth.is_some() {
-                // transfer 0L -> ETH
-                match &self.agent_eth {
-                    Some(a) => {
-                        let rt = Runtime::new().unwrap();
-                        let handle = rt.handle();
-                        handle.block_on(async move {
-                                let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                                let data = contract
-                                    .withdraw_from_escrow(
-                                        sender_this.unwrap().to_u8(),
-                                        receiver_eth.unwrap(),
-                                        ai.balance,
-                                        transfer_id.unwrap(),
-                                    ).gas_price(a.gas_price);
-                                let pending_tx = data
-                                    .send()
-                                    .await
-                                    .map_err(|e| println!("Error pending: {}", e))
-                                    .unwrap();
-                                println!("pending_tx: {:?}", pending_tx);
-                        });
-
-                    }
-                    _ => println!("Warn: agent_eth is not initialized"),
-                }
+                self.withdraw_ol_eth(ai, sender_this, receiver_eth, transfer_id)
             } else {
                 println!("ERROR: receiver_this and receiver_eth are both empty, skip transfer");
             }
         }
 
         Ok(())
+    }
+
+    fn withdraw_ol_eth(&self, ai: &AccountInfo, sender_this: Result<AccountAddress, AccountAddressParseError>, receiver_eth: Option<H160>, transfer_id: Option<[u8; 16]>) {
+// transfer 0L -> ETH
+        match &self.agent_eth {
+            Some(a) => {
+                let rt = Runtime::new().unwrap();
+                let handle = rt.handle();
+                handle.block_on(async move {
+                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                    let data = contract
+                        .withdraw_from_escrow(
+                            sender_this.unwrap().to_u8(),
+                            receiver_eth.unwrap(),
+                            ai.balance,
+                            transfer_id.unwrap(),
+                        ).gas_price(a.gas_price);
+                    let pending_tx = data
+                        .send()
+                        .await
+                        .map_err(|e| println!("Error pending: {}", e))
+                        .unwrap();
+                    println!("pending_tx: {:?}", pending_tx);
+                });
+            }
+            _ => println!("Warn: agent_eth is not initialized"),
+        }
     }
 
     /// For compeleted transfers, remove locked and unlocked entries in this  porder
