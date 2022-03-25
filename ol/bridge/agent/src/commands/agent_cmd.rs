@@ -1,12 +1,12 @@
 //! `agent` subcommand
 
+use crate::agent::Agent;
 use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use std::process::exit;
-use std::{thread, time::Duration};
-use crate::agent::Agent;
 use std::env;
+use std::process::exit;
 use std::str::FromStr;
+use std::{thread, time::Duration};
 use tokio::runtime::Runtime;
 
 /// `agent` subcommand
@@ -21,8 +21,7 @@ pub struct AgentCmd {}
 
 impl Runnable for AgentCmd {
     fn run(&self) {
-        let _ = Runtime::new()
-            .unwrap();
+        let _ = Runtime::new().unwrap();
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
@@ -32,51 +31,71 @@ impl Runnable for AgentCmd {
             cfg.profile.account
         };
 
-        let ol_client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
-            println!("ERROR: Cannot connect to a client. Message: {}", e);
-            exit(1);
-        });
+        let ol_client =
+            client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
+                println!("ERROR: Cannot connect to a client. Message: {}", e);
+                exit(1);
+            });
 
         // Eth config
         let config_eth = (match args.eth_escrow_config {
-            Some(path) =>
-               bridge_ethers::config::Config::new(path.as_str()),
-            None =>
-                env::var("ETH_BRIDGE_ESCROW_CONFIG")
-                    .map_err(|e|format!("cannot read eth config from env var ETH_BRIDGE_ESCROW_CONFIG, err: {:?}",e))
-                    .and_then(|x|bridge_ethers::config::Config::new(x.as_str())),
-        }).map_err(|e|{println!("WARN: cannot read read ETH config: {:?}. Will run in 0L mode",e);e});
+            Some(path) => bridge_ethers::config::Config::new(path.as_str()),
+            None => env::var("ETH_BRIDGE_ESCROW_CONFIG")
+                .map_err(|e| {
+                    format!(
+                        "cannot read eth config from env var ETH_BRIDGE_ESCROW_CONFIG, err: {:?}",
+                        e
+                    )
+                })
+                .and_then(|x| bridge_ethers::config::Config::new(x.as_str())),
+        })
+        .map_err(|e| {
+            println!(
+                "WARN: cannot read read ETH config: {:?}. Will run in 0L mode",
+                e
+            );
+            e
+        });
 
         // ETH agent account
         let account_eth = match env::var("ETH_BRIDGE_ESCROW_ACCOUNT")
-            .map_err(|e|format!("cannot read eth account from env var ETH_BRIDGE_ESCROW_ACCOUNT, err: {:?}",e))
+            .map_err(|e| {
+                format!(
+                    "cannot read eth account from env var ETH_BRIDGE_ESCROW_ACCOUNT, err: {:?}",
+                    e
+                )
+            })
             .and_then(|account_str| {
-                bridge_ethers::signers::get_private_key(&account_str)
-                    .and_then(|x|{
-                        ethers::signers::Wallet::from_str(&x[2..])
-                            .map_err(|e| e.to_string())
-                    })
-            } ) {
-            Ok(a) =>Some(a),
+                bridge_ethers::signers::get_private_key(&account_str).and_then(|x| {
+                    ethers::signers::Wallet::from_str(&x[2..]).map_err(|e| e.to_string())
+                })
+            }) {
+            Ok(a) => Some(a),
             Err(err) => {
-                println!("WARN: failed to create ETH account wallet: {:?}",err);
+                println!("WARN: failed to create ETH account wallet: {:?}", err);
                 None
-            },
+            }
         };
 
-        let agent = Agent::new(ol_escrow,
-                               Node::new(ol_client, &cfg, is_swarm),
-                               config_eth.map_or_else(|_|None,|x| Some(x)),
-                               account_eth);
+        let agent = Agent::new(
+            ol_escrow,
+            Node::new(ol_client, &cfg, is_swarm),
+            config_eth.map_or_else(|_| None, |x| Some(x)),
+            account_eth,
+        );
 
         loop {
-            agent.process_deposits();
-            agent.process_withdrawals();
+            // 0L->0L
+            agent.process_deposits_ol_ol();
+            agent.process_withdrawals_ol_ol();
+            thread::sleep(Duration::from_millis(10000));
+
+            // 0L->ETH
+            agent.process_deposits_ol_eth();
+            //agent.process_withdrawals_ol_ol();
             thread::sleep(Duration::from_millis(10000));
         }
     }
 }
 
-impl AgentCmd {
-
-}
+impl AgentCmd {}
