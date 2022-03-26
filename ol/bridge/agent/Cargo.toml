@@ -71,8 +71,9 @@ move-binary-format = { path = "../../../language/move-binary-format" }
 dialoguer = "0.8.0"
 diem-crypto = { path = "../../../crypto/crypto" }
 ethers = "0.1.3"
-bridge-ethers = { git = "https://github.com/coin1111/eth-bridge-rs" , version = "0.1.0", rev="f657f08725a70e777ff977af7d3f1a8348afb6da"}
+bridge-ethers = { git = "https://github.com/coin1111/eth-bridge-rs" , version = "0.1.0", rev="1f8429376e7b356cf438b8a940d8131472dae09c"}
 crossbeam = { version = "0.8.1", features = ["std"] }
+simple-error = "0.2.3"
 
 # Parity with Storage create
 [dependencies.rocksdb]

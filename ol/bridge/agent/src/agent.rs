@@ -1,16 +1,18 @@
 //! Bridge agent
 use crate::bridge_escrow::BridgeEscrow;
-use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
 use crate::{node::node::Node, node::query::QueryType};
+use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
+use bridge_ethers::config::Config;
+use bridge_ethers::util::AccountInfo as AccountInfoEth;
+use ethers::abi::Token;
+use ethers::prelude::Wallet as WalletEth;
+use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
-use move_core_types::account_address::{AccountAddress};
+use ethers::types::Address;
+use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
-use bridge_ethers::config::Config;
-use ethers::prelude::{Client as ClientEth, H160, Wallet};
-use ethers::prelude::Wallet as WalletEth;
-use ethers::types::Address;
 use tokio::runtime::Runtime;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,7 +33,7 @@ pub struct Agent {
     /// BridgeEscrow contract for 0L
     pub bridge_escrow_ol: BridgeEscrow,
 
-    agent_eth : Option<AgentEth>,
+    agent_eth: Option<AgentEth>,
 }
 
 struct AgentEth {
@@ -39,26 +41,30 @@ struct AgentEth {
     escrow_addr: Address,
 
     /// ETH client
-    client: ClientEth<Http,WalletEth>,
+    client: ClientEth<Http, WalletEth>,
 
     /// ETH gas price
     gas_price: u64,
 }
 
 impl AgentEth {
-    pub fn new(config_eth: &Option<Config>, agent_eth: &Option<Wallet>) -> Result<AgentEth, String> {
-        let escrow_addr = match &config_eth{
+    pub fn new(
+        config_eth: &Option<Config>,
+        agent_eth: &Option<Wallet>,
+    ) -> Result<AgentEth, String> {
+        let escrow_addr = match &config_eth {
             Some(c) => c.get_escrow_contract_address(),
             None => Err(String::from("cannot get eth config")),
         }?;
 
-        let provider_eth = match &config_eth{
-            Some(c) => c.get_provider_url()
-                .and_then(|url|Provider::<Http>::try_from(url.as_str()).map_err(|e|e.to_string())),
+        let provider_eth = match &config_eth {
+            Some(c) => c.get_provider_url().and_then(|url| {
+                Provider::<Http>::try_from(url.as_str()).map_err(|e| e.to_string())
+            }),
             None => Err(String::from("cannot get eth config")),
         }?;
 
-        let gas_price = match &config_eth{
+        let gas_price = match &config_eth {
             Some(c) => c.get_gas_price(),
             None => Err(String::from("cannot get eth config")),
         }?;
@@ -67,7 +73,7 @@ impl AgentEth {
             Some(w) => Ok(w.clone().connect(provider_eth.clone())),
             _ => Err(format!("wallet is not provided")),
         }?;
-        Ok(AgentEth{
+        Ok(AgentEth {
             escrow_addr,
             client,
             gas_price,
@@ -95,7 +101,7 @@ impl Agent {
         }
     }
 
-     /// Process autstanding transfers
+    /// Process autstanding transfers
     pub fn process_deposits_ol_ol(&self) {
         println!("INFO: process deposits");
         let ais = self.query_locked();
@@ -125,44 +131,57 @@ impl Agent {
             return Err(format!("Empty deposit id: {:?}", ai));
         }
         // Query unlocked
-        let unlocked = self.query_unlocked()
-            .map_err(|err|format!("Failed to get unlocked: {:?}", err))?;
+        let unlocked = self
+            .query_unlocked()
+            .map_err(|err| format!("Failed to get unlocked: {:?}", err))?;
 
         let unlocked_ai = unlocked
             .iter()
             .find(|x| x.transfer_id == ai.transfer_id)
             .and_then(|x| Some(x.clone()));
         if unlocked_ai.is_none() {
-            let sender_this =
-                AccountAddress::from_str(&ai.sender_this)
-                    .map_err(|err|format!(
-                        "Failed to parse sender address: {:?}",
-                        err
-                    ))?;
+            let sender_this = AccountAddress::from_str(&ai.sender_this)
+                .map_err(|err| format!("Failed to parse sender address: {:?}", err))?;
 
             // try to parse receiver address on 0L chain
             let receiver_this = match AccountAddress::from_str(&ai.receiver_this) {
                 Ok(r) => Some(r),
                 Err(err) => {
-                    println!("WARN: cannot parse receiver_this address: {:?}", err.to_string());
+                    println!(
+                        "WARN: cannot parse receiver_this address: {:?}",
+                        err.to_string()
+                    );
                     None
                 }
             };
 
             // try to parse receiver address on ETH chain
             let receiver_eth = match hex_to_bytes(&ai.receiver_other)
-                .map_err(|err|{println!("{:?}",err);err})
-                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,20>(v)})
-                .map_err(|err|{println!("Can't convert vector to array {:?}",err);err})
-                .and_then(|a|{Ok(ethers::types::Address::from(a))}) {
-                Ok(r) =>Some(r),
+                .map_err(|err| {
+                    println!("{:?}", err);
+                    err
+                })
+                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
+                .map_err(|err| {
+                    println!("Can't convert vector to array {:?}", err);
+                    err
+                })
+                .and_then(|a| Ok(ethers::types::Address::from(a)))
+            {
+                Ok(r) => Some(r),
                 _ => None,
             };
 
             let transfer_id = hex_to_bytes(&ai.transfer_id)
-                .map_err(|err|{println!("{:?}",err);err})
-                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,16>(v)})
-                .map_err(|err|{println!("Can't convert vector to array {:?}",err);err})?;
+                .map_err(|err| {
+                    println!("{:?}", err);
+                    err
+                })
+                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))
+                .map_err(|err| {
+                    println!("Can't convert vector to array {:?}", err);
+                    err
+                })?;
 
             // Transfer is not happened => transfer funds
             if receiver_this.is_some() {
@@ -177,8 +196,14 @@ impl Agent {
         Ok(())
     }
 
-    fn withdraw_ol_ol(&self, ai: &AccountInfo, sender_this: AccountAddress, receiver_this: AccountAddress, transfer_id: [u8; 16]) {
-// transfer 0L->0L
+    fn withdraw_ol_ol(
+        &self,
+        ai: &AccountInfo,
+        sender_this: AccountAddress,
+        receiver_this: AccountAddress,
+        transfer_id: [u8; 16],
+    ) {
+        // transfer 0L->0L
         println!("INFO: withdraw from bridge, ai: {:?}", ai);
         let res = self.bridge_escrow_ol.bridge_withdraw(
             sender_this,
@@ -189,17 +214,20 @@ impl Agent {
             None,
         );
         if res.is_err() {
-            println!(
-                "Failed to withdraw from escrow: {:?}",
-                res.unwrap_err()
-            );
+            println!("Failed to withdraw from escrow: {:?}", res.unwrap_err());
         } else {
             println!("INFO: withdraw from bridge: {:?}", res.unwrap());
         }
     }
 
-    fn withdraw_ol_eth(&self, ai: &AccountInfo, sender_this: AccountAddress, receiver_eth: H160, transfer_id: [u8; 16]) {
-// transfer 0L -> ETH
+    fn withdraw_ol_eth(
+        &self,
+        ai: &AccountInfo,
+        sender_this: AccountAddress,
+        receiver_eth: H160,
+        transfer_id: [u8; 16],
+    ) {
+        // transfer 0L -> ETH
         match &self.agent_eth {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
@@ -212,7 +240,8 @@ impl Agent {
                             receiver_eth,
                             ai.balance,
                             transfer_id,
-                        ).gas_price(a.gas_price);
+                        )
+                        .gas_price(a.gas_price);
                     let pending_tx = data
                         .send()
                         .await
@@ -222,6 +251,28 @@ impl Agent {
                 });
             }
             _ => println!("Warn: agent_eth is not initialized"),
+        }
+    }
+
+    fn query_unlocked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        match &self.agent_eth {
+            Some(a) => {
+                let rt = Runtime::new().unwrap();
+                let handle = rt.handle();
+                let mut res: Result<AccountInfoEth, String> =
+                    Err(String::from("uninited contract"));
+                handle.block_on(async {
+                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                    let data = contract.get_unlocked_account_info(transfer_id);
+                    res = data
+                        .call()
+                        .await
+                        .map_err(|err| format!("ERROR: call: {:?}", err))
+                        .and_then(|x| AccountInfoEth::from(x));
+                });
+                res
+            }
+            _ => Err(String::from("agent is not initialized")),
         }
     }
 
@@ -251,8 +302,13 @@ impl Agent {
         if ai.transfer_id.is_empty() {
             return Err(format!("Empty transfer id: {:?}", ai));
         }
-        let transfer_id = hex_to_bytes(&ai.transfer_id)
-            .map_err(|err|{println!("Failed to parse transfer_id: {}, error: {:?}", ai.transfer_id, err);err})?;
+        let transfer_id = hex_to_bytes(&ai.transfer_id).map_err(|err| {
+            println!(
+                "Failed to parse transfer_id: {}, error: {:?}",
+                ai.transfer_id, err
+            );
+            err
+        })?;
 
         // Query locked
         let locked = self.query_locked();
@@ -333,29 +389,28 @@ impl Agent {
         if ai.transfer_id.is_empty() {
             return Err(format!("ERROR: Empty deposit id: {:?}", ai));
         }
+
+        let transfer_id = hex_to_bytes(&ai.transfer_id)
+            .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))?;
+
         // Query unlocked on ETH
-        let unlocked = self.query_unlocked()?;
-
-
-        let unlocked_ai = unlocked
-            .iter()
-            .find(|x| x.transfer_id == ai.transfer_id)
-            .and_then(|x| Some(x.clone()));
-        if unlocked_ai.is_none() {
+        let unlocked: AccountInfoEth = self.query_unlocked_eth(transfer_id.clone())?;
+        if unlocked.transfer_id == [0u8; 16] {
             let sender_this =
-                AccountAddress::from_str(&ai.sender_this)
-                    .map_err(|err|err.to_string())?;
+                AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
             // try to parse receiver address on ETH chain
             let receiver_eth = hex_to_bytes(&ai.receiver_other)
-                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,20>(v)})
-                .and_then(|a|{Ok(ethers::types::Address::from(a))})?;
-
-            let transfer_id = hex_to_bytes(&ai.transfer_id)
-                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,16>(v)})?;
+                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
+                .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
             // Transfer is not happened => transfer funds
             self.withdraw_ol_eth(ai, sender_this, receiver_eth, transfer_id);
+        } else {
+            println!(
+                "Withdrawal for transfer_id {:?} has been made on ETH",
+                ai.transfer_id
+            );
         }
 
         Ok(())
@@ -431,20 +486,20 @@ impl Agent {
     }
 }
 
-fn hex_to_bytes(s: &String) -> Result<Vec<u8>,String> {
+fn hex_to_bytes(s: &String) -> Result<Vec<u8>, String> {
     if s.len() % 2 == 0 {
-      match (0..s.len())
+        match (0..s.len())
             .step_by(2)
             .map(|i| {
                 s.get(i..i + 2)
                     .and_then(|sub| u8::from_str_radix(sub, 16).ok())
             })
-            .collect() {
-          Some(r) => Ok(r),
-          _ => Err(format!("Cannot conver string {} to hex",s)),
-      }
+            .collect()
+        {
+            Some(r) => Ok(r),
+            _ => Err(format!("Cannot conver string {} to hex", s)),
+        }
     } else {
-        Err(format!("Can't conver string {:?} to hex",s))
+        Err(format!("Can't conver string {:?} to hex", s))
     }
 }
-
