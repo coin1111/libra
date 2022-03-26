@@ -4,7 +4,6 @@ use crate::{node::node::Node, node::query::QueryType};
 use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
 use bridge_ethers::config::Config;
 use bridge_ethers::util::AccountInfo as AccountInfoEth;
-use ethers::abi::Token;
 use ethers::prelude::Wallet as WalletEth;
 use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
@@ -411,8 +410,27 @@ impl Agent {
                 "Withdrawal for transfer_id {:?} has been made on ETH",
                 ai.transfer_id
             );
-        }
+            // Query locked
+            let locked = self.query_locked()?;
 
+            // Transfer happened , remove locked
+            let locked_ai = locked
+                .iter()
+                .find(|x| x.transfer_id == ai.transfer_id)
+                .and_then(|x| Some(x.clone()));
+            if locked_ai.is_some() {
+                println!("INFO: remove locked: {:?}", locked_ai);
+                let res = self.bridge_escrow_ol.bridge_close_transfer(
+                    &transfer_id.to_vec(),
+                    false, //close_other
+                    None,
+                );
+                if res.is_err() {
+                    return Err(format!("Failed to remove locked: {:?}", res.unwrap_err()));
+                }
+                println!("INFO: removed locked: {:?}", res.unwrap());
+            }
+        }
         Ok(())
     }
 
