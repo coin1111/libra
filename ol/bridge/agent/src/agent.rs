@@ -331,11 +331,11 @@ impl Agent {
         use std::str::FromStr;
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
-            return Err(format!("Empty deposit id: {:?}", ai));
+            return Err(format!("ERROR: Empty deposit id: {:?}", ai));
         }
-        // Query unlocked
-        let unlocked = self.query_unlocked()
-            .map_err(|err|format!("Failed to get unlocked: {:?}", err))?;
+        // Query unlocked on ETH
+        let unlocked = self.query_unlocked()?;
+
 
         let unlocked_ai = unlocked
             .iter()
@@ -344,43 +344,18 @@ impl Agent {
         if unlocked_ai.is_none() {
             let sender_this =
                 AccountAddress::from_str(&ai.sender_this)
-                    .map_err(|err|format!(
-                        "Failed to parse sender address: {:?}",
-                        err
-                    ))?;
-
-            // try to parse receiver address on 0L chain
-            let receiver_this = match AccountAddress::from_str(&ai.receiver_this) {
-                Ok(r) => Some(r),
-                Err(err) => {
-                    println!("WARN: cannot parse receiver_this address: {:?}", err.to_string());
-                    None
-                }
-            };
+                    .map_err(|err|err.to_string())?;
 
             // try to parse receiver address on ETH chain
-            let receiver_eth = match hex_to_bytes(&ai.receiver_other)
-                .map_err(|err|{println!("{:?}",err);err})
+            let receiver_eth = hex_to_bytes(&ai.receiver_other)
                 .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,20>(v)})
-                .map_err(|err|{println!("Can't convert vector to array {:?}",err);err})
-                .and_then(|a|{Ok(ethers::types::Address::from(a))}) {
-                Ok(r) =>Some(r),
-                _ => None,
-            };
+                .and_then(|a|{Ok(ethers::types::Address::from(a))})?;
 
             let transfer_id = hex_to_bytes(&ai.transfer_id)
-                .map_err(|err|{println!("{:?}",err);err})
-                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,16>(v)})
-                .map_err(|err|{println!("Can't convert vector to array {:?}",err);err})?;
+                .and_then(|v|{bridge_ethers::util::vec_to_array::<u8,16>(v)})?;
 
             // Transfer is not happened => transfer funds
-            if receiver_this.is_some() {
-                self.withdraw_ol_ol(ai, sender_this, receiver_this.unwrap(), transfer_id);
-            } else if receiver_eth.is_some() {
-                self.withdraw_ol_eth(ai, sender_this, receiver_eth.unwrap(), transfer_id)
-            } else {
-                println!("ERROR: receiver_this and receiver_eth are both empty, skip transfer");
-            }
+            self.withdraw_ol_eth(ai, sender_this, receiver_eth, transfer_id);
         }
 
         Ok(())

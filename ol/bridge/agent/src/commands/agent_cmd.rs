@@ -86,9 +86,9 @@ impl Runnable for AgentCmd {
 
         loop {
             // 0L->0L
-            agent.process_deposits_ol_ol();
-            agent.process_withdrawals_ol_ol();
-            thread::sleep(Duration::from_millis(10000));
+            // agent.process_deposits_ol_ol();
+            // agent.process_withdrawals_ol_ol();
+            // thread::sleep(Duration::from_millis(10000));
 
             // 0L->ETH
             agent.process_deposits_ol_eth();
