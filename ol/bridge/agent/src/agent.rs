@@ -119,6 +119,14 @@ impl Agent {
         let transfer_id_str = hex::encode(locked.0);
         if locked_ai.is_closed {
             println!("INFO: transfer_id: {:?} is processed ignore it",locked.0);
+            // check if 0L unlocked is prersent and remove it
+            self.query_unlocked()
+                .and_then(|v|{
+                    match v.iter().find(|ai| ai.transfer_id == transfer_id_str) {
+                        Some(ai) => {self.close_eth_account(locked.0); Ok(())},
+                        _ => Ok(()),
+                    } })?;
+            // dave checkpoint of the last transfer id processed to a file
             let data = format!("{},{}", hex::encode(locked.0),locked.1);
             fs::write("agent_checkpoint", data)
                 .map_err(|err|format!("Unable to write file agent_checkpoint, error: {:?}",err))?;
@@ -130,39 +138,24 @@ impl Agent {
                 .and_then(|ai|Some(ai.clone()))
                 ))?;
         if unlocked_exists.is_some() {
-            println!("INFO: 0L unlocked entry exists for transfer_id {}", transfer_id_str);
+            println!("INFO: 0L unlocked entry exists for transfer_id {}, remove it", transfer_id_str);
             // mark eth entry as completed
             self.close_eth_account(locked.0);
-            return         Ok(());
+            Ok(())
+        } else {
+            // unlocked doesn't exist
+            // transfer fund on 0L
+            let receiver_this =
+                AccountAddress::from_bytes(locked_ai.receiver_other)
+                    .map_err(|err| format!("cannot parse receiver_other: {:?}, error: {:?}",
+                                           locked_ai.receiver_other, err))?;
+            self.withdraw_eth_ol(
+                locked_ai.sender_other.to_vec(),
+                receiver_this,
+                locked_ai.balance,
+                locked_ai.transfer_id);
+            Ok(())
         }
-        // transfer fund on 0L
-        let receiver_this =
-            AccountAddress::from_bytes(locked_ai.receiver_other)
-                .map_err(|err|format!("cannot parse receiver_other: {:?}, error: {:?}",
-                locked_ai.receiver_other,err))?;
-        self.withdraw_eth_ol(
-                             locked_ai.sender_other.to_vec(),
-                             receiver_this,
-                             locked_ai.balance,
-                             locked_ai.transfer_id);
-        Ok(())
-
-
-        //
-        // let ais = self.query_locked();
-        // if ais.is_err() {
-        //     println!("WARN: Failed to get locked: {}", ais.unwrap_err());
-        //     return;
-        // }
-        // for ai in ais.unwrap() {
-        //     match self.process_deposit_eth_ol(&ai) {
-        //         Ok(()) => println!("INFO: Succesfully processed transfer: {}", ai.transfer_id),
-        //         Err(err) => println!(
-        //             "ERROR: Failed to process transfer: {}, error: {}",
-        //             ai.transfer_id, err
-        //         ),
-        //     }
-        // }
     }
 
     /// Process individual transfer
