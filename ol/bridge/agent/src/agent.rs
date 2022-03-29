@@ -7,12 +7,13 @@ use bridge_ethers::util::AccountInfo as AccountInfoEth;
 use ethers::prelude::Wallet as WalletEth;
 use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
-use ethers::types::Address;
+use ethers::types::{Address, U256};
 use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
 use tokio::runtime::Runtime;
+use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -101,29 +102,74 @@ impl Agent {
     }
 
     /// Process autstanding transfers
-    pub fn process_deposits_ol_ol(&self) {
-        println!("INFO: process deposits");
-        let ais = self.query_locked();
-        if ais.is_err() {
-            println!("WARN: Failed to get locked: {}", ais.unwrap_err());
-            return;
+    pub fn process_deposits_eth_ol(&self) -> Result<(),String> {
+        println!("INFO: process deposits from ETH to 0L");
+        // Query unlocked on ETH
+        let start:U256 = U256::from(0);
+        let len:U256 = U256::from(10);
+        let locked= self.get_next_locked_info(start,len)?;
+
+        println!("next locked: {:?}",locked);
+        if locked.0 == [0u8;16] {
+            return Ok(())  ;
         }
-        for ai in ais.unwrap() {
-            match self.process_deposit_ol_ol(&ai) {
-                Ok(()) => println!("INFO: Succesfully processed transfer: {}", ai.transfer_id),
-                Err(err) => println!(
-                    "ERROR: Failed to process transfer: {}, error: {}",
-                    ai.transfer_id, err
-                ),
-            }
+        println!("INFO: processing transfer_id: {:?}",locked.0);
+        // check if it is processed already
+       let locked_ai = self.query_locked_eth(locked.0)?;
+        let transfer_id_str = hex::encode(locked.0);
+        if locked_ai.is_closed {
+            println!("INFO: transfer_id: {:?} is processed ignore it",locked.0);
+            let data = format!("{},{}", hex::encode(locked.0),locked.1);
+            fs::write("agent_checkpoint", data)
+                .map_err(|err|format!("Unable to write file agent_checkpoint, error: {:?}",err))?;
+            return Ok(());
         }
+        // check if unlocked exists on 0L
+        let unlocked_exists = self.query_unlocked()
+            .and_then(|v|Ok(v.iter().find(|ai| ai.transfer_id == transfer_id_str)
+                .and_then(|ai|Some(ai.clone()))
+                ))?;
+        if unlocked_exists.is_some() {
+            println!("INFO: 0L unlocked entry exists for transfer_id {}", transfer_id_str);
+            // mark eth entry as completed
+            self.close_eth_account(locked.0);
+            return         Ok(());
+        }
+        // transfer fund on 0L
+        let receiver_this =
+            AccountAddress::from_bytes(locked_ai.receiver_other)
+                .map_err(|err|format!("cannot parse receiver_other: {:?}, error: {:?}",
+                locked_ai.receiver_other,err))?;
+        self.withdraw_eth_ol(
+                             locked_ai.sender_other.to_vec(),
+                             receiver_this,
+                             locked_ai.balance,
+                             locked_ai.transfer_id);
+        Ok(())
+
+
+        //
+        // let ais = self.query_locked();
+        // if ais.is_err() {
+        //     println!("WARN: Failed to get locked: {}", ais.unwrap_err());
+        //     return;
+        // }
+        // for ai in ais.unwrap() {
+        //     match self.process_deposit_eth_ol(&ai) {
+        //         Ok(()) => println!("INFO: Succesfully processed transfer: {}", ai.transfer_id),
+        //         Err(err) => println!(
+        //             "ERROR: Failed to process transfer: {}, error: {}",
+        //             ai.transfer_id, err
+        //         ),
+        //     }
+        // }
     }
 
     /// Process individual transfer
     // Transfer deposit from escrow to destination receiver
     // Ensure that unlocked doesn't have an entry for this transfer
     // This indicates that transfer has not been made, thus proceed with transfer
-    fn process_deposit_ol_ol(&self, ai: &AccountInfo) -> Result<(), String> {
+    fn process_deposit_eth_ol(&self, ai: &AccountInfo) -> Result<(), String> {
         use std::str::FromStr;
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
@@ -219,6 +265,30 @@ impl Agent {
         }
     }
 
+    fn withdraw_eth_ol(
+        &self,
+        sender_other: Vec<u8>,
+        receiver_this: AccountAddress,
+        balance: u64,
+        transfer_id: [u8; 16],
+    ) {
+        // transfer 0L->0L
+        println!("INFO: withdraw from bridge, transfer_id: {:?}", transfer_id);
+        let res = self.bridge_escrow_ol.bridge_withdraw(
+            AccountAddress::ZERO,
+            sender_other,
+            receiver_this,
+            balance,
+            transfer_id.to_vec(),
+            None,
+        );
+        if res.is_err() {
+            println!("Failed to withdraw from escrow: {:?}", res.unwrap_err());
+        } else {
+            println!("INFO: withdraw from bridge: {:?}", res.unwrap());
+        }
+    }
+
     fn withdraw_ol_eth(
         &self,
         ai: &AccountInfo,
@@ -253,6 +323,56 @@ impl Agent {
         }
     }
 
+    fn close_eth_account(
+        &self,
+        transfer_id: [u8; 16],
+    ) {
+        // close ETH transfer account
+        match &self.agent_eth {
+            Some(a) => {
+                let rt = Runtime::new().unwrap();
+                let handle = rt.handle();
+                handle.block_on(async move {
+                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                    let data = contract
+                        .close_transfer_account_sender(
+                            transfer_id,
+                        )
+                        .gas_price(a.gas_price);
+                    let pending_tx = data
+                        .send()
+                        .await
+                        .map_err(|e| println!("Error pending: {}", e))
+                        .unwrap();
+                    println!("pending_tx: {:?}", pending_tx);
+                });
+            }
+            _ => println!("Warn: agent_eth is not initialized"),
+        }
+    }
+
+    fn query_locked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        match &self.agent_eth {
+            Some(a) => {
+                let rt = Runtime::new().unwrap();
+                let handle = rt.handle();
+                let mut res: Result<AccountInfoEth, String> =
+                    Err(String::from("uninited contract"));
+                handle.block_on(async {
+                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                    let data = contract.get_locked_account_info(transfer_id);
+                    res = data
+                        .call()
+                        .await
+                        .map_err(|err| format!("ERROR: call: {:?}", err))
+                        .and_then(|x| AccountInfoEth::from(x));
+                });
+                res
+            }
+            _ => Err(String::from("agent is not initialized")),
+        }
+    }
+
     fn query_unlocked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
         match &self.agent_eth {
             Some(a) => {
@@ -275,89 +395,27 @@ impl Agent {
         }
     }
 
-    /// For compeleted transfers, remove locked and unlocked entries in this  porder
-    pub fn process_withdrawals_ol_ol(&self) {
-        println!("INFO: process withdrawals");
-        let ais = self.query_unlocked();
-        if ais.is_err() {
-            println!("WARN: Failed to get unlocked: {}", ais.unwrap_err());
-            return;
-        }
-        for ai in ais.unwrap() {
-            match self.process_withdrawal_ol_ol(&ai) {
-                Ok(()) => println!("INFO: Succesfully processed withdrawal: {}", ai.transfer_id),
-                Err(err) => println!(
-                    "ERROR: Failed to process withdrawal: {}, error: {}",
-                    ai.transfer_id, err
-                ),
+    fn get_next_locked_info(&self, start: U256, len:U256) -> Result<([u8; 16], U256), String> {
+        match &self.agent_eth {
+            Some(a) => {
+                let rt = Runtime::new().unwrap();
+                let handle = rt.handle();
+                let mut res: Result<([u8; 16], U256), String> =
+                    Err(String::from("uninited contract"));
+                handle.block_on(async {
+                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
+                    let data = contract.get_next_transfer_id(start, len);
+                    res = data
+                        .call()
+                        .await
+                        .map_err(|err| format!("ERROR: call: {:?}", err));
+                });
+                res
             }
+            _ => Err(String::from("agent is not initialized")),
         }
     }
 
-    /// Process individual transfer
-    // If unlocked exists, remove locked and then unlocked in this order
-    fn process_withdrawal_ol_ol(&self, ai: &AccountInfo) -> Result<(), String> {
-        println!("INFO: Processing withdrawal: {:?}", ai);
-        if ai.transfer_id.is_empty() {
-            return Err(format!("Empty transfer id: {:?}", ai));
-        }
-        let transfer_id = hex_to_bytes(&ai.transfer_id).map_err(|err| {
-            println!(
-                "Failed to parse transfer_id: {}, error: {:?}",
-                ai.transfer_id, err
-            );
-            err
-        })?;
-
-        // Query locked
-        let locked = self.query_locked();
-        if locked.is_err() {
-            return Err(format!("Failed to get locked: {}", locked.unwrap_err()));
-        }
-        // Transfer happened , remove locked
-        let locked_ai = locked
-            .unwrap()
-            .iter()
-            .find(|x| x.transfer_id == ai.transfer_id)
-            .and_then(|x| Some(x.clone()));
-        if locked_ai.is_some() {
-            println!("INFO: remove locked: {:?}", locked_ai);
-            let res = self.bridge_escrow_ol.bridge_close_transfer(
-                &transfer_id,
-                false, //close_other
-                None,
-            );
-            if res.is_err() {
-                return Err(format!("Failed to remove locked: {:?}", res.unwrap_err()));
-            }
-            println!("INFO: removed locked: {:?}", res.unwrap());
-        }
-
-        // Locked is removed , remove unlocked
-        // Query locked
-        let unlocked = self.query_unlocked();
-        if unlocked.is_err() {
-            return Err(format!("Failed to get unlocked: {}", unlocked.unwrap_err()));
-        }
-        let unlocked_ai = unlocked
-            .unwrap()
-            .iter()
-            .find(|x| x.transfer_id == ai.transfer_id)
-            .and_then(|x| Some(x.clone()));
-        if unlocked_ai.is_some() {
-            println!("INFO: remove unlocked: {:?}", unlocked_ai);
-            let res = self.bridge_escrow_ol.bridge_close_transfer(
-                &transfer_id,
-                true, //close_other
-                None,
-            );
-            if res.is_err() {
-                return Err(format!("Failed to remove unlocked: {:?}", res.unwrap_err()));
-            }
-            println!("INFO: removed unlocked: {:?}", res.unwrap());
-        }
-        Ok(())
-    }
 
     /// Process autstanding transfers
     pub fn process_deposits_ol_eth(&self) {

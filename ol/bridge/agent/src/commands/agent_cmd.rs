@@ -86,14 +86,14 @@ impl Runnable for AgentCmd {
 
         loop {
             // 0L->0L
-            // agent.process_deposits_ol_ol();
+            let _ = agent.process_deposits_eth_ol().
+                map_err(|err|println!("ERROR: failed to process eth deposits, error: {:?}",err));
             // agent.process_withdrawals_ol_ol();
-            // thread::sleep(Duration::from_millis(10000));
+            thread::sleep(Duration::from_millis(10000));
 
             // 0L->ETH
-            agent.process_deposits_ol_eth();
-            //agent.process_withdrawals_ol_ol();
-            thread::sleep(Duration::from_millis(10000));
+            // agent.process_deposits_ol_eth();
+            // thread::sleep(Duration::from_millis(10000));
         }
     }
 }
