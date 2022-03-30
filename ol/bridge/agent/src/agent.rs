@@ -47,6 +47,16 @@ struct AgentEth {
     gas_price: u64,
 }
 
+/// Contains current transfer_id to process and the next start element
+/// to start searching from for the next transfer_id to process
+#[derive(Debug)]
+struct EthLockedInfo {
+    /// Current transfer_id to process
+    transfer_id :[u8;16],
+    ///  Index to start searching for the next transfer_id to process
+    next_start: U256,
+}
+
 impl AgentEth {
     pub fn new(
         config_eth: &Option<Config>,
@@ -105,6 +115,21 @@ impl Agent {
     pub fn process_deposits_eth_ol(&self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
+        let start_idx = Self::read_checkpoint();
+
+        // Query unlocked on ETH
+        let start = U256::from(start_idx);
+        let len: U256 = U256::from(10);
+        let locked = self.get_next_locked_info(start, len)?;
+
+        println!("next locked: {:?}", locked);
+        if locked.transfer_id == [0u8; 16] {
+            return Ok(());
+        }
+        self.process_transfer_ethol(locked)
+    }
+
+    fn read_checkpoint() -> i32 {
         let start_idx = fs::read_to_string(".agent_checkpoint")
             .and_then(|ss| {
                 let v: Vec<&str> = ss.split('\n').collect();
@@ -119,27 +144,17 @@ impl Agent {
                 Ok(start.unwrap_or(0))
             })
             .unwrap_or(0);
-
-        // Query unlocked on ETH
-        let start = U256::from(start_idx);
-        let len: U256 = U256::from(10);
-        let locked = self.get_next_locked_info(start, len)?;
-
-        println!("next locked: {:?}", locked);
-        if locked.0 == [0u8; 16] {
-            return Ok(());
-        }
-        self.process_transfer_ethol(locked)
+        start_idx
     }
 
-    fn process_transfer_ethol(&self, locked: ([u8; 16], U256)) -> Result<(), String> {
-        println!("INFO: processing transfer_id: {:?}", locked.0);
+    fn process_transfer_ethol(&self, locked: EthLockedInfo) -> Result<(), String> {
+        println!("INFO: processing transfer_id: {:?}", locked.transfer_id);
         // check if it is processed already
-        let locked_ai = self.query_locked_eth(locked.0)?;
+        let locked_ai = self.query_locked_eth(locked.transfer_id)?;
         if locked_ai.is_closed {
             return Ok(());
         }
-        let transfer_id_str = hex::encode(locked.0);
+        let transfer_id_str = hex::encode(locked.transfer_id);
         // check if unlocked exists on 0L
         let unlocked_exists = self.query_unlocked().and_then(|v| {
             Ok(v.iter()
@@ -152,18 +167,18 @@ impl Agent {
                 transfer_id_str
             );
             // mark eth entry as completed
-            self.close_eth_account(locked.0);
+            self.close_eth_account(locked.transfer_id);
             // query ETH locked account
-            let ai = self.query_locked_eth(locked.0)?;
+            let ai = self.query_locked_eth(locked.transfer_id)?;
             if ai.is_closed {
-                println!("INFO: transfer_id: {:?} is processed ignore it", locked.0);
+                println!("INFO: transfer_id: {:?} is processed ignore it", locked.transfer_id);
                 // check if 0L unlocked is prersent and remove it
                 self.query_unlocked().and_then(|v| {
                     Ok(v.iter().find(|ai| ai.transfer_id == transfer_id_str)
-                        .map_or_else(||(),|_|self.close_eth_account(locked.0)))
+                        .map_or_else(||(),|_|self.close_eth_account(locked.transfer_id)))
                 })?;
                 // dave checkpoint of the last transfer id processed to a file
-                let data = format!("{},{}", hex::encode(locked.0), locked.1);
+                let data = format!("{},{}", hex::encode(locked.transfer_id), locked.next_start);
                 fs::write(".agent_checkpoint", data).map_err(|err| {
                     format!("Unable to write file agent_checkpoint, error: {:?}", err)
                 })?;
@@ -316,12 +331,12 @@ impl Agent {
         }
     }
 
-    fn get_next_locked_info(&self, start: U256, len: U256) -> Result<([u8; 16], U256), String> {
+    fn get_next_locked_info(&self, start: U256, len: U256) -> Result<EthLockedInfo, String> {
         match &self.agent_eth {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
                 let handle = rt.handle();
-                let mut res: Result<([u8; 16], U256), String> =
+                let mut res: Result<EthLockedInfo, String> =
                     Err(String::from("uninited contract"));
                 handle.block_on(async {
                     let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
@@ -329,7 +344,11 @@ impl Agent {
                     res = data
                         .call()
                         .await
-                        .map_err(|err| format!("ERROR: call: {:?}", err));
+                        .map_err(|err| format!("ERROR: call: {:?}", err))
+                        .and_then(|tuple|Ok(EthLockedInfo{
+                            transfer_id: tuple.0,
+                            next_start: tuple.1,
+                        }));
                 });
                 res
             }
