@@ -12,8 +12,8 @@ use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
-use tokio::runtime::Runtime;
 use std::fs;
+use tokio::runtime::Runtime;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -102,58 +102,92 @@ impl Agent {
     }
 
     /// Process autstanding transfers
-    pub fn process_deposits_eth_ol(&self) -> Result<(),String> {
+    pub fn process_deposits_eth_ol(&self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
-        // Query unlocked on ETH
-        let start:U256 = U256::from(0);
-        let len:U256 = U256::from(10);
-        let locked= self.get_next_locked_info(start,len)?;
+        // use checkpoint to get start element
+        let start_idx = fs::read_to_string(".agent_checkpoint")
+            .and_then(|ss| {
+                let v: Vec<&str> = ss.split('\n').collect();
+                let start = v.get(0).and_then(|s| {
+                    let idx = s
+                        .split(',')
+                        .collect::<Vec<&str>>()
+                        .last()
+                        .and_then(|v| Some(v.parse::<i32>().unwrap_or(0)));
+                    idx
+                });
+                Ok(start.unwrap_or(0))
+            })
+            .unwrap_or(0);
 
-        println!("next locked: {:?}",locked);
-        if locked.0 == [0u8;16] {
-            return Ok(())  ;
-        }
-        println!("INFO: processing transfer_id: {:?}",locked.0);
-        // check if it is processed already
-       let locked_ai = self.query_locked_eth(locked.0)?;
-        let transfer_id_str = hex::encode(locked.0);
-        if locked_ai.is_closed {
-            println!("INFO: transfer_id: {:?} is processed ignore it",locked.0);
-            // check if 0L unlocked is prersent and remove it
-            self.query_unlocked()
-                .and_then(|v|{
-                    match v.iter().find(|ai| ai.transfer_id == transfer_id_str) {
-                        Some(ai) => {self.close_eth_account(locked.0); Ok(())},
-                        _ => Ok(()),
-                    } })?;
-            // dave checkpoint of the last transfer id processed to a file
-            let data = format!("{},{}", hex::encode(locked.0),locked.1);
-            fs::write("agent_checkpoint", data)
-                .map_err(|err|format!("Unable to write file agent_checkpoint, error: {:?}",err))?;
+        // Query unlocked on ETH
+        let start = U256::from(start_idx);
+        let len: U256 = U256::from(10);
+        let locked = self.get_next_locked_info(start, len)?;
+
+        println!("next locked: {:?}", locked);
+        if locked.0 == [0u8; 16] {
             return Ok(());
         }
+        println!("INFO: processing transfer_id: {:?}", locked.0);
+        // check if it is processed already
+        let locked_ai = self.query_locked_eth(locked.0)?;
+        if locked_ai.is_closed {
+            return Ok(());
+        }
+        let transfer_id_str = hex::encode(locked.0);
         // check if unlocked exists on 0L
-        let unlocked_exists = self.query_unlocked()
-            .and_then(|v|Ok(v.iter().find(|ai| ai.transfer_id == transfer_id_str)
-                .and_then(|ai|Some(ai.clone()))
-                ))?;
+        let unlocked_exists = self.query_unlocked().and_then(|v| {
+            Ok(v.iter()
+                .find(|ai| ai.transfer_id == transfer_id_str)
+                .and_then(|ai| Some(ai.clone())))
+        })?;
         if unlocked_exists.is_some() {
-            println!("INFO: 0L unlocked entry exists for transfer_id {}, remove it", transfer_id_str);
+            println!(
+                "INFO: 0L unlocked entry exists for transfer_id {}, remove it",
+                transfer_id_str
+            );
             // mark eth entry as completed
             self.close_eth_account(locked.0);
+            // query ETH locked account
+            let ai = self.query_locked_eth(locked.0)?;
+            if ai.is_closed {
+                println!("INFO: transfer_id: {:?} is processed ignore it", locked.0);
+                // check if 0L unlocked is prersent and remove it
+                self.query_unlocked().and_then(|v| {
+                    match v.iter().find(|ai| ai.transfer_id == transfer_id_str) {
+                        Some(ai) => {
+                            self.close_eth_account(locked.0);
+                            Ok(())
+                        }
+                        _ => Ok(()),
+                    }
+                })?;
+                // dave checkpoint of the last transfer id processed to a file
+                let data = format!("{},{}", hex::encode(locked.0), locked.1);
+                fs::write(".agent_checkpoint", data).map_err(|err| {
+                    format!("Unable to write file agent_checkpoint, error: {:?}", err)
+                })?;
+            }
+
             Ok(())
         } else {
             // unlocked doesn't exist
             // transfer fund on 0L
             let receiver_this =
-                AccountAddress::from_bytes(locked_ai.receiver_other)
-                    .map_err(|err| format!("cannot parse receiver_other: {:?}, error: {:?}",
-                                           locked_ai.receiver_other, err))?;
+                AccountAddress::from_bytes(locked_ai.receiver_other).map_err(|err| {
+                    format!(
+                        "cannot parse receiver_other: {:?}, error: {:?}",
+                        locked_ai.receiver_other, err
+                    )
+                })?;
             self.withdraw_eth_ol(
                 locked_ai.sender_other.to_vec(),
                 receiver_this,
                 locked_ai.balance,
-                locked_ai.transfer_id);
+                locked_ai.transfer_id,
+            );
+
             Ok(())
         }
     }
@@ -316,10 +350,7 @@ impl Agent {
         }
     }
 
-    fn close_eth_account(
-        &self,
-        transfer_id: [u8; 16],
-    ) {
+    fn close_eth_account(&self, transfer_id: [u8; 16]) {
         // close ETH transfer account
         match &self.agent_eth {
             Some(a) => {
@@ -328,9 +359,7 @@ impl Agent {
                 handle.block_on(async move {
                     let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
                     let data = contract
-                        .close_transfer_account_sender(
-                            transfer_id,
-                        )
+                        .close_transfer_account_sender(transfer_id)
                         .gas_price(a.gas_price);
                     let pending_tx = data
                         .send()
@@ -388,7 +417,7 @@ impl Agent {
         }
     }
 
-    fn get_next_locked_info(&self, start: U256, len:U256) -> Result<([u8; 16], U256), String> {
+    fn get_next_locked_info(&self, start: U256, len: U256) -> Result<([u8; 16], U256), String> {
         match &self.agent_eth {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
@@ -408,7 +437,6 @@ impl Agent {
             _ => Err(String::from("agent is not initialized")),
         }
     }
-
 
     /// Process autstanding transfers
     pub fn process_deposits_ol_eth(&self) {
