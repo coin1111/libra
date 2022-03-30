@@ -129,6 +129,10 @@ impl Agent {
         if locked.0 == [0u8; 16] {
             return Ok(());
         }
+        self.process_transfer_ethol(locked)
+    }
+
+    fn process_transfer_ethol(&self, locked: ([u8; 16], U256)) -> Result<(), String> {
         println!("INFO: processing transfer_id: {:?}", locked.0);
         // check if it is processed already
         let locked_ai = self.query_locked_eth(locked.0)?;
@@ -155,13 +159,8 @@ impl Agent {
                 println!("INFO: transfer_id: {:?} is processed ignore it", locked.0);
                 // check if 0L unlocked is prersent and remove it
                 self.query_unlocked().and_then(|v| {
-                    match v.iter().find(|ai| ai.transfer_id == transfer_id_str) {
-                        Some(ai) => {
-                            self.close_eth_account(locked.0);
-                            Ok(())
-                        }
-                        _ => Ok(()),
-                    }
+                    Ok(v.iter().find(|ai| ai.transfer_id == transfer_id_str)
+                        .map_or_else(||(),|_|self.close_eth_account(locked.0)))
                 })?;
                 // dave checkpoint of the last transfer id processed to a file
                 let data = format!("{},{}", hex::encode(locked.0), locked.1);
@@ -189,106 +188,6 @@ impl Agent {
             );
 
             Ok(())
-        }
-    }
-
-    /// Process individual transfer
-    // Transfer deposit from escrow to destination receiver
-    // Ensure that unlocked doesn't have an entry for this transfer
-    // This indicates that transfer has not been made, thus proceed with transfer
-    fn process_deposit_eth_ol(&self, ai: &AccountInfo) -> Result<(), String> {
-        use std::str::FromStr;
-        println!("INFO: Processing deposit: {:?}", ai);
-        if ai.transfer_id.is_empty() {
-            return Err(format!("Empty deposit id: {:?}", ai));
-        }
-        // Query unlocked
-        let unlocked = self
-            .query_unlocked()
-            .map_err(|err| format!("Failed to get unlocked: {:?}", err))?;
-
-        let unlocked_ai = unlocked
-            .iter()
-            .find(|x| x.transfer_id == ai.transfer_id)
-            .and_then(|x| Some(x.clone()));
-        if unlocked_ai.is_none() {
-            let sender_this = AccountAddress::from_str(&ai.sender_this)
-                .map_err(|err| format!("Failed to parse sender address: {:?}", err))?;
-
-            // try to parse receiver address on 0L chain
-            let receiver_this = match AccountAddress::from_str(&ai.receiver_this) {
-                Ok(r) => Some(r),
-                Err(err) => {
-                    println!(
-                        "WARN: cannot parse receiver_this address: {:?}",
-                        err.to_string()
-                    );
-                    None
-                }
-            };
-
-            // try to parse receiver address on ETH chain
-            let receiver_eth = match hex_to_bytes(&ai.receiver_other)
-                .map_err(|err| {
-                    println!("{:?}", err);
-                    err
-                })
-                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
-                .map_err(|err| {
-                    println!("Can't convert vector to array {:?}", err);
-                    err
-                })
-                .and_then(|a| Ok(ethers::types::Address::from(a)))
-            {
-                Ok(r) => Some(r),
-                _ => None,
-            };
-
-            let transfer_id = hex_to_bytes(&ai.transfer_id)
-                .map_err(|err| {
-                    println!("{:?}", err);
-                    err
-                })
-                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))
-                .map_err(|err| {
-                    println!("Can't convert vector to array {:?}", err);
-                    err
-                })?;
-
-            // Transfer is not happened => transfer funds
-            if receiver_this.is_some() {
-                self.withdraw_ol_ol(ai, sender_this, receiver_this.unwrap(), transfer_id);
-            } else if receiver_eth.is_some() {
-                self.withdraw_ol_eth(ai, sender_this, receiver_eth.unwrap(), transfer_id)
-            } else {
-                println!("ERROR: receiver_this and receiver_eth are both empty, skip transfer");
-            }
-        }
-
-        Ok(())
-    }
-
-    fn withdraw_ol_ol(
-        &self,
-        ai: &AccountInfo,
-        sender_this: AccountAddress,
-        receiver_this: AccountAddress,
-        transfer_id: [u8; 16],
-    ) {
-        // transfer 0L->0L
-        println!("INFO: withdraw from bridge, ai: {:?}", ai);
-        let res = self.bridge_escrow_ol.bridge_withdraw(
-            sender_this,
-            Vec::new(),
-            receiver_this,
-            ai.balance,
-            transfer_id.to_vec(),
-            None,
-        );
-        if res.is_err() {
-            println!("Failed to withdraw from escrow: {:?}", res.unwrap_err());
-        } else {
-            println!("INFO: withdraw from bridge: {:?}", res.unwrap());
         }
     }
 
