@@ -1,5 +1,6 @@
 //! Bridge agent
 use crate::bridge_escrow::BridgeEscrow;
+use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};
 use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
 use bridge_ethers::config::Config;
@@ -12,7 +13,6 @@ use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
-use std::fs;
 use tokio::runtime::Runtime;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -49,12 +49,12 @@ struct AgentEth {
 
 /// Contains current transfer_id to process and the next start element
 /// to start searching from for the next transfer_id to process
-#[derive(Debug)]
-struct EthLockedInfo {
+#[derive(Debug, Copy, Clone)]
+pub struct EthLockedInfo {
     /// Current transfer_id to process
-    transfer_id :[u8;16],
+    pub transfer_id: [u8; 16],
     ///  Index to start searching for the next transfer_id to process
-    next_start: U256,
+    pub next_start: U256,
 }
 
 impl AgentEth {
@@ -111,82 +111,100 @@ impl Agent {
         }
     }
 
-    /// Process autstanding transfers
+    /// Process outstanding transfers
     pub fn process_deposits_eth_ol(&self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
-        let start_idx = Self::read_checkpoint();
+        let start_idx = read_eth_checkpoint();
 
         // Query unlocked on ETH
         let start = U256::from(start_idx);
         let len: U256 = U256::from(10);
         let locked = self.get_next_locked_info(start, len)?;
 
-        println!("next locked: {:?}", locked);
+        println!("INFO: next locked: {:?}", locked);
         if locked.transfer_id == [0u8; 16] {
+            // transfer_id is 0, nothing to do
             return Ok(());
         }
-        self.process_transfer_ethol(locked)
+        self.process_deposit_eth_ol(locked)
     }
 
-    fn read_checkpoint() -> i32 {
-        let start_idx = fs::read_to_string(".agent_checkpoint")
-            .and_then(|ss| {
-                let v: Vec<&str> = ss.split('\n').collect();
-                let start = v.get(0).and_then(|s| {
-                    let idx = s
-                        .split(',')
-                        .collect::<Vec<&str>>()
-                        .last()
-                        .and_then(|v| Some(v.parse::<i32>().unwrap_or(0)));
-                    idx
-                });
-                Ok(start.unwrap_or(0))
-            })
-            .unwrap_or(0);
-        start_idx
-    }
-
-    fn process_transfer_ethol(&self, locked: EthLockedInfo) -> Result<(), String> {
+    /// Process transfer
+    /// 1. check if account on ETH chain is not processed (not closed) in locked struct
+    /// 2. check in unlocked struct exists on on 0L chain for this transfer_id. If exists, then
+    /// account on ETH can be closed for this transfer. If unlcoked entry doesn't exist on 0L,
+    /// then make a withdrawal on 0L, which will create an entry in unlocked struct on 0L.
+    /// 3. If locked entry is marked as closed on ETH chain then unlocked entry can be removed on 0L chain,
+    /// this completes a transfer on both chains.
+    fn process_deposit_eth_ol(&self, locked: EthLockedInfo) -> Result<(), String> {
         println!("INFO: processing transfer_id: {:?}", locked.transfer_id);
-        // check if it is processed already
-        let locked_ai = self.query_locked_eth(locked.transfer_id)?;
+        // Check if this transfer is processed already,
+        // e.g. locked entry on ETH chain is marked as closed
+        let locked_ai = self.query_eth_locked(locked.transfer_id)?;
         if locked_ai.is_closed {
+            println!("INFO: transfer is processed already: {:?}", locked_ai);
             return Ok(());
         }
+
         let transfer_id_str = hex::encode(locked.transfer_id);
-        // check if unlocked exists on 0L
+
+        // Locked entry on ETH side is not closed
+        // Check if corresponding unlocked exists on 0L chain.
+        // this means that withdrawal to a recepient on 0L has been made already
+        // and we need to cleanup this transfer account on both chains - 1) close locked entry on ETH
+        // and 2) remove unlocked entry on 0L strictly in this order
         let unlocked_exists = self.query_unlocked().and_then(|v| {
             Ok(v.iter()
                 .find(|ai| ai.transfer_id == transfer_id_str)
                 .and_then(|ai| Some(ai.clone())))
         })?;
         if unlocked_exists.is_some() {
+            // Unlocked entry already exists on 0L chain, which means that
+            // withdrawal has been made already,
+            // thus mark ETH side as completed
             println!(
-                "INFO: 0L unlocked entry exists for transfer_id {}, remove it",
+                "INFO: 0L unlocked entry exists for transfer_id {}, close ETH transfer account",
                 transfer_id_str
             );
-            // mark eth entry as completed
-            self.close_eth_account(locked.transfer_id);
-            // query ETH locked account
-            let ai = self.query_locked_eth(locked.transfer_id)?;
-            if ai.is_closed {
-                println!("INFO: transfer_id: {:?} is processed ignore it", locked.transfer_id);
-                // check if 0L unlocked is prersent and remove it
-                self.query_unlocked().and_then(|v| {
-                    Ok(v.iter().find(|ai| ai.transfer_id == transfer_id_str)
-                        .map_or_else(||(),|_|self.close_eth_account(locked.transfer_id)))
-                })?;
-                // dave checkpoint of the last transfer id processed to a file
-                let data = format!("{},{}", hex::encode(locked.transfer_id), locked.next_start);
-                fs::write(".agent_checkpoint", data).map_err(|err| {
-                    format!("Unable to write file agent_checkpoint, error: {:?}", err)
-                })?;
-            }
+            // Mark ETH entry as completed
+            self.close_eth_account(locked.transfer_id)?;
 
-            Ok(())
+            // Query ETH locked account we just closed.
+            // Note we don't rely on success or failure of close_eth_account()
+            // instead we directly query ETH chain to ensure that account is indeed closed.
+            let ai = self.query_eth_locked(locked.transfer_id)?;
+            if !ai.is_closed {
+                return Ok(());
+            }
+            // Now that ETH account is closed
+            // we can remove corresponding unlocked entry on 0L chain
+            println!(
+                "INFO: ETH account is closed for transfer_id: {:?}",
+                locked.transfer_id
+            );
+            // Check if 0L unlocked is prersent and remove it
+            self.query_unlocked().and_then(|v| {
+                    v.iter().find(|ai| ai.transfer_id == transfer_id_str)
+                        .map_or_else(||Ok(()),|_|{
+                            let res = self.bridge_escrow_ol.bridge_close_transfer(
+                                &locked.transfer_id.to_vec(),
+                                true, //close_other
+                                None,
+                            )
+                                .map_err(|err|format!("ERROR: failed to remove locked: {:?}", err))
+                                .map(|tx|{
+                                    println!("INFO: closed unlocked 0L account for transfer_id: {:?}, tx: {:?}",
+                                             transfer_id_str,tx)
+                                });
+                            res
+                        })
+                })?;
+            // Save checkpoint of the last transfer id processed to a file
+            // so that the next time we know where to start searching for unprocessed transfers
+            return save_eth_checkpoint(locked);
         } else {
-            // unlocked doesn't exist
+            // unlocked entry on 0L doesn't exist
             // transfer fund on 0L
             let receiver_this =
                 AccountAddress::from_bytes(locked_ai.receiver_other).map_err(|err| {
@@ -195,14 +213,14 @@ impl Agent {
                         locked_ai.receiver_other, err
                     )
                 })?;
-            self.withdraw_eth_ol(
+            // We can query ETH side and mark locked entry as closed right after,
+            // instead let the other iteration of this function to do that
+            return self.withdraw_eth_ol(
                 locked_ai.sender_other.to_vec(),
                 receiver_this,
                 locked_ai.balance,
                 locked_ai.transfer_id,
             );
-
-            Ok(())
         }
     }
 
@@ -212,22 +230,19 @@ impl Agent {
         receiver_this: AccountAddress,
         balance: u64,
         transfer_id: [u8; 16],
-    ) {
+    ) -> Result<(),String>{
         // transfer 0L->0L
         println!("INFO: withdraw from bridge, transfer_id: {:?}", transfer_id);
-        let res = self.bridge_escrow_ol.bridge_withdraw(
+        self.bridge_escrow_ol.bridge_withdraw(
             AccountAddress::ZERO,
             sender_other,
             receiver_this,
             balance,
             transfer_id.to_vec(),
             None,
-        );
-        if res.is_err() {
-            println!("Failed to withdraw from escrow: {:?}", res.unwrap_err());
-        } else {
-            println!("INFO: withdraw from bridge: {:?}", res.unwrap());
-        }
+        )
+            .map_err(|err|format!("ERROR: bridge_withdraw, error: {:?}",err))
+            .map(|tx|println!("INFO: transaction: {:?}",tx))
     }
 
     fn withdraw_ol_eth(
@@ -264,30 +279,31 @@ impl Agent {
         }
     }
 
-    fn close_eth_account(&self, transfer_id: [u8; 16]) {
+    fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
         // close ETH transfer account
         match &self.agent_eth {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
                 let handle = rt.handle();
-                handle.block_on(async move {
+                let mut pending_tx: Result<(),String> = Err(format!("ERROR: empty pending_tx"));
+                handle.block_on(async {
                     let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
                     let data = contract
                         .close_transfer_account_sender(transfer_id)
                         .gas_price(a.gas_price);
-                    let pending_tx = data
+                    pending_tx = data
                         .send()
                         .await
-                        .map_err(|e| println!("Error pending: {}", e))
-                        .unwrap();
-                    println!("pending_tx: {:?}", pending_tx);
+                        .map_err(|e| format!("Error pending: {}", e))
+                        .map(|tx| println!("INFO: transaction: {:?}", tx));
                 });
+                pending_tx
             }
-            _ => println!("Warn: agent_eth is not initialized"),
+            _ => Err(format!("Warn: agent_eth is not initialized")),
         }
     }
 
-    fn query_locked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+    fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
         match &self.agent_eth {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
@@ -336,8 +352,7 @@ impl Agent {
             Some(a) => {
                 let rt = Runtime::new().unwrap();
                 let handle = rt.handle();
-                let mut res: Result<EthLockedInfo, String> =
-                    Err(String::from("uninited contract"));
+                let mut res: Result<EthLockedInfo, String> = Err(String::from("uninited contract"));
                 handle.block_on(async {
                     let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
                     let data = contract.get_next_transfer_id(start, len);
@@ -345,10 +360,12 @@ impl Agent {
                         .call()
                         .await
                         .map_err(|err| format!("ERROR: call: {:?}", err))
-                        .and_then(|tuple|Ok(EthLockedInfo{
-                            transfer_id: tuple.0,
-                            next_start: tuple.1,
-                        }));
+                        .and_then(|tuple| {
+                            Ok(EthLockedInfo {
+                                transfer_id: tuple.0,
+                                next_start: tuple.1,
+                            })
+                        });
                 });
                 res
             }
