@@ -363,6 +363,7 @@ impl Agent {
         println!("INFO: process 0L transfers");
         let ais = self.query_ol_locked()?;
 
+        // Process one entry at a time
         ais.get(0).and_then(|ai|{
             Some(self.process_transfer_ol(&ai)
                 .map(|_|println!("INFO: Succesfully processed 0L transfer: {:?}", ai)))
@@ -401,23 +402,26 @@ impl Agent {
                 "INFO: withdrawal for transfer_id {:?} has been made on ETH, remove unlocked entry on 0L",
                 ai.transfer_id
             );
-            // Query locked on 0L chain
-            let locked_ol = self.query_ol_locked()?;
+            // Query locked entries on 0L chain
+            let locked_ol_entries = self.query_ol_locked()?;
 
-            // Remove locked om 0L
-            return locked_ol
+            // Find entry for this tyransfer id
+            let  locked_ol = locked_ol_entries
                 .iter()
-                .find(|x| x.transfer_id == ai.transfer_id)
-                .map_or_else(||Ok(()), |x| {
-                    println!("INFO: remove locked on 0L: {:?}", x);
-                    self.bridge_escrow_ol.bridge_close_transfer(
-                        &transfer_id.to_vec(),
-                        false, //close_other = false -> remove locked entry
-                        None,
-                    ).map_err(|err|format!("Failed to remove locked: {:?}", err))
-                        .map(|tx|println!("INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
-                                         transfer_id,tx))
-                });
+                .find(|x| x.transfer_id == ai.transfer_id);
+
+            if locked_ol.is_none() {
+                return Ok(());
+            }
+
+            println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
+            return self.bridge_escrow_ol.bridge_close_transfer(
+                &transfer_id.to_vec(),
+                false, //close_other = false -> remove locked entry
+                None,
+            ).map_err(|err|format!("Failed to remove locked: {:?}", err))
+                .map(|tx|println!("INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
+                                  transfer_id,tx));
         }
     }
 

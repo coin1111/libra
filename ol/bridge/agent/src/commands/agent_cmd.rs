@@ -94,8 +94,9 @@ impl Runnable for AgentCmd {
             thread::sleep(Duration::from_millis(10000));
 
             // 0L->ETH
-            // agent.process_transfers_ol();
-            // // thread::sleep(Duration::from_millis(10000));
+            let _ = agent.process_transfers_ol()
+                .map_err(|err|println!("ERROR: failed to process 0L deposits, error: {:?}",err));
+            thread::sleep(Duration::from_millis(10000));
         }
     }
 }
