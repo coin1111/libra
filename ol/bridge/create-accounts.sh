@@ -9,3 +9,5 @@ cargo run -p txs -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice  create-
 
 # init escrow
 cargo run -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bridge-escrow bridge-create-escrow
+
+rm $HOME/libra/.agent_checkpoint
