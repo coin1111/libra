@@ -34,7 +34,7 @@ pub struct Agent {
     /// BridgeEscrow contract for 0L
     pub bridge_escrow_ol: BridgeEscrow,
 
-    agent_eth: Option<AgentEth>,
+    agent_eth: AgentEth,
 }
 
 struct AgentEth {
@@ -110,17 +110,14 @@ impl Agent {
         node_ol: Node,
         config_eth: Option<Config>,
         agent_eth: Option<Wallet>,
-    ) -> Agent {
-        let agent_eth = match AgentEth::new(&config_eth, &agent_eth) {
-            Ok(a) => Some(a),
-            _ => None,
-        };
+    ) -> Result<Agent, String> {
+        let agent_eth = AgentEth::new(&config_eth, &agent_eth)?;
 
-        Agent {
+        Ok(Agent {
             node_ol,
             bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
             agent_eth,
-        }
+        })
     }
 
     /// Process outstanding transfers
@@ -271,124 +268,92 @@ impl Agent {
         transfer_id: [u8; 16],
     ) {
         // transfer 0L -> ETH
-        match &self.agent_eth {
-            Some(a) => {
-                let rt = Runtime::new().unwrap();
-                let handle = rt.handle();
-                handle.block_on(async move {
-                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                    let data = contract
-                        .withdraw_from_escrow(
-                            sender_this.to_u8(),
-                            receiver_eth,
-                            ai.balance,
-                            transfer_id,
-                        )
-                        .gas_price(a.gas_price);
-                    let pending_tx = data
-                        .send()
-                        .await
-                        .map_err(|e| println!("Error pending: {}", e))
-                        .unwrap();
-                    println!("pending_tx: {:?}", pending_tx);
-                });
-            }
-            _ => println!("Warn: agent_eth is not initialized"),
-        }
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        handle.block_on(async {
+            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+            let data = contract
+                .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
+                .gas_price(self.agent_eth.gas_price);
+            let pending_tx = data
+                .send()
+                .await
+                .map_err(|e| println!("Error pending: {}", e))
+                .unwrap();
+            println!("pending_tx: {:?}", pending_tx);
+        });
     }
 
     fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
         // close ETH transfer account
-        match &self.agent_eth {
-            Some(a) => {
-                let rt = Runtime::new().unwrap();
-                let handle = rt.handle();
-                let mut pending_tx: Result<(), String> = Err(format!("ERROR: empty pending_tx"));
-                handle.block_on(async {
-                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                    let data = contract
-                        .close_transfer_account_sender(transfer_id)
-                        .gas_price(a.gas_price);
-                    pending_tx = data
-                        .send()
-                        .await
-                        .map_err(|e| format!("Error pending: {}", e))
-                        .map(|tx| println!("INFO: transaction: {:?}", tx));
-                });
-                pending_tx
-            }
-            _ => Err(format!("Warn: agent_eth is not initialized")),
-        }
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        let mut pending_tx: Result<(), String> = Err(format!("ERROR: empty pending_tx"));
+        handle.block_on(async {
+            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+            let data = contract
+                .close_transfer_account_sender(transfer_id)
+                .gas_price(self.agent_eth.gas_price);
+            pending_tx = data
+                .send()
+                .await
+                .map_err(|e| format!("Error pending: {}", e))
+                .map(|tx| println!("INFO: transaction: {:?}", tx));
+        });
+        pending_tx
     }
 
     fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        match &self.agent_eth {
-            Some(a) => {
-                let rt = Runtime::new().unwrap();
-                let handle = rt.handle();
-                let mut res: Result<AccountInfoEth, String> =
-                    Err(String::from("uninited contract"));
-                handle.block_on(async {
-                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                    let data = contract.get_locked_account_info(transfer_id);
-                    res = data
-                        .call()
-                        .await
-                        .map_err(|err| format!("ERROR: call: {:?}", err))
-                        .and_then(|x| AccountInfoEth::from(x));
-                });
-                res
-            }
-            _ => Err(String::from("agent is not initialized")),
-        }
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        let mut res: Result<AccountInfoEth, String> = Err(String::from("uninited contract"));
+        handle.block_on(async {
+            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+            let data = contract.get_locked_account_info(transfer_id);
+            res = data
+                .call()
+                .await
+                .map_err(|err| format!("ERROR: call: {:?}", err))
+                .and_then(|x| AccountInfoEth::from(x));
+        });
+        res
     }
 
     fn query_unlocked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        match &self.agent_eth {
-            Some(a) => {
-                let rt = Runtime::new().unwrap();
-                let handle = rt.handle();
-                let mut res: Result<AccountInfoEth, String> =
-                    Err(String::from("uninited contract"));
-                handle.block_on(async {
-                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                    let data = contract.get_unlocked_account_info(transfer_id);
-                    res = data
-                        .call()
-                        .await
-                        .map_err(|err| format!("ERROR: call: {:?}", err))
-                        .and_then(|x| AccountInfoEth::from(x));
-                });
-                res
-            }
-            _ => Err(String::from("agent is not initialized")),
-        }
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        let mut res: Result<AccountInfoEth, String> = Err(String::from("uninited contract"));
+        handle.block_on(async {
+            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+            let data = contract.get_unlocked_account_info(transfer_id);
+            res = data
+                .call()
+                .await
+                .map_err(|err| format!("ERROR: call: {:?}", err))
+                .and_then(|x| AccountInfoEth::from(x));
+        });
+        res
     }
 
     fn get_eth_next_locked_info(&self, start: U256, len: U256) -> Result<EthLockedInfo, String> {
-        match &self.agent_eth {
-            Some(a) => {
-                let rt = Runtime::new().unwrap();
-                let handle = rt.handle();
-                let mut res: Result<EthLockedInfo, String> = Err(String::from("uninited contract"));
-                handle.block_on(async {
-                    let contract = BridgeEscrowEth::new(a.escrow_addr, &a.client);
-                    let data = contract.get_next_transfer_id(start, len);
-                    res = data
-                        .call()
-                        .await
-                        .map_err(|err| format!("ERROR: call: {:?}", err))
-                        .and_then(|tuple| {
-                            Ok(EthLockedInfo {
-                                transfer_id: tuple.0,
-                                next_start: tuple.1,
-                            })
-                        });
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        let mut res: Result<EthLockedInfo, String> = Err(String::from("uninited contract"));
+        handle.block_on(async {
+            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+            let data = contract.get_next_transfer_id(start, len);
+            res = data
+                .call()
+                .await
+                .map_err(|err| format!("ERROR: call: {:?}", err))
+                .and_then(|tuple| {
+                    Ok(EthLockedInfo {
+                        transfer_id: tuple.0,
+                        next_start: tuple.1,
+                    })
                 });
-                res
-            }
-            _ => Err(String::from("agent is not initialized")),
-        }
+        });
+        res
     }
 
     /// Process autstanding transfers

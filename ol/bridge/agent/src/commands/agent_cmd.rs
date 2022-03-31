@@ -82,7 +82,10 @@ impl Runnable for AgentCmd {
             Node::new(ol_client, &cfg, is_swarm),
             config_eth.map_or_else(|_| None, |x| Some(x)),
             account_eth,
-        );
+        ).unwrap_or_else(|err|{
+            println!("ERROR: failed to create agent, error: {}",err);
+            exit(1);
+        });
 
         loop {
             // 0L->0L
