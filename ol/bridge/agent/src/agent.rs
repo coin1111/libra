@@ -121,7 +121,7 @@ impl Agent {
     }
 
     /// Process outstanding transfers
-    pub fn process_deposits_eth(&self) -> Result<(), String> {
+    pub fn process_transfers_eth(&self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
         let start_idx = read_eth_checkpoint();
@@ -136,7 +136,7 @@ impl Agent {
             // transfer_id is 0, nothing to do
             return Ok(());
         }
-        self.process_deposit_eth(locked_eth)
+        self.process_transfer_eth(locked_eth)
     }
 
     /// Process transfer
@@ -146,7 +146,7 @@ impl Agent {
     /// then make a withdrawal on 0L, which will create an entry in unlocked struct on 0L.
     /// 3. If locked entry is marked as closed on ETH chain then unlocked entry can be removed on 0L chain,
     /// this completes a transfer on both chains.
-    fn process_deposit_eth(&self, locked_eth: EthLockedInfo) -> Result<(), String> {
+    fn process_transfer_eth(&self, locked_eth: EthLockedInfo) -> Result<(), String> {
         println!(
             "INFO: processing transfer_id: {:?} on ETH chain",
             hex::encode(locked_eth.transfer_id)
