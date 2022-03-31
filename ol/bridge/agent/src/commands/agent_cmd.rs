@@ -94,7 +94,7 @@ impl Runnable for AgentCmd {
             thread::sleep(Duration::from_millis(10000));
 
             // 0L->ETH
-            // agent.process_deposits_ol_eth();
+            // agent.process_transfers_ol();
             // // thread::sleep(Duration::from_millis(10000));
         }
     }

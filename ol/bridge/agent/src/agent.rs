@@ -15,6 +15,7 @@ use serde_json::Value;
 use std::convert::TryFrom;
 use std::fmt;
 use tokio::runtime::Runtime;
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -166,7 +167,7 @@ impl Agent {
         // this means that withdrawal to a recepient on 0L has been made already
         // and we need to cleanup this transfer account on both chains - 1) close locked entry on ETH
         // and 2) remove unlocked entry on 0L strictly in this order
-        let unlocked_ol_exists = self.query_unlocked().and_then(|v| {
+        let unlocked_ol_exists = self.query_ol_unlocked().and_then(|v| {
             Ok(v.iter()
                 .find(|ai| ai.transfer_id == transfer_id_str)
                 .and_then(|ai| Some(ai.clone())))
@@ -196,7 +197,7 @@ impl Agent {
                 hex::encode(locked_eth.transfer_id)
             );
             // Check if 0L unlocked is prersent and remove it
-            self.query_unlocked().and_then(|v| {
+            self.query_ol_unlocked().and_then(|v| {
                     v.iter().find(|ai| ai.transfer_id == transfer_id_str)
                         .map_or_else(||Ok(()),|_|{
                             println!("INFO: will close unlocked 0L account for transfer_id: {:?}",transfer_id_str);
@@ -260,28 +261,29 @@ impl Agent {
             .map(|tx| println!("INFO: 0L transaction: {:?}", tx))
     }
 
-    fn withdraw_ol_eth(
+    fn withdraw_eth(
         &self,
         ai: &AccountInfo,
         sender_this: AccountAddress,
         receiver_eth: H160,
         transfer_id: [u8; 16],
-    ) {
+    ) -> Result<(),String>{
         // transfer 0L -> ETH
         let rt = Runtime::new().unwrap();
         let handle = rt.handle();
+        let mut res : Result<(),String> = Err(format!(""));
         handle.block_on(async {
             let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
             let data = contract
                 .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
                 .gas_price(self.agent_eth.gas_price);
-            let pending_tx = data
+             res = data
                 .send()
                 .await
-                .map_err(|e| println!("Error pending: {}", e))
-                .unwrap();
-            println!("pending_tx: {:?}", pending_tx);
+                .map_err(|e| format!("failed withdraw from 0L: {:?}", e))
+                .map(|tx|println!("INFO: withdraw from 0L, tx: {:?}",tx));
         });
+        res
     }
 
     fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
@@ -319,7 +321,7 @@ impl Agent {
         res
     }
 
-    fn query_unlocked_eth(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+    fn query_eth_unlocked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
         let rt = Runtime::new().unwrap();
         let handle = rt.handle();
         let mut res: Result<AccountInfoEth, String> = Err(String::from("uninited contract"));
@@ -357,30 +359,21 @@ impl Agent {
     }
 
     /// Process autstanding transfers
-    pub fn process_deposits_ol_eth(&self) {
-        println!("INFO: process deposits");
-        let ais = self.query_locked();
-        if ais.is_err() {
-            println!("WARN: Failed to get locked: {}", ais.unwrap_err());
-            return;
-        }
-        for ai in ais.unwrap() {
-            match self.process_deposit_ol_eth(&ai) {
-                Ok(()) => println!("INFO: Succesfully processed transfer: {}", ai.transfer_id),
-                Err(err) => println!(
-                    "ERROR: Failed to process transfer: {}, error: {}",
-                    ai.transfer_id, err
-                ),
-            }
-        }
+    pub fn process_transfers_ol(&self) -> Result<(),String>{
+        println!("INFO: process 0L transfers");
+        let ais = self.query_ol_locked()?;
+
+        ais.get(0).and_then(|ai|{
+            Some(self.process_transfer_ol(&ai)
+                .map(|_|println!("INFO: Succesfully processed 0L transfer: {:?}", ai)))
+        }).unwrap_or_else(||Ok(()))
     }
 
     /// Process individual transfer
     // Transfer deposit from escrow to destination receiver
     // Ensure that unlocked doesn't have an entry for this transfer
     // This indicates that transfer has not been made, thus proceed with transfer
-    fn process_deposit_ol_eth(&self, ai: &AccountInfo) -> Result<(), String> {
-        use std::str::FromStr;
+    fn process_transfer_ol(&self, ai: &AccountInfo) -> Result<(), String> {
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
             return Err(format!("ERROR: Empty deposit id: {:?}", ai));
@@ -390,8 +383,8 @@ impl Agent {
             .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))?;
 
         // Query unlocked on ETH
-        let unlocked: AccountInfoEth = self.query_unlocked_eth(transfer_id.clone())?;
-        if unlocked.transfer_id == [0u8; 16] {
+        let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone())?;
+        if unlocked_eth.transfer_id == [0u8; 16] {
             let sender_this =
                 AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
@@ -400,41 +393,38 @@ impl Agent {
                 .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
                 .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
-            // Transfer is not happened => transfer funds
-            self.withdraw_ol_eth(ai, sender_this, receiver_eth, transfer_id);
+            // Transfer is not happened => transfer funds on ETH chain
+            return self.withdraw_eth(ai, sender_this, receiver_eth, transfer_id);
         } else {
+            // Unlocked entry exists on ETH chain, can remove locked entry on 0L chain now
             println!(
-                "Withdrawal for transfer_id {:?} has been made on ETH",
+                "INFO: withdrawal for transfer_id {:?} has been made on ETH, remove unlocked entry on 0L",
                 ai.transfer_id
             );
-            // Query locked
-            let locked = self.query_locked()?;
+            // Query locked on 0L chain
+            let locked_ol = self.query_ol_locked()?;
 
-            // Transfer happened , remove locked
-            let locked_ai = locked
+            // Remove locked om 0L
+            return locked_ol
                 .iter()
                 .find(|x| x.transfer_id == ai.transfer_id)
-                .and_then(|x| Some(x.clone()));
-            if locked_ai.is_some() {
-                println!("INFO: remove locked: {:?}", locked_ai);
-                let res = self.bridge_escrow_ol.bridge_close_transfer(
-                    &transfer_id.to_vec(),
-                    false, //close_other
-                    None,
-                );
-                if res.is_err() {
-                    return Err(format!("Failed to remove locked: {:?}", res.unwrap_err()));
-                }
-                println!("INFO: removed locked: {:?}", res.unwrap());
-            }
+                .map_or_else(||Ok(()), |x| {
+                    println!("INFO: remove locked on 0L: {:?}", x);
+                    self.bridge_escrow_ol.bridge_close_transfer(
+                        &transfer_id.to_vec(),
+                        false, //close_other = false -> remove locked entry
+                        None,
+                    ).map_err(|err|format!("Failed to remove locked: {:?}", err))
+                        .map(|tx|println!("INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
+                                         transfer_id,tx))
+                });
         }
-        Ok(())
     }
 
-    fn query_locked(&self) -> Result<Vec<AccountInfo>, String> {
+    fn query_ol_locked(&self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("locked");
     }
-    fn query_unlocked(&self) -> Result<Vec<AccountInfo>, String> {
+    fn query_ol_unlocked(&self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("unlocked");
     }
 
