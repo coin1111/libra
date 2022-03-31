@@ -13,8 +13,8 @@ use move_core_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
-use tokio::runtime::Runtime;
 use std::fmt;
+use tokio::runtime::Runtime;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -62,7 +62,7 @@ impl fmt::Display for EthLockedInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "transfer_id: {}, next_start: {})",
+            "transfer_id: {}, next_start: {}",
             hex::encode(self.transfer_id),
             self.next_start
         )
@@ -134,7 +134,7 @@ impl Agent {
         let len: U256 = U256::from(10);
         let locked = self.get_next_locked_info(start, len)?;
 
-        println!("INFO: next locked on ETH chain : {:?}", locked);
+        println!("INFO: next locked on ETH chain : {}", locked);
         if locked.transfer_id == [0u8; 16] {
             // transfer_id is 0, nothing to do
             return Ok(());
@@ -232,7 +232,7 @@ impl Agent {
             // We can query ETH side and mark locked entry as closed right after,
             // instead let the other iteration of this function to do that
             return self.withdraw_eth_ol(
-                locked_ai.sender_other.to_vec(),
+                locked_ai.sender_this.as_bytes().to_vec(),
                 receiver_this,
                 locked_ai.balance,
                 locked_ai.transfer_id,
