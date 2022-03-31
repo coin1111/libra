@@ -86,7 +86,7 @@ impl Runnable for AgentCmd {
 
         loop {
             // 0L->0L
-            let _ = agent.process_deposits_eth_ol().
+            let _ = agent.process_deposits_eth().
                 map_err(|err|println!("ERROR: failed to process eth deposits, error: {:?}",err));
             thread::sleep(Duration::from_millis(10000));
 
