@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
 use std::fmt;
-use tokio::runtime::Runtime;
 use std::str::FromStr;
+use tokio::runtime::Runtime;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -267,21 +267,21 @@ impl Agent {
         sender_this: AccountAddress,
         receiver_eth: H160,
         transfer_id: [u8; 16],
-    ) -> Result<(),String>{
+    ) -> Result<(), String> {
         // transfer 0L -> ETH
         let rt = Runtime::new().unwrap();
         let handle = rt.handle();
-        let mut res : Result<(),String> = Err(format!(""));
+        let mut res: Result<(), String> = Err(format!(""));
         handle.block_on(async {
             let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
             let data = contract
                 .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
                 .gas_price(self.agent_eth.gas_price);
-             res = data
+            res = data
                 .send()
                 .await
                 .map_err(|e| format!("failed withdraw from 0L: {:?}", e))
-                .map(|tx|println!("INFO: withdraw from 0L, tx: {:?}",tx));
+                .map(|tx| println!("INFO: withdraw from 0L, tx: {:?}", tx));
         });
         res
     }
@@ -359,15 +359,19 @@ impl Agent {
     }
 
     /// Process autstanding transfers
-    pub fn process_transfers_ol(&self) -> Result<(),String>{
+    pub fn process_transfers_ol(&self) -> Result<(), String> {
         println!("INFO: process 0L transfers");
         let ais = self.query_ol_locked()?;
 
         // Process one entry at a time
-        ais.get(0).and_then(|ai|{
-            Some(self.process_transfer_ol(&ai)
-                .map(|_|println!("INFO: Succesfully processed 0L transfer: {:?}", ai)))
-        }).unwrap_or_else(||Ok(()))
+        ais.get(0)
+            .and_then(|ai| {
+                Some(
+                    self.process_transfer_ol(&ai)
+                        .map(|_| println!("INFO: Succesfully processed 0L transfer: {:?}", ai)),
+                )
+            })
+            .unwrap_or_else(|| Ok(()))
     }
 
     /// Process individual transfer
@@ -406,7 +410,7 @@ impl Agent {
             let locked_ol_entries = self.query_ol_locked()?;
 
             // Find entry for this tyransfer id
-            let  locked_ol = locked_ol_entries
+            let locked_ol = locked_ol_entries
                 .iter()
                 .find(|x| x.transfer_id == ai.transfer_id);
 
@@ -415,13 +419,21 @@ impl Agent {
             }
 
             println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
-            return self.bridge_escrow_ol.bridge_close_transfer(
-                &transfer_id.to_vec(),
-                false, //close_other = false -> remove locked entry
-                None,
-            ).map_err(|err|format!("Failed to remove locked: {:?}", err))
-                .map(|tx|println!("INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
-                                  transfer_id,tx));
+            return self
+                .bridge_escrow_ol
+                .bridge_close_transfer(
+                    &transfer_id.to_vec(),
+                    false, //close_other = false -> remove locked entry
+                    None,
+                )
+                .map_err(|err| format!("Failed to remove locked: {:?}", err))
+                .map(|tx| {
+                    println!(
+                        "INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
+                        hex::encode(transfer_id),
+                        tx
+                    )
+                });
         }
     }
 
