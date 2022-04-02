@@ -13,6 +13,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
 use ol_types::config::TxType;
 use std::{path::PathBuf, process::exit};
+use uuid::Uuid;
 /// `BridgeDeposit` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct BridgeDepositCmd {
@@ -55,7 +56,7 @@ impl Runnable for BridgeDepositCmd {
                 exit(1);
             }
         };
-        let receiver_this = if  !self.receiver_this.is_empty() {
+        let receiver_this = if !self.receiver_this.is_empty() {
             match self.receiver_this.parse::<AccountAddress>() {
                 Ok(a) => a,
                 Err(e) => {
@@ -68,17 +69,14 @@ impl Runnable for BridgeDepositCmd {
                 }
             }
         } else {
-            AccountAddress::new([0;16])
+            AccountAddress::new([0; 16])
         };
 
         let receiver = if !self.receiver.is_empty() {
             match hex_to_bytes(&self.receiver) {
                 Some(a) => a,
                 None => {
-                    println!(
-                        "ERROR: could not parse this receiver: {}",
-                        self.receiver
-                    );
+                    println!("ERROR: could not parse this receiver: {}", self.receiver);
                     exit(1);
                 }
             }
@@ -86,15 +84,20 @@ impl Runnable for BridgeDepositCmd {
             Vec::new()
         };
 
-        let transfer_id = match hex_to_bytes(&self.transfer_id) {
-            Some(a) => a,
-            None => {
-                println!(
-                    "ERROR: could not parse this transfer_id: {}",
-                    self.transfer_id
-                );
-                exit(1);
+        let transfer_id = if !self.transfer_id.is_empty() {
+            match hex_to_bytes(&self.transfer_id) {
+                Some(a) => a,
+                None => {
+                    println!(
+                        "ERROR: could not parse this transfer_id: {}",
+                        self.transfer_id
+                    );
+                    exit(1);
+                }
             }
+        } else {
+            // generate transfer id
+            Uuid::new_v4().as_bytes().to_vec()
         };
 
         match bridge_deposit(

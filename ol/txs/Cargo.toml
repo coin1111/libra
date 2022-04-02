@@ -46,6 +46,7 @@ reqwest = { version = "0.11.2", features = ["blocking", "json"], default_feature
 storage-interface= {path = "../../storage/storage-interface"}
 vdf = { path = "../../ol/verifiable_delay/vdf", version = "^0.1.0" }
 vm-genesis={path="../../language/tools/vm-genesis"}
+uuid = { version = "0.8", features = ["v4"] }
 
 [dependencies.abscissa_core]
 version = "0.5.2"
