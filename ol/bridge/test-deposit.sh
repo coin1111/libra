@@ -1,1 +1,1 @@
-cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=pete bridge-deposit -e 708B1D23219EB737035CB29A68F0F3A8 -r 15d34aaf54267db7d7c367839aaf71a00a2c6a65 -c 20 -t aab47fa3a3dc42bc8cbc48c02182669b
+cargo run -p txs -- --swarm-path=/home/ruslan/swarm_temp/ --swarm-persona=pete bridge-deposit -e 708B1D23219EB737035CB29A68F0F3A8 -r 15d34aaf54267db7d7c367839aaf71a00a2c6a65 -c 20
