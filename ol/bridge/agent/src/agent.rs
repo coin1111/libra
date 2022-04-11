@@ -290,7 +290,9 @@ impl Agent {
     fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
         // close ETH transfer account
         let mut pending_tx: Result<(), String> = Err(format!("ERROR: empty pending_tx"));
-        let res = abscissa_tokio::run(&APPLICATION, async {
+        let rt = Runtime::new().unwrap();
+        let handle = rt.handle();
+        handle.block_on(async {
             let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
             let data = contract
                 .close_transfer_account_sender(transfer_id)
@@ -300,10 +302,8 @@ impl Agent {
                 .await
                 .map_err(|e| format!("Error pending: {}", e))
                 .map(|tx| println!("INFO: transaction: {:?}", tx));
-        })
-            .map_err(|err|err.to_string());
-
-        res.and_then(|_|pending_tx)
+        });
+        pending_tx
     }
 
     fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
