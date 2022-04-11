@@ -5,6 +5,7 @@ use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
+
 use abscissa_tokio::TokioComponent;
 /// Application state
 pub static APPLICATION: AppCell<BridgeAgentApp> = AppCell::new();

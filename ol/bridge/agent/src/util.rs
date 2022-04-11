@@ -19,7 +19,7 @@ pub fn read_eth_checkpoint() -> i32 {
             });
             Ok(start.unwrap_or(0))
         })
-        .map_err(|err|println!("ERROR: cannot read checkpoint file: {:?}, error: {:?}",
+        .map_err(|err|println!("WARN: cannot read checkpoint file: {:?}, error: {:?}",
             ETH_AGENT_CHECKPOINT, err.to_string()))
         .unwrap_or(0);
     start_idx

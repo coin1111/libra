@@ -16,6 +16,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
 use tokio::runtime::Runtime;
+use crate::application::APPLICATION;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -288,10 +289,8 @@ impl Agent {
 
     fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
         // close ETH transfer account
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
         let mut pending_tx: Result<(), String> = Err(format!("ERROR: empty pending_tx"));
-        handle.block_on(async {
+        let res = abscissa_tokio::run(&APPLICATION, async {
             let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
             let data = contract
                 .close_transfer_account_sender(transfer_id)
@@ -301,8 +300,10 @@ impl Agent {
                 .await
                 .map_err(|e| format!("Error pending: {}", e))
                 .map(|tx| println!("INFO: transaction: {:?}", tx));
-        });
-        pending_tx
+        })
+            .map_err(|err|err.to_string());
+
+        res.and_then(|_|pending_tx)
     }
 
     fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
@@ -394,7 +395,8 @@ impl Agent {
                 AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
             // try to parse receiver address on ETH chain
-            let receiver_eth = hex_to_bytes(&ai.receiver_other)
+            let receiver_eth = hex::decode(&ai.receiver_other)
+                .map_err(|err|err.to_string())
                 .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
                 .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
