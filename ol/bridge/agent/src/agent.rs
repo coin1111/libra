@@ -15,8 +15,6 @@ use serde_json::Value;
 use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
-use tokio::runtime::Runtime;
-use crate::application::APPLICATION;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -123,7 +121,7 @@ impl Agent {
     }
 
     /// Process outstanding transfers
-    pub fn process_transfers_eth(&self) -> Result<(), String> {
+    pub async fn process_transfers_eth(&self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
         let start_idx = read_eth_checkpoint();
@@ -131,14 +129,14 @@ impl Agent {
         // Query unlocked on ETH
         let start = U256::from(start_idx);
         let len: U256 = U256::from(10);
-        let locked_eth = self.get_eth_next_locked_info(start, len)?;
+        let locked_eth = self.get_eth_next_locked_info(start, len).await?;
 
         println!("INFO: next locked on ETH chain : {}", locked_eth);
         if locked_eth.transfer_id == [0u8; 16] {
             // transfer_id is 0, nothing to do
             return Ok(());
         }
-        self.process_transfer_eth(locked_eth)
+        self.process_transfer_eth(locked_eth).await
     }
 
     /// Process transfer
@@ -148,14 +146,14 @@ impl Agent {
     /// then make a withdrawal on 0L, which will create an entry in unlocked struct on 0L.
     /// 3. If locked entry is marked as closed on ETH chain then unlocked entry can be removed on 0L chain,
     /// this completes a transfer on both chains.
-    fn process_transfer_eth(&self, locked_eth: EthLockedInfo) -> Result<(), String> {
+    async fn process_transfer_eth(&self, locked_eth: EthLockedInfo) -> Result<(), String> {
         println!(
             "INFO: processing transfer_id: {:?} on ETH chain",
             hex::encode(locked_eth.transfer_id)
         );
         // Check if this transfer is processed already,
         // e.g. locked entry on ETH chain is marked as closed
-        let locked_ai = self.query_eth_locked(locked_eth.transfer_id)?;
+        let locked_ai = self.query_eth_locked(locked_eth.transfer_id).await?;
         if locked_ai.is_closed {
             println!("INFO: transfer is processed already: {:?}", locked_ai);
             return Ok(());
@@ -182,12 +180,12 @@ impl Agent {
                 transfer_id_str
             );
             // Mark ETH entry as completed
-            self.close_eth_account(locked_eth.transfer_id)?;
+            self.close_eth_account(locked_eth.transfer_id).await?;
 
             // Query ETH locked account we just closed.
             // Note we don't rely on success or failure of close_eth_account()
             // instead we directly query ETH chain to ensure that account is indeed closed.
-            let ai = self.query_eth_locked(locked_eth.transfer_id)?;
+            let ai = self.query_eth_locked(locked_eth.transfer_id).await?;
             if !ai.is_closed {
                 return Ok(());
             }
@@ -262,7 +260,7 @@ impl Agent {
             .map(|tx| println!("INFO: 0L transaction: {:?}", tx))
     }
 
-    fn withdraw_eth(
+    async fn withdraw_eth(
         &self,
         ai: &AccountInfo,
         sender_this: AccountAddress,
@@ -270,116 +268,84 @@ impl Agent {
         transfer_id: [u8; 16],
     ) -> Result<(), String> {
         // transfer 0L -> ETH
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
-        let mut res: Result<(), String> = Err(format!(""));
-        handle.block_on(async {
-            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-            let data = contract
-                .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
-                .gas_price(self.agent_eth.gas_price);
-            res = data
-                .send()
-                .await
-                .map_err(|e| format!("failed withdraw from 0L: {:?}", e))
-                .map(|tx| println!("INFO: withdraw from 0L, tx: {:?}", tx));
-        });
-        res
+        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+        let data = contract
+            .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
+            .gas_price(self.agent_eth.gas_price);
+        data.send()
+            .await
+            .map_err(|e| format!("failed withdraw from 0L: {:?}", e))
+            .map(|tx| println!("INFO: withdraw from 0L, tx: {:?}", tx))
     }
 
-    fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
+    async fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
         // close ETH transfer account
-        let mut pending_tx: Result<(), String> = Err(format!("ERROR: empty pending_tx"));
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
-        handle.block_on(async {
-            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-            let data = contract
-                .close_transfer_account_sender(transfer_id)
-                .gas_price(self.agent_eth.gas_price);
-            pending_tx = data
-                .send()
-                .await
-                .map_err(|e| format!("Error pending: {}", e))
-                .map(|tx| println!("INFO: transaction: {:?}", tx));
-        });
-        pending_tx
+        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+        let data = contract
+            .close_transfer_account_sender(transfer_id)
+            .gas_price(self.agent_eth.gas_price);
+        data.send()
+            .await
+            .map_err(|e| format!("Error pending: {}", e))
+            .map(|tx| println!("INFO: transaction: {:?}", tx))
     }
 
-    fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
-        let mut res: Result<AccountInfoEth, String> = Err(String::from("uninited contract"));
-        handle.block_on(async {
-            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-            let data = contract.get_locked_account_info(transfer_id);
-            res = data
-                .call()
-                .await
-                .map_err(|err| format!("ERROR: call: {:?}", err))
-                .and_then(|x| AccountInfoEth::from(x));
-        });
-        res
+    async fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+        let data = contract.get_locked_account_info(transfer_id);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|x| AccountInfoEth::from(x))
     }
 
-    fn query_eth_unlocked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
-        let mut res: Result<AccountInfoEth, String> = Err(String::from("uninited contract"));
-        handle.block_on(async {
-            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-            let data = contract.get_unlocked_account_info(transfer_id);
-            res = data
-                .call()
-                .await
-                .map_err(|err| format!("ERROR: call: {:?}", err))
-                .and_then(|x| AccountInfoEth::from(x));
-        });
-        res
+    async fn query_eth_unlocked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+        let data = contract.get_unlocked_account_info(transfer_id);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|x| AccountInfoEth::from(x))
     }
 
-    fn get_eth_next_locked_info(&self, start: U256, len: U256) -> Result<EthLockedInfo, String> {
-        let rt = Runtime::new().unwrap();
-        let handle = rt.handle();
-        let mut res: Result<EthLockedInfo, String> = Err(String::from("uninited contract"));
-        handle.block_on(async {
-            let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-            let data = contract.get_next_transfer_id(start, len);
-            res = data
-                .call()
-                .await
-                .map_err(|err| format!("ERROR: call: {:?}", err))
-                .and_then(|tuple| {
-                    Ok(EthLockedInfo {
-                        transfer_id: tuple.0,
-                        next_start: tuple.1,
-                    })
-                });
-        });
-        res
+    async fn get_eth_next_locked_info(
+        &self,
+        start: U256,
+        len: U256,
+    ) -> Result<EthLockedInfo, String> {
+        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
+        let data = contract.get_next_transfer_id(start, len);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|tuple| {
+                Ok(EthLockedInfo {
+                    transfer_id: tuple.0,
+                    next_start: tuple.1,
+                })
+            })
     }
 
     /// Process autstanding transfers
-    pub fn process_transfers_ol(&self) -> Result<(), String> {
+    pub async fn process_transfers_ol(&self) -> Result<(), String> {
         println!("INFO: process 0L transfers");
         let ais = self.query_ol_locked()?;
 
         // Process one entry at a time
-        ais.get(0)
-            .and_then(|ai| {
-                Some(
-                    self.process_transfer_ol(&ai)
-                        .map(|_| println!("INFO: Succesfully processed 0L transfer: {:?}", ai)),
-                )
-            })
-            .unwrap_or_else(|| Ok(()))
+        match ais.get(0) {
+            Some(ai) => self
+                .process_transfer_ol(&ai)
+                .await
+                .map(|_| println!("INFO: Succesfully processed 0L transfer: {:?}", ai)),
+            _ => Ok(()),
+        }
     }
 
     /// Process individual transfer
     // Transfer deposit from escrow to destination receiver
     // Ensure that unlocked doesn't have an entry for this transfer
     // This indicates that transfer has not been made, thus proceed with transfer
-    fn process_transfer_ol(&self, ai: &AccountInfo) -> Result<(), String> {
+    async fn process_transfer_ol(&self, ai: &AccountInfo) -> Result<(), String> {
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
             return Err(format!("ERROR: Empty deposit id: {:?}", ai));
@@ -389,19 +355,21 @@ impl Agent {
             .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))?;
 
         // Query unlocked on ETH
-        let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone())?;
+        let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
         if unlocked_eth.transfer_id == [0u8; 16] {
             let sender_this =
                 AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
             // try to parse receiver address on ETH chain
             let receiver_eth = hex::decode(&ai.receiver_other)
-                .map_err(|err|err.to_string())
+                .map_err(|err| err.to_string())
                 .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
                 .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
             // Transfer is not happened => transfer funds on ETH chain
-            return self.withdraw_eth(ai, sender_this, receiver_eth, transfer_id);
+            return self
+                .withdraw_eth(ai, sender_this, receiver_eth, transfer_id)
+                .await;
         } else {
             // Unlocked entry exists on ETH chain, can remove locked entry on 0L chain now
             println!(
