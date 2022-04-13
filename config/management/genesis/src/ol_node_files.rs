@@ -286,7 +286,7 @@ pub fn make_fullnode_cfg(
     seed_addr: Option<SeedAddresses>,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
-    let mut c = default_for_public_fullnode()?;
+    let mut c = default_for_public_full_node()?;
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
@@ -486,7 +486,7 @@ fn encode_validator_seed_for_vfn_discovery(
 }
 
 
-pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
+pub fn default_for_public_full_node() -> Result<NodeConfig, anyhow::Error> {
     let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
         .parent()
