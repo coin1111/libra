@@ -10,11 +10,9 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod query_cmd;
 mod agent_cmd;
 
 use self::{
-    query_cmd::QueryCmd,
     agent_cmd::AgentCmd,
 };
 
@@ -35,10 +33,6 @@ pub enum OlCliCmd {
     /// The `help` subcommand
     #[options(help = "get usage information")]
     Help(Help<Self>),
-
-    /// The `query` subcommand
-    #[options(help = "run simple queries through subcommands, prints the value to stdout")]
-    Query(QueryCmd),
 
     /// The `agent` subcommand
     #[options(help = "start agent")]
