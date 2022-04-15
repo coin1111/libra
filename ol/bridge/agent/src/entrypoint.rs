@@ -10,6 +10,11 @@ use reqwest::Url;
 use std::path::PathBuf;
 
 use crate::commands;
+use ol_types::config::TxType;
+use crate::submit_tx::TxParams;
+use anyhow::Error;
+use crate::prelude::app_config;
+use crate::submit_tx::tx_params;
 
 /// Toplevel entrypoint command.
 ///
@@ -171,4 +176,29 @@ pub fn get_node_home() -> PathBuf {
     }
 
     return config_path;
+}
+
+
+/// Main get tx params logic based on the design in this URL:
+/// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
+pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
+    let EntryPointTxsCmd {
+        url,
+        waypoint,
+        swarm_path,
+        swarm_persona,
+        ..
+    } = get_args();
+    let app_config = app_config().clone();
+    tx_params(
+        app_config,
+        url,
+        waypoint,
+        swarm_path,
+        swarm_persona,
+        tx_type,
+        false,//is_operator,
+        false, //use_upstream_url,
+        None,
+    )
 }

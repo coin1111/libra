@@ -1,6 +1,6 @@
 //! Bridge agent
 use crate::contract::BridgeEscrow;
-use crate::submit_tx::tx_params_wrapper;
+use crate::entrypoint::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};
 use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;

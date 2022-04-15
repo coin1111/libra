@@ -2,8 +2,6 @@
 #![forbid(unsafe_code)]
 use crate::{
     config::AppCfg,
-    entrypoint::{self, EntryPointTxsCmd},
-    prelude::app_config,
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
@@ -215,30 +213,6 @@ pub fn submit_tx(
         },
         Err(err) => Err(err),
     }
-}
-
-/// Main get tx params logic based on the design in this URL:
-/// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
-pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
-    let EntryPointTxsCmd {
-        url,
-        waypoint,
-        swarm_path,
-        swarm_persona,
-        ..
-    } = entrypoint::get_args();
-    let app_config = app_config().clone();
-    tx_params(
-        app_config,
-        url,
-        waypoint,
-        swarm_path,
-        swarm_persona,
-        tx_type,
-        false,//is_operator,
-        false, //use_upstream_url,
-        None,
-    )
 }
 
 /// tx_parameters format
