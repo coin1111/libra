@@ -1,18 +1,24 @@
 //! BridgeEscrow methods
-use crate::submit_tx::{maybe_submit, tx_params_wrapper, TxError};
+use crate::submit_tx::{maybe_submit, TxError};
 
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
-use ol_types::config::TxType;
+use crate::submit_tx::TxParams;
 use std::path::PathBuf;
+use anyhow::Error;
 /// BridgeEscrow contract
 pub struct BridgeEscrow {
     /// Bridge escrow account
     pub escrow: AccountAddress,
+
+    tx_params: TxParams,
 }
 
 impl BridgeEscrow {
+    pub fn new(escrow: AccountAddress,tx_params: TxParams) -> Result<BridgeEscrow, Error> {
+        Ok(BridgeEscrow { escrow, tx_params })
+    }
     /// withdraw into escrow account
     pub fn bridge_withdraw(
         &self,
@@ -23,7 +29,6 @@ impl BridgeEscrow {
         transfer_id: Vec<u8>,
         save_path: Option<PathBuf>,
     ) -> Result<TransactionView, TxError> {
-        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
         // coins are scaled
         let script = transaction_builder::encode_bridge_withdraw_script_function(
             self.escrow,
@@ -33,7 +38,7 @@ impl BridgeEscrow {
             balance,
             transfer_id,
         );
-        maybe_submit(script, &tx_params, save_path)
+        maybe_submit(script, &self.tx_params, save_path)
     }
 
     /// withdraw into escrow account
@@ -43,13 +48,12 @@ impl BridgeEscrow {
         close_other: bool,
         save_path: Option<PathBuf>,
     ) -> Result<TransactionView, TxError> {
-        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
         // coins are scaled
         let script = transaction_builder::encode_bridge_close_transfer_script_function(
             self.escrow,
             transfer_id.clone(),
             close_other,
         );
-        maybe_submit(script, &tx_params, save_path)
+        maybe_submit(script, &self.tx_params, save_path)
     }
 }

@@ -1,5 +1,6 @@
 //! Bridge agent
-use crate::bridge_escrow::BridgeEscrow;
+use crate::contract::BridgeEscrow;
+use crate::submit_tx::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};
 use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
@@ -10,6 +11,7 @@ use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
 use ethers::types::{Address, U256};
 use move_core_types::account_address::AccountAddress;
+use ol_types::config::TxType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::convert::TryFrom;
@@ -112,10 +114,11 @@ impl Agent {
         agent_eth: Option<Wallet>,
     ) -> Result<Agent, String> {
         let agent_eth = AgentEth::new(&config_eth, &agent_eth)?;
+        let tx_params = tx_params_wrapper(TxType::Mgmt).map_err(|err| err.to_string())?;
 
         Ok(Agent {
             node_ol,
-            bridge_escrow_ol: BridgeEscrow { escrow: ol_escrow },
+            bridge_escrow_ol: BridgeEscrow::new(ol_escrow, tx_params).unwrap(),
             agent_eth,
         })
     }
