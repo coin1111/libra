@@ -2,5 +2,4 @@
 #[cfg(test)]
 mod transfer_test;
 
-mod util;
 

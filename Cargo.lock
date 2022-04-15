@@ -224,9 +224,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.40"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
+checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
 dependencies = [
  "backtrace",
 ]
@@ -654,6 +654,7 @@ dependencies = [
  "bcs",
  "bitflags",
  "bridge-ethers",
+ "bridge-ol",
  "byteorder",
  "cassowary",
  "chrono",
@@ -713,6 +714,7 @@ dependencies = [
  "unicode-segmentation",
  "unicode-width",
  "url",
+ "uuid",
  "walkdir",
  "warp",
 ]
@@ -725,6 +727,27 @@ dependencies = [
  "ethers",
  "ethers-core",
  "serde_json",
+]
+
+[[package]]
+name = "bridge-ol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cli",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-json-rpc-client",
+ "diem-json-rpc-types",
+ "diem-secure-storage",
+ "diem-transaction-builder",
+ "diem-types",
+ "diem-wallet",
+ "ol-keys",
+ "ol-types",
+ "reqwest 0.11.2",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]

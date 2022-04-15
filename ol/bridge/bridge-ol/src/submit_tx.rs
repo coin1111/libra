@@ -1,14 +1,10 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
 use crate::{
-    config::AppCfg,
-    entrypoint::{self, EntryPointTxsCmd},
-    prelude::app_config,
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
 use anyhow::{Error, anyhow};
-use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
@@ -21,6 +17,7 @@ use diem_types::{
     chain_id::ChainId,
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
 };
+use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use ol_keys::{scheme::KeyScheme, wallet};
 
 use diem_wallet::WalletLibrary;
@@ -35,6 +32,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
+use ol_types::{config::{AppCfg, parse_toml}};
 
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
@@ -220,20 +218,19 @@ pub fn submit_tx(
 /// Main get tx params logic based on the design in this URL:
 /// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
 pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
-    let EntryPointTxsCmd {
-        url,
-        waypoint,
-        swarm_path,
-        swarm_persona,
-        ..
-    } = entrypoint::get_args();
-    let app_config = app_config().clone();
+    let tx_config = crate::config::read_config().unwrap();
+    let swarm_path = match tx_config.swarm_path.clone() {
+        Some(v) => (Ok(v) as Result<PathBuf, Error>),
+        None => Err(anyhow!("cannot get swarm config").into()),
+    }?;
+    let toml_path = swarm_path.join("0").join("0L.toml");
+    let app_config: AppCfg = parse_toml(toml_path)?;
     tx_params(
         app_config,
-        url,
-        waypoint,
-        swarm_path,
-        swarm_persona,
+        tx_config.url_opt,
+        tx_config.waypoint,
+        tx_config.swarm_path,
+        tx_config.swarm_persona,
         tx_type,
         false,//is_operator,
         false, //use_upstream_url,
@@ -243,7 +240,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
 
 /// tx_parameters format
 pub fn tx_params(
-    config: AppCfg,
+    config:AppCfg,
     url_opt: Option<Url>,
     waypoint: Option<Waypoint>,
     swarm_path: Option<PathBuf>,

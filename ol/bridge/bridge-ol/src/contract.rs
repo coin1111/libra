@@ -3,17 +3,13 @@
 #![allow(clippy::never_loop)]
 
 use crate::{
-    entrypoint,
     submit_tx::{maybe_submit, tx_params_wrapper, TxError},
 };
-use abscissa_core::{Command, Options, Runnable};
-
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
 use ol_types::config::TxType;
-use std::{path::PathBuf, process::exit};
-use uuid::Uuid;
+use std::{path::PathBuf};
 
 /// Deposit into escrow account
 pub fn bridge_deposit(
