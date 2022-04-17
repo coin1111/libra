@@ -3,11 +3,10 @@
 #![allow(clippy::never_loop)]
 
 use crate::submit_tx::TxParams;
-use crate::submit_tx::{maybe_submit, tx_params_wrapper, TxError};
+use crate::submit_tx::{maybe_submit, TxError};
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
-use ol_types::config::TxType;
 use std::path::PathBuf;
 use anyhow::Error;
 
@@ -19,8 +18,7 @@ pub struct BridgeEscrow {
 }
 
 impl BridgeEscrow {
-    pub fn new(escrow: AccountAddress) -> Result<BridgeEscrow, Error> {
-        let tx_params = tx_params_wrapper(TxType::Mgmt)?;
+    pub fn new(escrow: AccountAddress,tx_params: TxParams) -> Result<BridgeEscrow, Error> {
         Ok(BridgeEscrow { escrow, tx_params })
     }
 

@@ -1,5 +1,5 @@
 //! Bridge agent
-use crate::contract::BridgeEscrow;
+use bridge_ol::contract::BridgeEscrow;
 use crate::entrypoint::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};

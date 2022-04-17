@@ -11,10 +11,10 @@ use std::path::PathBuf;
 
 use crate::commands;
 use ol_types::config::TxType;
-use crate::submit_tx::TxParams;
+use bridge_ol::submit_tx::TxParams;
 use anyhow::Error;
 use crate::prelude::app_config;
-use crate::submit_tx::tx_params;
+use bridge_ol::submit_tx::tx_params;
 
 /// Toplevel entrypoint command.
 ///
