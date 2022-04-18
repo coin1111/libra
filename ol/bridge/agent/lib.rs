@@ -5,7 +5,4 @@
 #![recursion_limit = "1024"]
 
 
-#[cfg(any(test))]
-mod tests;
-
 

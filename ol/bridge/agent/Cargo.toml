@@ -77,8 +77,6 @@ simple-error = "0.2.3"
 uuid = "0.8.2"
 bridge-ol = { path = "../bridge-ol/" }
 
-
-
 # Parity with Storage create
 [dependencies.rocksdb]
 version = "0.15.0"
