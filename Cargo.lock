@@ -722,11 +722,13 @@ dependencies = [
 [[package]]
 name = "bridge-ethers"
 version = "0.1.0"
-source = "git+https://github.com/coin1111/eth-bridge-rs?rev=1f8429376e7b356cf438b8a940d8131472dae09c#1f8429376e7b356cf438b8a940d8131472dae09c"
+source = "git+https://github.com/coin1111/eth-bridge-rs?rev=453072f13358d620fb1e1e95a276d46907b50d64#453072f13358d620fb1e1e95a276d46907b50d64"
 dependencies = [
  "ethers",
  "ethers-core",
+ "hex 0.4.3",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -4630,10 +4632,13 @@ dependencies = [
 name = "integration-tests"
 version = "0.1.0"
 dependencies = [
+ "bridge-ethers",
  "bridge-ol",
  "diem-types",
+ "ethers",
  "hex 0.4.3",
  "ol-types",
+ "tokio 0.2.25",
  "uuid",
 ]
 
