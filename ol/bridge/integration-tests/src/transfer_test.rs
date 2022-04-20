@@ -6,9 +6,11 @@ use ol_types::config::TxType;
 use ethers::types::{Address as EthAddress};
 use bridge_ol::util::vec_to_array;
 use std::env;
-use ethers::providers::{Http, JsonRpcClient, Provider};
+use ethers::providers::{Http, Provider};
 use std::convert::TryFrom;
-use bridge_ethers::oltoken_mod::OLToken;
+use ethers::prelude::Address;
+use ethers::prelude::Client;
+use ethers::prelude::Wallet;
 
 #[tokio::main]
 #[test]
@@ -17,22 +19,8 @@ async fn test_transfer_simple() {
     let receiver_addr = hex::decode(receiver_addr_str).unwrap();
 
     // Eth contract
-    let eth_cfg_path = env::var("ETH_BRIDGE_ESCROW_CONFIG").unwrap();
-    println!("eth cfg path: {:?}", eth_cfg_path.clone());
-    let eth_cfg = bridge_ethers::config::Config::new(
-        eth_cfg_path.as_str()).unwrap();
-    let escrow_eth_addr = eth_cfg.get_escrow_contract_address().unwrap();
-    println!("escrow_eth_addr: {:?}", escrow_eth_addr);
-    let url = eth_cfg.get_provider_url().unwrap();
-    let gas_price = eth_cfg.get_gas_price().unwrap();
-    let eth_provider: Provider<Http> = Provider::<Http>::try_from(url.as_str()).unwrap();
-    let accounts_path_eth = env::var("ETH_ACCOUNTS_PATH").unwrap();
-    let names = vec!["alice", "bob", "carol", "pete", "todd", "bridgeEscrow"];
-    let eth_signers = bridge_ethers::signers::get_signers(accounts_path_eth.as_str(), names).unwrap();
-    let eth_sender_wallet = bridge_ethers::signers::get_signer(&eth_signers, "pete").unwrap();
+    let (eth_ol_addr, eth_client_ol) = get_eth_client();
 
-    let eth_ol_addr = eth_cfg.get_ol_contract_address().unwrap();
-    let eth_client_ol = eth_sender_wallet.clone().connect(eth_provider.clone());
     let eth_ol_token = bridge_ethers::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
 
     // Validate that funds are transferred to the other blockchian
@@ -67,5 +55,23 @@ async fn test_transfer_simple() {
         );
     println!("{:?}",res);
     assert!(res.is_ok());
+}
 
+fn get_eth_client() -> (Address, Client<Http, Wallet>) {
+    let eth_cfg_path = env::var("ETH_BRIDGE_ESCROW_CONFIG").unwrap();
+    println!("eth cfg path: {:?}", eth_cfg_path.clone());
+    let eth_cfg = bridge_ethers::config::Config::new(
+        eth_cfg_path.as_str()).unwrap();
+    let escrow_eth_addr = eth_cfg.get_escrow_contract_address().unwrap();
+    println!("escrow_eth_addr: {:?}", escrow_eth_addr);
+    let url = eth_cfg.get_provider_url().unwrap();
+    let eth_provider: Provider<Http> = Provider::<Http>::try_from(url.as_str()).unwrap();
+    let accounts_path_eth = env::var("ETH_ACCOUNTS_PATH").unwrap();
+    let names = vec!["alice", "bob", "carol", "pete", "todd", "bridgeEscrow"];
+    let eth_signers = bridge_ethers::signers::get_signers(accounts_path_eth.as_str(), names).unwrap();
+    let eth_sender_wallet = bridge_ethers::signers::get_signer(&eth_signers, "pete").unwrap();
+
+    let eth_ol_addr = eth_cfg.get_ol_contract_address().unwrap();
+    let eth_client_ol = eth_sender_wallet.clone().connect(eth_provider.clone());
+    (eth_ol_addr, eth_client_ol)
 }
