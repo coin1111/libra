@@ -28,7 +28,7 @@ pub fn read_eth_checkpoint() -> i32 {
 /// Save checkpoint to query ETH side of the bridge
 pub fn save_eth_checkpoint(locked: EthLockedInfo) -> Result<(),String>{
     let data = format!("{},{}", hex::encode(locked.transfer_id), locked.next_start);
-    fs::write(".agent_checkpoint", data).map_err(|err| {
+    fs::write(ETH_AGENT_CHECKPOINT, data).map_err(|err| {
         format!("Unable to write file {:?}, error: {:?}", ETH_AGENT_CHECKPOINT, err)
     })
 }
