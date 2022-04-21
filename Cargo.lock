@@ -4632,8 +4632,10 @@ dependencies = [
 name = "integration-tests"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bridge-ethers",
  "bridge-ol",
+ "cli",
  "diem-types",
  "ethers",
  "hex 0.4.3",
