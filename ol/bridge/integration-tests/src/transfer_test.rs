@@ -1,5 +1,8 @@
+use anyhow::{anyhow, Error};
 use bridge_ol::submit_tx::tx_params_wrapper;
+use bridge_ol::submit_tx::TxError;
 use bridge_ol::util::vec_to_array;
+use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use diem_types::account_address::AccountAddress;
 use ethers::prelude::Address;
 use ethers::prelude::Client;
@@ -11,9 +14,6 @@ use std::convert::TryFrom;
 use std::env;
 use std::{thread, time};
 use uuid::Uuid;
-use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-use bridge_ol::submit_tx::TxError;
-use anyhow::{anyhow, Error};
 
 #[tokio::main]
 #[test]
@@ -22,7 +22,7 @@ async fn test_transfer_ol_eth() {
     let receiver_addr = hex::decode(receiver_addr_str).unwrap();
 
     // Eth contract
-    let (eth_ol_addr, _, _, _, eth_client_ol) = get_eth_client("pete");
+    let (eth_ol_addr, _, _, eth_client_ol) = get_eth_client("pete");
     let eth_ol_token = bridge_ethers::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
 
     // Validate that funds are transferred to the other blockchian
@@ -86,18 +86,12 @@ async fn test_transfer_ol_eth() {
 #[tokio::main]
 #[test]
 async fn test_transfer_eth_ol() {
-    let eth_receiver_addr_str = String::from("15d34aaf54267db7d7c367839aaf71a00a2c6a65");
-    let eth_receiver_addr = hex::decode(eth_receiver_addr_str).unwrap();
-
     // Eth contract
-    let (eth_ol_addr,
-        eth_escrow_addr,
-        eth_gas_price,
-        sender_wallet,
-        eth_client_ol) =
+    let (eth_ol_addr, eth_escrow_addr, eth_gas_price,  eth_client_ol) =
         get_eth_client("pete");
     let eth_ol_token = bridge_ethers::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
-    let eth_ol_bridge = bridge_ethers::bridge_escrow_mod::BridgeEscrow::new(eth_escrow_addr, &eth_client_ol);
+    let eth_ol_bridge =
+        bridge_ethers::bridge_escrow_mod::BridgeEscrow::new(eth_escrow_addr, &eth_client_ol);
 
     // 0L contract
     let escrow_addr = "708B1D23219EB737035CB29A68F0F3A8"
@@ -109,31 +103,42 @@ async fn test_transfer_eth_ol() {
     let contract = bridge_ol::contract::BridgeEscrow::new(escrow_addr, tx_params);
     assert!(contract.is_ok());
 
-    let ol_client =
-        DiemClient::new(ol_url, ol_waypoint).map_err(|e| TxError {
+    let ol_client = DiemClient::new(ol_url, ol_waypoint)
+        .map_err(|e| TxError {
             err: Some(e),
             tx_view: None,
             location: None,
             abort_code: None,
-        }).unwrap();
+        })
+        .unwrap();
 
     // 0L pete balance
     let receiver_addr_ol = "770B2C65843B25CA12CA48091FC33CD8"
         .parse::<AccountAddress>()
         .unwrap();
 
-    let balance_ol_before = get_ol_balance(ol_client, &receiver_addr_ol).unwrap();
-    println!("Balance before: {}",balance_ol_before);
+    let balance_ol_before = get_ol_balance(&ol_client, &receiver_addr_ol).unwrap();
+    println!("Balance before: {}", balance_ol_before);
 
     // deposit into ETH account
     let amount = 10;
     let data_approve = eth_ol_token
         .approve(eth_escrow_addr, U256::from(amount))
         .gas_price(eth_gas_price);
+    let approve_tx = data_approve
+        .send()
+        .await
+        .map_err(|e| println!("Error pending: {}", e))
+        .unwrap();
+    println!("approve_tx: {:?}", approve_tx);
 
     let transfer_id = Uuid::new_v4().as_bytes().to_vec();
     let deposit_data = eth_ol_bridge
-        .create_transfer_account(receiver_addr_ol, amount, transfer_id.bytes)
+        .create_transfer_account(
+            *receiver_addr_ol,
+            amount,
+            <[u8; 16]>::try_from(transfer_id.clone()).unwrap(),
+        )
         .gas_price(eth_gas_price);
     let pending_tx = deposit_data
         .send()
@@ -141,76 +146,39 @@ async fn test_transfer_eth_ol() {
         .map_err(|e| println!("Error pending: {}", e))
         .unwrap();
     println!("pending_tx: {:?}", pending_tx);
+    let mut tries = 0;
+    let max_tries = 100;
+    while tries < max_tries {
+        // Balance after
+        let balance_ol_after = get_ol_balance(&ol_client, &receiver_addr_ol).unwrap();
+        println!("Balance after: {}", balance_ol_after);
 
-    // // Validate that funds are transferred to the other blockchian
-    // let receiver_eth_addr = EthAddress::from(vec_to_array(receiver_addr.clone()).unwrap());
-    // let data = eth_ol_token.balance_of(receiver_eth_addr);
-    // let receiver_eth_balance_before = data
-    //     .call()
-    //     .await
-    //     .map_err(|e| println!("Error pending: {}", e))
-    //     .unwrap();
-    // println!(
-    //     "Before receiver_eth_balance: {:?}",
-    //     receiver_eth_balance_before
-    // );
-    //
-
-    // // Deposit into 0L
-    // let deposit_amount = 10;
-    // let transfer_id = Uuid::new_v4().as_bytes().to_vec();
-    // let res = contract.unwrap().bridge_deposit(
-    //     AccountAddress::ZERO,
-    //     receiver_addr.clone(),
-    //     deposit_amount,
-    //     transfer_id,
-    //     None,
-    // );
-    // println!("{:?}", res);
-    // assert!(res.is_ok());
-    //
-    // let mut tries = 0;
-    // let max_tries = 100;
-    // while tries < max_tries {
-    //     let receiver_eth_balance_after = data
-    //         .call()
-    //         .await
-    //         .map_err(|e| println!("Error pending: {}", e))
-    //         .unwrap();
-    //     println!(
-    //         "After receiver_eth_balance: {:?}",
-    //         receiver_eth_balance_after
-    //     );
-    //
-    //     let diff: U256 = receiver_eth_balance_after - receiver_eth_balance_before;
-    //     if diff.as_u64() == deposit_amount {
-    //         break;
-    //     }
-    //     tries += 1;
-    //     thread::sleep(time::Duration::from_millis(1000));
-    // }
-    // assert!(tries < max_tries);
+        let diff = (balance_ol_after - balance_ol_before) as u64;
+        if diff == amount {
+            break;
+        }
+        tries += 1;
+        thread::sleep(time::Duration::from_millis(1000));
+    }
+    assert!(tries < max_tries);
 }
 
-fn get_ol_balance(ol_client: DiemClient, receiver_addr_ol: &AccountAddress) -> Result<f64, Error> {
+fn get_ol_balance(ol_client: &DiemClient, receiver_addr_ol: &AccountAddress) -> Result<f64, Error> {
     match ol_client.get_account(&receiver_addr_ol) {
         Ok(Some(account_view)) => {
-            match account_view
-                .balances
-                .iter()
-                .find(|av| av.currency == "GAS")
-            {
-                Some(av) => {
-                    Ok(av.amount as f64)
-                }
+            match account_view.balances.iter().find(|av| av.currency == "GAS") {
+                Some(av) => Ok(av.amount as f64),
                 _ => Err(anyhow!("No GAS found on account".to_owned())),
             }
-        },
-        _ => Err(anyhow!("No account {} found on chain, account", receiver_addr_ol)),
+        }
+        _ => Err(anyhow!(
+            "No account {} found on chain, account",
+            receiver_addr_ol
+        )),
     }
 }
 
-fn get_eth_client(account_name: &str) -> (Address, Address, u64, Wallet, Client<Http, Wallet>) {
+fn get_eth_client(account_name: &str) -> (Address, Address, u64,  Client<Http, Wallet>) {
     let eth_cfg_path = env::var("ETH_BRIDGE_ESCROW_CONFIG").unwrap();
     println!("eth cfg path: {:?}", eth_cfg_path.clone());
     let eth_cfg = bridge_ethers::config::Config::new(eth_cfg_path.as_str()).unwrap();
@@ -229,5 +197,10 @@ fn get_eth_client(account_name: &str) -> (Address, Address, u64, Wallet, Client<
     let eth_ol_addr = eth_cfg.get_ol_contract_address().unwrap();
     let eth_escrow_addr = eth_cfg.get_escrow_contract_address().unwrap();
     let eth_client_ol = eth_sender_wallet.clone().connect(eth_provider.clone());
-    (eth_ol_addr, eth_escrow_addr, gas_price, eth_sender_wallet, eth_client_ol)
+    (
+        eth_ol_addr,
+        eth_escrow_addr,
+        gas_price,
+        eth_client_ol,
+    )
 }
