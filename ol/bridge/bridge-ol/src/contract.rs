@@ -25,7 +25,6 @@ impl BridgeEscrow {
     /// Deposit into escrow account
     pub fn bridge_deposit(
         &self,
-        receiver_this: AccountAddress,
         receiver: Vec<u8>,
         coins: u64,
         transfer_id: Vec<u8>,
@@ -44,7 +43,6 @@ impl BridgeEscrow {
     /// withdraw into escrow account
     pub fn bridge_withdraw(
         &self,
-        sender_this: AccountAddress,
         sender_other: Vec<u8>,
         receiver: AccountAddress,
         balance: u64,

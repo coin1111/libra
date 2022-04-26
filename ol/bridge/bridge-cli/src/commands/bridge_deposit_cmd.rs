@@ -19,8 +19,6 @@ use uuid::Uuid;
 pub struct BridgeDepositCmd {
     #[options(short = "e", help = "escrow address address")]
     escrow_account: String,
-    #[options(short = "l", help = "receiver address on this chain")]
-    receiver_this: String,
     #[options(short = "r", help = "eth receiver address")]
     receiver: String,
     #[options(short = "c", help = "the amount of coins to send to escrow, scaled")]
@@ -56,21 +54,6 @@ impl Runnable for BridgeDepositCmd {
                 exit(1);
             }
         };
-        let receiver_this = if !self.receiver_this.is_empty() {
-            match self.receiver_this.parse::<AccountAddress>() {
-                Ok(a) => a,
-                Err(e) => {
-                    println!(
-                        "ERROR: could not parse this account address: {}, message: {}",
-                        self.receiver_this,
-                        &e.to_string()
-                    );
-                    exit(1);
-                }
-            }
-        } else {
-            AccountAddress::new([0; 16])
-        };
 
         let receiver = if !self.receiver.is_empty() {
             match hex_to_bytes(&self.receiver) {
@@ -102,7 +85,6 @@ impl Runnable for BridgeDepositCmd {
 
         match bridge_deposit(
             escrow,
-            receiver_this,
             receiver,
             self.coins,
             transfer_id,
@@ -120,7 +102,6 @@ impl Runnable for BridgeDepositCmd {
 /// Deposit into escrow account
 pub fn bridge_deposit(
     escrow: AccountAddress,
-    receiver_this: AccountAddress,
     receiver: Vec<u8>,
     coins: u64,
     transfer_id: Vec<u8>,

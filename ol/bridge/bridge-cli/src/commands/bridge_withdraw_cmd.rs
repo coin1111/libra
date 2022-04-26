@@ -19,9 +19,6 @@ pub struct BridgeWithdrawCmd {
     #[options(short = "e", help = "escrow address")]
     escrow: String,
 
-    #[options(short = "l", help = "sender on this chain")]
-    sender_this: String,
-
     #[options(short = "s", help = "sender on the other chain")]
     sender_other: String,
 
@@ -63,22 +60,6 @@ impl Runnable for BridgeWithdrawCmd {
             }
         };
 
-        let sender_this = if !self.sender_this.is_empty() {
-            match self.sender_this.parse::<AccountAddress>() {
-                Ok(a) => a,
-                Err(e) => {
-                    println!(
-                        "ERROR: could not parse this account address: {}, message: {}",
-                        self.sender_this,
-                        &e.to_string()
-                    );
-                    exit(1);
-                }
-            }
-        } else {
-            AccountAddress::ZERO
-        };
-
         let sender_other = if !self.sender_other.is_empty() {
             match hex_to_bytes(&self.sender_other) {
                 Some(a) => a,
@@ -117,7 +98,7 @@ impl Runnable for BridgeWithdrawCmd {
             }
         };
 
-        match bridge_withdraw(escrow, sender_this, sender_other, receiver, self.balance, transfer_id, entry_args.save_path) {
+        match bridge_withdraw(escrow, sender_other, receiver, self.balance, transfer_id, entry_args.save_path) {
             Ok(_) => println!("Success: Bridge withdraw posted: {}", self.transfer_id),
             Err(e) => {
                 println!("ERROR: execute bridge withdraw message: {:?}", &e);
@@ -130,7 +111,6 @@ impl Runnable for BridgeWithdrawCmd {
 /// withdraw into escrow account
 pub fn bridge_withdraw(
     escrow: AccountAddress,
-    sender_this: AccountAddress,
     sender_other: Vec<u8>,
     receiver: AccountAddress,
     balance: u64,

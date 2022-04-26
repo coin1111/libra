@@ -252,7 +252,6 @@ impl Agent {
                  transfer_id, hex::encode(sender_other.clone()), receiver_this, balance);
         self.bridge_escrow_ol
             .bridge_withdraw(
-                AccountAddress::ZERO,
                 sender_other,
                 receiver_this,
                 balance,
