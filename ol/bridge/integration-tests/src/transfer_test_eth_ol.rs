@@ -44,7 +44,6 @@ async fn test_transfer_ol_eth() {
     let deposit_amount = 10;
     let transfer_id = Uuid::new_v4().as_bytes().to_vec();
     let res = contract.unwrap().bridge_deposit(
-        AccountAddress::ZERO,
         receiver_addr.clone(),
         deposit_amount,
         transfer_id,
