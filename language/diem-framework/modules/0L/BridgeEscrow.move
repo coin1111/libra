@@ -71,21 +71,6 @@ address 0x1 {
             });
         }
 
-        // Creates an account for transfer between 0L->0L accounts
-        // Used for testing purposes
-        // When user initiates a transfer it calls this method which
-        // moves funds from user account into an escrow account.
-        // It also creates an entry in locked to indicate such transfer.
-        // Executed under user account
-        public fun create_transfer_account_this(escrow: address,
-                                           sender_address: &signer,
-                                           receiver_address: address,
-                                           amount: u64,
-                                           transfer_id: vector<u8>) acquires EscrowState {
-            create_transfer_account_aux(escrow, sender_address,receiver_address,
-                Vector::empty<u8>(), amount, transfer_id)
-        }
-
         // Creates an account for transfer between 0L->eth accounts
         // When user initiates a transfer it calls this method which
         // moves funds from user account into an escrow account.
@@ -149,20 +134,6 @@ address 0x1 {
                 balance: amount,
                 transfer_id: transfer_id,
             });
-        }
-
-        // Moves funds from escrow account to user account between 0L->0L accounts
-        // Used for testing purposes
-        // Creates an entry in unlocked vector to indicate such transfer.
-        // Executed under escrow account
-        public fun withdraw_from_escrow_this(sender: &signer,
-                                        escrow_address: address,
-                                        sender_address: address, // sender on this  chain
-                                        receiver_address:address, // receiver on this chain
-                                        balance: u64, // balance to transfer
-                                        transfer_id: vector<u8>, // transfer_id
-        ) acquires EscrowState  {
-            withdraw_from_escrow_aux(sender,escrow_address,sender_address, Vector::empty<u8>(), receiver_address, balance, transfer_id)
         }
 
         // Moves funds from escrow account to user account between eth->0L accounts
@@ -299,16 +270,9 @@ address 0x1 {
             let state = borrow_global<EscrowState>(escrow);
             Vector::length(&state.unlocked)
         }
-        public fun get_sender_this(ai: &AccountInfo): address {
-            *&ai.sender_this
-        }
 
         public fun get_sender_other(ai: &AccountInfo): vector<u8> {
             *&ai.sender_other
-        }
-
-        public fun get_receiver_this(ai: &AccountInfo): address {
-            *&ai.receiver_this
         }
 
         public fun get_receiver_other(ai: &AccountInfo): vector<u8> {
