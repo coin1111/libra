@@ -16,7 +16,7 @@ async fn test_transfer_ol_eth() {
 
     // Eth contract
     let (eth_ol_addr, _, _, eth_client_ol) = get_eth_client("pete");
-    let eth_ol_token = bridge_ethers::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
+    let eth_ol_token = bridge_eth::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
 
     // Validate that funds are transferred to the other blockchian
     let receiver_eth_addr = EthAddress::from(vec_to_array(receiver_addr.clone()).unwrap());

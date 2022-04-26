@@ -2,11 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    entrypoint,
-    submit_tx::{TxError, maybe_submit, tx_params_wrapper},
-    tx_params::TxParams,
-};
+use crate::{entrypoint, submit_tx::{TxError, maybe_submit, tx_params_wrapper}};
 use abscissa_core::{Command, Options, Runnable};
 
 use diem_json_rpc_types::views::TransactionView;
@@ -33,8 +29,8 @@ impl Runnable for TransferCmd {
               exit(1);
             },
         };
-        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
-        match balance_transfer(destination, self.coins, tx_params, entry_args.save_path) {
+
+        match balance_transfer(destination, self.coins, entry_args.save_path) {
             Ok(_) => println!("Success: Balance transfer posted: {}", self.destination_account),
             Err(e) => {
               println!("ERROR: execute balance transfer message: {:?}", &e);
@@ -45,7 +41,9 @@ impl Runnable for TransferCmd {
 }
 
 /// create an account by sending coin to it
-pub fn balance_transfer(destination: AccountAddress, coins: u64, tx_params: TxParams, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
+pub fn balance_transfer(destination: AccountAddress, coins: u64, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
+  let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
+
   // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
   let script = transaction_builder::encode_balance_transfer_script_function(
       destination,

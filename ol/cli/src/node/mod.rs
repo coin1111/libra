@@ -8,5 +8,4 @@ pub mod client;
 pub mod states;
 pub mod dictionary;
 pub mod refresh_peers;
-pub mod autopay_view;
 // mod transitions;

@@ -164,6 +164,7 @@ members = [
     "vm-validator",
     # //////// 0L ////////
     "ol/bridge/agent",
+    "ol/bridge/bridge-cli",
     "ol/bridge/integration-tests",
     "ol/cli",    
     "ol/keys",

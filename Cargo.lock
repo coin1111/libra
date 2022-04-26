@@ -653,7 +653,7 @@ dependencies = [
  "backup-cli",
  "bcs",
  "bitflags",
- "bridge-ethers",
+ "bridge-eth",
  "bridge-ol",
  "byteorder",
  "cassowary",
@@ -720,9 +720,58 @@ dependencies = [
 ]
 
 [[package]]
-name = "bridge-ethers"
+name = "bridge-cli"
+version = "5.0.11"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "bcs",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "criterion",
+ "dialoguer",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-json-rpc-types",
+ "diem-logger",
+ "diem-management",
+ "diem-secure-storage",
+ "diem-transaction-builder",
+ "diem-types",
+ "diem-wallet",
+ "diemdb",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop 0.7.0",
+ "hex 0.4.3",
+ "move-core-types",
+ "ol",
+ "ol-keys",
+ "ol-types",
+ "once_cell",
+ "regex",
+ "reqwest 0.11.2",
+ "resource-viewer",
+ "rpassword",
+ "rustyline 6.3.0",
+ "serde",
+ "serde_json",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "uuid",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
+]
+
+[[package]]
+name = "bridge-eth"
 version = "0.1.0"
-source = "git+https://github.com/coin1111/eth-bridge-rs?rev=453072f13358d620fb1e1e95a276d46907b50d64#453072f13358d620fb1e1e95a276d46907b50d64"
 dependencies = [
  "ethers",
  "ethers-core",
@@ -4633,7 +4682,7 @@ name = "integration-tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bridge-ethers",
+ "bridge-eth",
  "bridge-ol",
  "cli",
  "diem-types",
@@ -6201,7 +6250,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-vm-types",
- "nix 0.20.0",
+ "nix 0.18.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -9504,7 +9553,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "5.1.0"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "ajson",

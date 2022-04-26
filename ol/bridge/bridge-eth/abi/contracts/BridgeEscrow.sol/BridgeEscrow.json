@@ -1,0 +1,423 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "olTokenAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "executorAddr",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "call",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "closeTransferAccountSender",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes16",
+        "name": "receiver_address",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "uint64",
+        "name": "amount",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "createTransferAccount",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender_this",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "sender_other",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "address payable",
+        "name": "receiver_this",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "receiver_other",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "uint64",
+        "name": "amount",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "createTransferAccountAux",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "receiver_address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint64",
+        "name": "amount",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "createTransferAccountThis",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "executor",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes16",
+        "name": "transferId",
+        "type": "bytes16"
+      }
+    ],
+    "name": "getLockedAccountInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "sender_this",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "sender_other",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "address payable",
+            "name": "receiver_this",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "receiver_other",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "uint64",
+            "name": "balance",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "transfer_id",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "locked_idx",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "is_closed",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct BridgeEscrow.AccountInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLockedLength",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "start",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "n",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextTransferId",
+    "outputs": [
+      {
+        "internalType": "bytes16",
+        "name": "",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes16",
+        "name": "transferId",
+        "type": "bytes16"
+      }
+    ],
+    "name": "getUnlockedAccountInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "sender_this",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "sender_other",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "address payable",
+            "name": "receiver_this",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "receiver_other",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "uint64",
+            "name": "balance",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes16",
+            "name": "transfer_id",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "locked_idx",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "is_closed",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct BridgeEscrow.AccountInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes16",
+        "name": "sender_address",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "address payable",
+        "name": "receiver_address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint64",
+        "name": "balance",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "withdrawFromEscrow",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender_this",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "sender_other",
+        "type": "bytes16"
+      },
+      {
+        "internalType": "address payable",
+        "name": "receiver_this",
+        "type": "address"
+      },
+      {
+        "internalType": "uint64",
+        "name": "balance",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "withdrawFromEscrowAux",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender_address",
+        "type": "address"
+      },
+      {
+        "internalType": "address payable",
+        "name": "receiver_address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint64",
+        "name": "balance",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes16",
+        "name": "transfer_id",
+        "type": "bytes16"
+      }
+    ],
+    "name": "withdrawFromEscrowThis",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

@@ -3,9 +3,9 @@ use bridge_ol::contract::BridgeEscrow;
 use crate::entrypoint::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};
-use bridge_ethers::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
-use bridge_ethers::config::Config;
-use bridge_ethers::util::AccountInfo as AccountInfoEth;
+use bridge_eth::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
+use bridge_eth::config::Config;
+use bridge_eth::util::AccountInfo as AccountInfoEth;
 use ethers::prelude::Wallet as WalletEth;
 use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
@@ -355,7 +355,7 @@ impl Agent {
         }
 
         let transfer_id = hex_to_bytes(&ai.transfer_id)
-            .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 16>(v))?;
+            .and_then(|v| bridge_eth::util::vec_to_array::<u8, 16>(v))?;
 
         // Query unlocked on ETH
         let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
@@ -366,7 +366,7 @@ impl Agent {
             // try to parse receiver address on ETH chain
             let receiver_eth = hex::decode(&ai.receiver_other)
                 .map_err(|err| err.to_string())
-                .and_then(|v| bridge_ethers::util::vec_to_array::<u8, 20>(v))
+                .and_then(|v| bridge_eth::util::vec_to_array::<u8, 20>(v))
                 .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
             // Transfer is not happened => transfer funds on ETH chain

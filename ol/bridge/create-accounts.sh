@@ -8,6 +8,6 @@ cargo run -p txs -- --swarm-path=$HOME/swarm_temp --swarm-persona=bob  create-ac
 cargo run -p txs -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice  create-account -a 6c1578bcb229521f78099149d7f578f0708b1d23219eb737035cb29a68f0f3a8  -c 1
 
 # init escrow
-cargo run -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bridge-escrow bridge-create-escrow
+cargo run -p bridge-cli -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bridge-escrow bridge-create-escrow
 
 rm $HOME/libra/.agent_checkpoint
