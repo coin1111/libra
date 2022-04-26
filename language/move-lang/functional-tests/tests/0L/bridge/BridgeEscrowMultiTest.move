@@ -20,7 +20,7 @@ script {
 }
 //! check: EXECUTED
 
-///// Test 2: Alice deposit funds into escrow for bob
+///// Test 2: Alice deposit funds into escrow for pete on ETH
 //! new-transaction
 //! sender: alice
 //! gas-currency: GAS
@@ -29,15 +29,16 @@ script {
 
     fun main(sender: signer){
         let transfer_id1: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let receiver_eth: vector<u8> = x"15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         let amount: u64 = 100;
-        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{bob}}, amount, transfer_id1);
+        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, receiver_eth, amount, transfer_id1);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 1, 20002);
     }
 }
 //! check: EXECUTED
 
-///// Test 3: Bob deposit funds into escrow for carol
+///// Test 3: Bob deposit funds into escrow for todd ETH
 //! new-transaction
 //! sender: bob
 //! gas-currency: GAS
@@ -46,15 +47,16 @@ script {
 
     fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
+        let receiver_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
         let amount: u64 = 10;
-        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{carol}},  amount, transfer_id2);
+        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, receiver_eth,  amount, transfer_id2);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount + 100, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 2, 20002);
     }
 }
 //! check: EXECUTED
 
-///// Test 4: Carol deposit funds into escrow for alice
+///// Test 4: Carol deposit funds into escrow for pete on ETH
 //! new-transaction
 //! sender: carol
 //! gas-currency: GAS
@@ -63,17 +65,15 @@ script {
 
     fun main(sender: signer){
         let transfer_id3: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E7";
+        let receiver_eth: vector<u8> = x"15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         let amount: u64 = 50;
-        BridgeEscrow::create_transfer_account_this(@{{escrow}}, &sender, @{{alice}},  amount, transfer_id3);
+        BridgeEscrow::create_transfer_account(@{{escrow}}, &sender, receiver_eth,  amount, transfer_id3);
         assert(BridgeEscrow::get_escrow_balance(@{{escrow}}) == amount + 100 + 10, 20001);
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 3, 20002);
     }
 }
 
-///// Test 3: Bridge agent detects that Bob deposited funds and
-/// create complimentary transaction on the other chain
-/// in this case the other chain is the same.
-/// Complimentary account is carol
+///// Test 5: Transfer funds into local account carol
 //! new-transaction
 //! sender: dave
 //! gas-currency: GAS
@@ -83,6 +83,7 @@ script {
 
     fun main(sender: signer){
         let transfer_id2: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E9";
+        let sender_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
         let escrow_address: address = @{{escrow}};
         assert(BridgeEscrow::get_escrow_balance(escrow_address) == 100+ 50 + 10, 30001);
 
@@ -95,9 +96,9 @@ script {
 
         let ai = BridgeEscrow::get_locked_at(escrow_address,*idx);
 
-        BridgeEscrow::withdraw_from_escrow_this(&sender, escrow_address,
-                BridgeEscrow::get_sender_this(&ai),
-                BridgeEscrow::get_receiver_this(&ai),
+        BridgeEscrow::withdraw_from_escrow(&sender, escrow_address,
+                sender_eth,
+                @{{carol}},
                 BridgeEscrow::get_balance(&ai),
                 BridgeEscrow::get_transfer_id(&ai),
         );
@@ -109,7 +110,7 @@ script {
 }
 //! check: EXECUTED
 
-///// Test 4: Delete Bob escrow account
+///// Test 5: Delete Bob escrow account
 //! new-transaction
 //! sender: dave
 //! gas-currency: GAS
@@ -134,7 +135,7 @@ script {
 }
 //! check: EXECUTED
 
-///// Test 4: Delete Bob escrow account
+///// Test 7: Delete Bob escrow account
 //! new-transaction
 //! sender: dave
 //! gas-currency: GAS
@@ -157,4 +158,5 @@ script {
     }
 }
 //! check: EXECUTED
+
 
