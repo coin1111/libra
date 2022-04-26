@@ -1631,7 +1631,6 @@ pub enum ScriptFunctionCall {
 
     BridgeDeposit {
         escrow: AccountAddress,
-        receiver_this: AccountAddress,
         receiver_other: Bytes,
         value: u64,
         transfer_id: Bytes,
@@ -1639,7 +1638,6 @@ pub enum ScriptFunctionCall {
 
     BridgeWithdraw {
         escrow: AccountAddress,
-        sender_this: AccountAddress,
         sender_other: Bytes,
         receiver: AccountAddress,
         balance: u64,
@@ -3559,27 +3557,18 @@ impl ScriptFunctionCall {
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
             BridgeDeposit {
                 escrow,
-                receiver_this,
                 receiver_other,
                 value,
                 transfer_id,
-            } => encode_bridge_deposit_script_function(
-                escrow,
-                receiver_this,
-                receiver_other,
-                value,
-                transfer_id,
-            ),
+            } => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
             BridgeWithdraw {
                 escrow,
-                sender_this,
                 sender_other,
                 receiver,
                 balance,
                 transfer_id,
             } => encode_bridge_withdraw_script_function(
                 escrow,
-                sender_this,
                 sender_other,
                 receiver,
                 balance,
@@ -4269,7 +4258,6 @@ pub fn encode_bridge_create_escrow_script_function() -> TransactionPayload {
 
 pub fn encode_bridge_deposit_script_function(
     escrow: AccountAddress,
-    receiver_this: AccountAddress,
     receiver_other: Vec<u8>,
     value: u64,
     transfer_id: Vec<u8>,
@@ -4283,7 +4271,6 @@ pub fn encode_bridge_deposit_script_function(
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&receiver_this).unwrap(),
             bcs::to_bytes(&receiver_other).unwrap(),
             bcs::to_bytes(&value).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
@@ -4293,7 +4280,6 @@ pub fn encode_bridge_deposit_script_function(
 
 pub fn encode_bridge_withdraw_script_function(
     escrow: AccountAddress,
-    sender_this: AccountAddress,
     sender_other: Vec<u8>,
     receiver: AccountAddress,
     balance: u64,
@@ -4308,7 +4294,6 @@ pub fn encode_bridge_withdraw_script_function(
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&sender_this).unwrap(),
             bcs::to_bytes(&sender_other).unwrap(),
             bcs::to_bytes(&receiver).unwrap(),
             bcs::to_bytes(&balance).unwrap(),
@@ -8381,10 +8366,9 @@ fn decode_bridge_deposit_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeDeposit {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            receiver_this: bcs::from_bytes(script.args().get(1)?).ok()?,
-            receiver_other: bcs::from_bytes(script.args().get(2)?).ok()?,
-            value: bcs::from_bytes(script.args().get(3)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(4)?).ok()?,
+            receiver_other: bcs::from_bytes(script.args().get(1)?).ok()?,
+            value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8397,11 +8381,10 @@ fn decode_bridge_withdraw_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeWithdraw {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            sender_this: bcs::from_bytes(script.args().get(1)?).ok()?,
-            sender_other: bcs::from_bytes(script.args().get(2)?).ok()?,
-            receiver: bcs::from_bytes(script.args().get(3)?).ok()?,
-            balance: bcs::from_bytes(script.args().get(4)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(5)?).ok()?,
+            sender_other: bcs::from_bytes(script.args().get(1)?).ok()?,
+            receiver: bcs::from_bytes(script.args().get(2)?).ok()?,
+            balance: bcs::from_bytes(script.args().get(3)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
@@ -9780,12 +9763,12 @@ fn decode_bool_argument(arg: TransactionArgument) -> Option<bool> {
     }
 }
 
-// fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
-//     match arg {
-//         TransactionArgument::U8(value) => Some(value),
-//         _ => None,
-//     }
-// }
+fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
+    match arg {
+        TransactionArgument::U8(value) => Some(value),
+        _ => None,
+    }
+}
 
 fn decode_u64_argument(arg: TransactionArgument) -> Option<u64> {
     match arg {

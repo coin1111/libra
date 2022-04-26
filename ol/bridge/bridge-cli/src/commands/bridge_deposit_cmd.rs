@@ -130,7 +130,6 @@ pub fn bridge_deposit(
     // coins are scaled
     let script = transaction_builder::encode_bridge_deposit_script_function(
         escrow,
-        receiver_this,
         receiver,
         coins,
         transfer_id,

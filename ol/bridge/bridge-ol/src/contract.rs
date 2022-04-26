@@ -34,7 +34,6 @@ impl BridgeEscrow {
         // coins are scaled
         let script = transaction_builder::encode_bridge_deposit_script_function(
             self.escrow,
-            receiver_this,
             receiver,
             coins,
             transfer_id,
@@ -55,7 +54,6 @@ impl BridgeEscrow {
         // coins are scaled
         let script = transaction_builder::encode_bridge_withdraw_script_function(
             self.escrow,
-            sender_this,
             sender_other,
             receiver,
             balance,
