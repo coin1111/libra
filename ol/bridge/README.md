@@ -28,9 +28,18 @@ talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep 
 ```
 
 
-## Test Bridge Contracts
+## Test Bridge Agent
+```
+# run agent
+./run-agent.sh
+
+# run integratrion tests
+cd integration-tests
+./run-integration-tests.sh
 ```
 
-# run tests
-./test-bridge.sh
+## Test 0L Bridge Agent
+```
+# stop agent
+./test-bridge-contract.sh
 ```
