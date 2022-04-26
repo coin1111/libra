@@ -71,7 +71,6 @@ Only selected subset of validators are selected to be participants in bridge ope
 
 ## Running Tests
 ```
-cd language/move-lang/functional-tests/tests/0L
-cargo  test BridgeEscrowMultiTest
+./run-escrow-tests.sh
 ```
 
