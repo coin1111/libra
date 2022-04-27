@@ -28,6 +28,8 @@ address 0x1 {
 
         const ZERO_ADDRESS: address = @0x0;
 
+        const ETH_ACCOUNT_LENGTH: u64 = 20;
+
         struct AccountInfo has copy, store, drop {
             // user address on this chain
             // 0L->eth transfer
@@ -77,22 +79,7 @@ address 0x1 {
         // It also creates an entry in locked to indicate such transfer.
         // Executed under user account
         public fun create_transfer_account(escrow: address,
-                                                sender_address: &signer,
-                                                receiver_address: vector<u8>,
-                                                amount: u64,
-                                                transfer_id: vector<u8>) acquires EscrowState {
-            create_transfer_account_aux(escrow, sender_address,ZERO_ADDRESS,
-                receiver_address, amount, transfer_id)
-        }
-
-        // Creates an account for transfer
-        // When user initiates a transfer it calls this method which
-        // moves funds from user account into an escrow account.
-        // It also creates an entry in locked to indicate such transfer.
-        // Executed under user account
-        fun create_transfer_account_aux(escrow: address,
                                            sender: &signer,
-                                           receiver_this: address,
                                            receiver_other: vector<u8>,
                                            amount: u64,
                                            transfer_id: vector<u8>) acquires EscrowState {
@@ -110,9 +97,7 @@ address 0x1 {
             assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
 
             // receiver_other must be non-empty OR receiver must exists and have no -
-            if (Vector::length(&receiver_other) == 0) {
-                assert(DiemAccount::balance<GAS>(receiver_this) > 0, ERROR_NO_RECEIVER_ACCOUNT);
-            };
+            assert(Vector::length(&receiver_other) == ETH_ACCOUNT_LENGTH, ERROR_NO_RECEIVER_ACCOUNT);
 
             // 1. move funds from user to escrow account
             let with_cap = DiemAccount::extract_withdraw_capability(sender);
@@ -129,7 +114,7 @@ address 0x1 {
             Vector::push_back<AccountInfo>(&mut state.locked, AccountInfo{
                 sender_this: sender_this,
                 sender_other: Vector::empty<u8>(),
-                receiver_this: receiver_this,
+                receiver_this: ZERO_ADDRESS,
                 receiver_other: receiver_other,
                 balance: amount,
                 transfer_id: transfer_id,
@@ -140,21 +125,7 @@ address 0x1 {
         // Creates an entry in unlocked vector to indicate such transfer.
         // Executed under escrow account
         public fun withdraw_from_escrow(sender: &signer,
-                                             escrow_address: address,
-                                             sender_address: vector<u8>, // sender on the other chain
-                                             receiver_address:address, // receiver on this chain
-                                             balance: u64, // balance to transfer
-                                             transfer_id: vector<u8>, // transfer_id
-        ) acquires EscrowState  {
-            withdraw_from_escrow_aux(sender,escrow_address,ZERO_ADDRESS, sender_address, receiver_address, balance, transfer_id)
-        }
-
-        // Moves funds from escrow account to user account.
-        // Creates an entry in unlocked vector to indicate such transfer.
-        // Executed under escrow account
-        fun withdraw_from_escrow_aux(sender: &signer,
                                         escrow_address: address,
-                                        sender_this: address, // sender on this  chain
                                         sender_other: vector<u8>, // sender on the other chain
                                         receiver_this:address, // receiver on this chain
                                         balance: u64, // balance to transfer
@@ -179,7 +150,7 @@ address 0x1 {
 
             // add entry to unlocked to indicate that funds were transferred
             let ai = AccountInfo {
-                sender_this: sender_this,
+                sender_this: ZERO_ADDRESS,
                 sender_other: sender_other,
                 receiver_this: copy receiver_this,
                 receiver_other: Vector::empty<u8>(),
