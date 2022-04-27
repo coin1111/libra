@@ -1636,12 +1636,23 @@ pub enum ScriptFunctionCall {
         transfer_id: Bytes,
     },
 
+    BridgeDepositFunds {
+        escrow: AccountAddress,
+        value: u64,
+    },
+
     BridgeWithdraw {
         escrow: AccountAddress,
         sender_other: Bytes,
         receiver: AccountAddress,
         balance: u64,
         transfer_id: Bytes,
+    },
+
+    BridgeWithdrawFunds {
+        escrow: AccountAddress,
+        receiver: AccountAddress,
+        balance: u64,
     },
 
     /// # Summary
@@ -3561,6 +3572,9 @@ impl ScriptFunctionCall {
                 value,
                 transfer_id,
             } => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
+            BridgeDepositFunds { escrow, value } => {
+                encode_bridge_deposit_funds_script_function(escrow, value)
+            }
             BridgeWithdraw {
                 escrow,
                 sender_other,
@@ -3574,6 +3588,11 @@ impl ScriptFunctionCall {
                 balance,
                 transfer_id,
             ),
+            BridgeWithdrawFunds {
+                escrow,
+                receiver,
+                balance,
+            } => encode_bridge_withdraw_funds_script_function(escrow, receiver, balance),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4278,6 +4297,24 @@ pub fn encode_bridge_deposit_script_function(
     ))
 }
 
+pub fn encode_bridge_deposit_funds_script_function(
+    escrow: AccountAddress,
+    value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("bridge_deposit_funds").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+        ],
+    ))
+}
+
 pub fn encode_bridge_withdraw_script_function(
     escrow: AccountAddress,
     sender_other: Vec<u8>,
@@ -4298,6 +4335,26 @@ pub fn encode_bridge_withdraw_script_function(
             bcs::to_bytes(&receiver).unwrap(),
             bcs::to_bytes(&balance).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_bridge_withdraw_funds_script_function(
+    escrow: AccountAddress,
+    receiver: AccountAddress,
+    balance: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("bridge_withdraw_funds").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&receiver).unwrap(),
+            bcs::to_bytes(&balance).unwrap(),
         ],
     ))
 }
@@ -8375,6 +8432,19 @@ fn decode_bridge_deposit_script_function(
     }
 }
 
+fn decode_bridge_deposit_funds_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeDepositFunds {
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            value: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_bridge_withdraw_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8385,6 +8455,20 @@ fn decode_bridge_withdraw_script_function(
             receiver: bcs::from_bytes(script.args().get(2)?).ok()?,
             balance: bcs::from_bytes(script.args().get(3)?).ok()?,
             transfer_id: bcs::from_bytes(script.args().get(4)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_bridge_withdraw_funds_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeWithdrawFunds {
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            receiver: bcs::from_bytes(script.args().get(1)?).ok()?,
+            balance: bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
@@ -9541,8 +9625,16 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_bridge_deposit_script_function),
         );
         map.insert(
+            "BridgeScriptsbridge_deposit_funds".to_string(),
+            Box::new(decode_bridge_deposit_funds_script_function),
+        );
+        map.insert(
             "BridgeScriptsbridge_withdraw".to_string(),
             Box::new(decode_bridge_withdraw_script_function),
+        );
+        map.insert(
+            "BridgeScriptsbridge_withdraw_funds".to_string(),
+            Box::new(decode_bridge_withdraw_funds_script_function),
         );
         map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),

@@ -19,6 +19,14 @@ module BridgeScripts {
         BridgeEscrow::create_transfer_account(escrow, &sender, receiver_other, value, transfer_id);
     }
 
+    public(script) fun bridge_deposit_funds(
+        sender: signer,
+        escrow: address,
+        value: u64,
+    ) {
+        BridgeEscrow::deposit_funds(escrow, &sender, value);
+    }
+
     public(script) fun bridge_withdraw(
         sender: signer,
         escrow: address,
@@ -32,6 +40,18 @@ module BridgeScripts {
             receiver, // receiver
             balance, // balance
             transfer_id, // transfer_id
+        );
+    }
+
+    public(script) fun bridge_withdraw_funds(
+        sender: signer,
+        escrow: address,
+        receiver: address,
+        balance: u64,
+    ) {
+        BridgeEscrow::withdraw_funds(&sender, escrow,
+            receiver, // receiver
+            balance, // balance
         );
     }
 
