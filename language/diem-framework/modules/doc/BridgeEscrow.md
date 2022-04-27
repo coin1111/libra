@@ -9,10 +9,10 @@
 -  [Resource `EscrowState`](#0x1_BridgeEscrow_EscrowState)
 -  [Constants](#@Constants_0)
 -  [Function `initialize_escrow`](#0x1_BridgeEscrow_initialize_escrow)
+-  [Function `deposit_funds`](#0x1_BridgeEscrow_deposit_funds)
+-  [Function `withdraw_funds`](#0x1_BridgeEscrow_withdraw_funds)
 -  [Function `create_transfer_account`](#0x1_BridgeEscrow_create_transfer_account)
--  [Function `create_transfer_account_aux`](#0x1_BridgeEscrow_create_transfer_account_aux)
 -  [Function `withdraw_from_escrow`](#0x1_BridgeEscrow_withdraw_from_escrow)
--  [Function `withdraw_from_escrow_aux`](#0x1_BridgeEscrow_withdraw_from_escrow_aux)
 -  [Function `delete_transfer_account`](#0x1_BridgeEscrow_delete_transfer_account)
 -  [Function `delete_unlocked`](#0x1_BridgeEscrow_delete_unlocked)
 -  [Function `find_locked_idx`](#0x1_BridgeEscrow_find_locked_idx)
@@ -229,6 +229,15 @@
 
 
 
+<a name="0x1_BridgeEscrow_ETH_ACCOUNT_LENGTH"></a>
+
+
+
+<pre><code><b>const</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_ETH_ACCOUNT_LENGTH">ETH_ACCOUNT_LENGTH</a>: u64 = 20;
+</code></pre>
+
+
+
 <a name="0x1_BridgeEscrow_ZERO_ADDRESS"></a>
 
 
@@ -268,13 +277,98 @@
 
 </details>
 
+<a name="0x1_BridgeEscrow_deposit_funds"></a>
+
+## Function `deposit_funds`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_deposit_funds">deposit_funds</a>(escrow: address, sender: &signer, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_deposit_funds">deposit_funds</a>(escrow: address,
+                                   sender: &signer,
+                                   amount: u64) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
+    // validate arguments
+    <b>assert</b> (amount &gt; 0, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_AMOUNT_MUST_BE_POSITIVE">ERROR_AMOUNT_MUST_BE_POSITIVE</a>);
+
+    // sender has enough funds
+    <b>let</b> sender_this = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_this) &gt;= amount, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
+
+    // escrow account <b>exists</b>
+    <b>assert</b> (<b>exists</b>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_NO_ESCROW_ACCOUNT">ERROR_NO_ESCROW_ACCOUNT</a>);
+
+    // 1. <b>move</b> funds from user <b>to</b> escrow account
+    <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(sender);
+    <b>let</b> tokens = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_tokens">DiemAccount::withdraw_tokens</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&with_cap, escrow, amount, x"");
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
+
+    // 2. <b>update</b> escrow state
+    <b>let</b> state = borrow_global_mut&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow);
+    <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> state.tokens,tokens);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BridgeEscrow_withdraw_funds"></a>
+
+## Function `withdraw_funds`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_funds">withdraw_funds</a>(sender: &signer, escrow_address: address, receiver_this: address, balance: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_funds">withdraw_funds</a>(sender: &signer,
+                                escrow_address: address,
+                                receiver_this:address, // receiver on this chain
+                                balance: u64
+) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
+    <b>let</b> sender_address= <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>assert</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(sender_address) == <b>true</b> ||
+           sender_address == escrow_address , <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_MUST_BE_VALIDATOR">ERROR_MUST_BE_VALIDATOR</a>);
+
+    // <b>update</b> escrow state
+    <b>let</b> state = borrow_global_mut&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;( escrow_address);
+
+    // escrow has enough funds
+    <b>assert</b>(<a href="Diem.md#0x1_Diem_get_value">Diem::get_value</a>(&state.tokens) &gt;= balance, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
+
+    // withdraw tokens from escrow
+    <b>let</b> tokens = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> state.tokens,balance);
+
+    // <b>move</b> funds from escrow <b>to</b> user account
+    <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">DiemAccount::deposit_tokens</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, escrow_address, receiver_this, tokens, x"", x"");
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_BridgeEscrow_create_transfer_account"></a>
 
 ## Function `create_transfer_account`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address, sender_address: &signer, receiver_address: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address, sender: &signer, receiver_other: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -284,37 +378,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account">create_transfer_account</a>(escrow: address,
-                                        sender_address: &signer,
-                                        receiver_address: vector&lt;u8&gt;,
-                                        amount: u64,
-                                        transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow, sender_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>,
-        receiver_address, amount, transfer_id)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BridgeEscrow_create_transfer_account_aux"></a>
-
-## Function `create_transfer_account_aux`
-
-
-
-<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow: address, sender: &signer, receiver_this: address, receiver_other: vector&lt;u8&gt;, amount: u64, transfer_id: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_create_transfer_account_aux">create_transfer_account_aux</a>(escrow: address,
                                    sender: &signer,
-                                   receiver_this: address,
                                    receiver_other: vector&lt;u8&gt;,
                                    amount: u64,
                                    transfer_id: vector&lt;u8&gt;) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a> {
@@ -332,9 +396,7 @@
     <b>assert</b> (<b>exists</b>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>&gt;(escrow), <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_NO_ESCROW_ACCOUNT">ERROR_NO_ESCROW_ACCOUNT</a>);
 
     // receiver_other must be non-empty OR receiver must <b>exists</b> and have no -
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&receiver_other) == 0) {
-        <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(receiver_this) &gt; 0, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_NO_RECEIVER_ACCOUNT">ERROR_NO_RECEIVER_ACCOUNT</a>);
-    };
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&receiver_other) == <a href="BridgeEscrow.md#0x1_BridgeEscrow_ETH_ACCOUNT_LENGTH">ETH_ACCOUNT_LENGTH</a>, <a href="BridgeEscrow.md#0x1_BridgeEscrow_ERROR_NO_RECEIVER_ACCOUNT">ERROR_NO_RECEIVER_ACCOUNT</a>);
 
     // 1. <b>move</b> funds from user <b>to</b> escrow account
     <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(sender);
@@ -351,7 +413,7 @@
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>&gt;(&<b>mut</b> state.locked, <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a>{
         sender_this: sender_this,
         sender_other: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(),
-        receiver_this: receiver_this,
+        receiver_this: <a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>,
         receiver_other: receiver_other,
         balance: amount,
         transfer_id: transfer_id,
@@ -369,7 +431,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer, escrow_address: address, sender_address: vector&lt;u8&gt;, receiver_address: address, balance: u64, transfer_id: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer, escrow_address: address, sender_other: vector&lt;u8&gt;, receiver_this: address, balance: u64, transfer_id: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -379,38 +441,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow">withdraw_from_escrow</a>(sender: &signer,
-                                     escrow_address: address,
-                                     sender_address: vector&lt;u8&gt;, // sender on the other chain
-                                     receiver_address:address, // receiver on this chain
-                                     balance: u64, // balance <b>to</b> transfer
-                                     transfer_id: vector&lt;u8&gt;, // transfer_id
-) <b>acquires</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_EscrowState">EscrowState</a>  {
-    <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender,escrow_address,<a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>, sender_address, receiver_address, balance, transfer_id)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BridgeEscrow_withdraw_from_escrow_aux"></a>
-
-## Function `withdraw_from_escrow_aux`
-
-
-
-<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender: &signer, escrow_address: address, sender_this: address, sender_other: vector&lt;u8&gt;, receiver_this: address, balance: u64, transfer_id: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="BridgeEscrow.md#0x1_BridgeEscrow_withdraw_from_escrow_aux">withdraw_from_escrow_aux</a>(sender: &signer,
                                 escrow_address: address,
-                                sender_this: address, // sender on this  chain
                                 sender_other: vector&lt;u8&gt;, // sender on the other chain
                                 receiver_this:address, // receiver on this chain
                                 balance: u64, // balance <b>to</b> transfer
@@ -435,7 +466,7 @@
 
     // add entry <b>to</b> unlocked <b>to</b> indicate that funds were transferred
     <b>let</b> ai = <a href="BridgeEscrow.md#0x1_BridgeEscrow_AccountInfo">AccountInfo</a> {
-        sender_this: sender_this,
+        sender_this: <a href="BridgeEscrow.md#0x1_BridgeEscrow_ZERO_ADDRESS">ZERO_ADDRESS</a>,
         sender_other: sender_other,
         receiver_this: <b>copy</b> receiver_this,
         receiver_other: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(),

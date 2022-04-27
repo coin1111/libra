@@ -14,11 +14,16 @@ pub mod bridge_close_transfer_cmd;
 pub mod bridge_create_escrow_cmd;
 pub mod bridge_deposit_cmd;
 pub mod bridge_withdraw_cmd;
+pub mod deposit_funds_cmd;
+pub mod withdraw_funds_cmd;
 
 use self::{
     bridge_close_transfer_cmd::BridgeCloseTransferCmd,
-    bridge_create_escrow_cmd::BridgeCreateEscrowCmd, bridge_deposit_cmd::BridgeDepositCmd,
+    bridge_create_escrow_cmd::BridgeCreateEscrowCmd,
+    bridge_deposit_cmd::BridgeDepositCmd,
     bridge_withdraw_cmd::BridgeWithdrawCmd,
+    deposit_funds_cmd::DepositFundsCmd,
+    withdraw_funds_cmd::WithdrawFundsCmd,
 };
 use crate::config::AppCfg;
 use crate::entrypoint;
@@ -39,16 +44,24 @@ pub enum TxsCmd {
     BridgeCreateEscrow(BridgeCreateEscrowCmd),
 
     /// deposit to bridge escrow
-    #[options(help = "deposit to bridge escrow")]
+    #[options(help = "deposit to bridge escrow to create transfer transaction")]
     BridgeDeposit(BridgeDepositCmd),
 
     /// withdraw from bridge escrow
-    #[options(help = "withdraw from bridge escrow")]
+    #[options(help = "withdraw from bridge escrow for transfer transaction")]
     BridgeWithdraw(BridgeWithdrawCmd),
 
     /// close transfer account
     #[options(help = "close tranfer account")]
     BridgeCloseTransfer(BridgeCloseTransferCmd),
+
+    /// deposit funds to bridge escrow
+    #[options(help = "deposit funds to bridge escrow")]
+    DepositFunds(DepositFundsCmd),
+
+    /// withdraw funds from bridge escrow
+    #[options(help = "withdraw funds from bridge escrow")]
+    WithdrawFunds(WithdrawFundsCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

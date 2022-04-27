@@ -4277,6 +4277,23 @@ pub fn encode_bridge_deposit_script_function(
         ],
     ))
 }
+pub fn encode_bridge_deposit_funds_script_function(
+    escrow: AccountAddress,
+    value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("deposit_funds").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+        ],
+    ))
+}
 
 pub fn encode_bridge_withdraw_script_function(
     escrow: AccountAddress,
@@ -4298,6 +4315,26 @@ pub fn encode_bridge_withdraw_script_function(
             bcs::to_bytes(&receiver).unwrap(),
             bcs::to_bytes(&balance).unwrap(),
             bcs::to_bytes(&transfer_id).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_bridge_withdraw_funds_script_function(
+    escrow: AccountAddress,
+    receiver: AccountAddress,
+    balance: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeScripts").to_owned(),
+        ),
+        ident_str!("withdraw_funds").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&receiver).unwrap(),
+            bcs::to_bytes(&balance).unwrap(),
         ],
     ))
 }

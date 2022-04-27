@@ -10,4 +10,8 @@ cargo run -p txs -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice  create-
 # init escrow
 cargo run -p bridge-cli -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bridge-escrow bridge-create-escrow
 
+# deposit some funds into bridge
+cargo run -p bridge-cli -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice deposit-funds -e 708B1D23219EB737035CB29A68F0F3A8 -c 500
+
+
 rm $HOME/libra/.agent_checkpoint
