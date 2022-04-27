@@ -3561,6 +3561,10 @@ impl ScriptFunctionCall {
                 value,
                 transfer_id,
             } => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
+            DepositFunds {
+                escrow,
+                value,
+            } => encode_bridge_deposit_funds_script_function(escrow, value),
             BridgeWithdraw {
                 escrow,
                 sender_other,
@@ -3573,6 +3577,15 @@ impl ScriptFunctionCall {
                 receiver,
                 balance,
                 transfer_id,
+            ),
+            WithdrawFunds {
+                escrow,
+                receiver,
+                balance,
+            } => encode_bridge_withdraw_funds_script_function(
+                escrow,
+                receiver,
+                balance,
             ),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
