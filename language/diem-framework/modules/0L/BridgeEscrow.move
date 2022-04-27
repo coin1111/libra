@@ -73,6 +73,55 @@ address 0x1 {
             });
         }
 
+        // Transfer token to escrow account to be used as
+        // for ETH->0L transfers
+        public fun deposit_funds(escrow: address,
+                                           sender: &signer,
+                                           amount: u64) acquires EscrowState {
+            // validate arguments
+            assert (amount > 0, ERROR_AMOUNT_MUST_BE_POSITIVE);
+
+            // sender has enough funds
+            let sender_this = Signer::address_of(sender);
+            assert(DiemAccount::balance<GAS>(sender_this) >= amount, ERROR_INSUFFICIENT_BALANCE);
+
+            // escrow account exists
+            assert (exists<EscrowState>(escrow), ERROR_NO_ESCROW_ACCOUNT);
+
+            // 1. move funds from user to escrow account
+            let with_cap = DiemAccount::extract_withdraw_capability(sender);
+            let tokens = DiemAccount::withdraw_tokens<GAS>(&with_cap, escrow, amount, x"");
+            DiemAccount::restore_withdraw_capability(with_cap);
+
+            // 2. update escrow state
+            let state = borrow_global_mut<EscrowState>(escrow);
+            Diem::deposit(&mut state.tokens,tokens);
+        }
+
+        // Withdraw funds from escrow
+        public fun withdraw_funds(sender: &signer,
+                                        escrow_address: address,
+                                        receiver_this:address, // receiver on this chain
+                                        balance: u64
+        ) acquires EscrowState  {
+            let sender_address= Signer::address_of(sender);
+            assert(DiemSystem::is_validator(sender_address) == true ||
+                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
+
+            // update escrow state
+            let state = borrow_global_mut<EscrowState>( escrow_address);
+
+            // escrow has enough funds
+            assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
+
+            // withdraw tokens from escrow
+            let tokens = Diem::withdraw(&mut state.tokens,balance);
+
+            // move funds from escrow to user account
+            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
+        }
+
+
         // Creates an account for transfer between 0L->eth accounts
         // When user initiates a transfer it calls this method which
         // moves funds from user account into an escrow account.

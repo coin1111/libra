@@ -1,3 +1,4 @@
+set -e
 export SWARM_PATH=/home/ruslan/swarm_temp/
 export SWARM_PERSONA=alice
 export ETH_BRIDGE_ESCROW_CONFIG=/home/ruslan/projects/eth-bridge/.bridge_escrow.config

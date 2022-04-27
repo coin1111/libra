@@ -72,6 +72,7 @@ script {
         assert(BridgeEscrow::get_locked_length(@{{escrow}}) == 3, 20002);
     }
 }
+//! check: EXECUTED
 
 ///// Test 5: Transfer funds into local account carol
 //! new-transaction
