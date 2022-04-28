@@ -20,19 +20,32 @@ Setup accounts
 ./create-accounts.sh
 ```
 
+Launch ETH devnet using hardhat
+```asm
+git clone https://github.com/coin1111/eth-bridge
+cd eth-bridge
+./setup-hardhat.sh
+npx hardhat compile
+./run-local-node.sh
+./deploy-local.sh
+```
+
 Launch bridge agent
 ```asm
 cd ~/libra
 cargo run -p bridge-agent -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice  -a 708B1D23219EB737035CB29A68F0F3A8 agent 
 ```
 
-Make deposit
+## Run Integration Tests
 ```asm
-cd ~/libra
-cargo run -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=pete bridge-deposit -e 708B1D23219EB737035CB29A68F0F3A8 -l 8671AF7A44F80253F3E141123FF4A7D2 -c 100 -t 1122
+cd integration-tests
+./run-integration-tests.sh
 ```
 
-Check balance of target account
-```asm
-cargo run -p ol -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice -a 8671AF7A44F80253F3E141123FF4A7D2 query --balance
-```
+## Project Structure
+* abigen-cli - generate rust files to interact with ETH bridge contract using abis
+* accounts-eth - ETH accounts used for development and testing
+* bridge-cli - cli to manage bridge
+* bridge-eth - rust library to interact with ETH bridge contract
+* bridge-ol - rust library to interact with 0L bridge contract
+* integration-tests - end-to-end bridge test
