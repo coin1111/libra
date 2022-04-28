@@ -9,7 +9,7 @@ cargo run --package abigen-ol --bin abigen-ol --  <contract-name> <contract-abi.
 ./generate-mods.sh
 ```
 
-abigen has a bag and incorrectly generates code for bridge_escrow_mod.rs. To correct that replace the following 2 methods in this file to have signature like this:
+abigen has a bug and incorrectly generates code for bridge_escrow_mod.rs. To correct that replace tuple (...) in the signature with Token in the following 2 methods in this file :
 ```
 pub fn get_locked_account_info(
             &self,
@@ -18,7 +18,7 @@ pub fn get_locked_account_info(
             'a,
             P,
             S,
-            Token,
+            Token, // **** abigen generates tuple (...) here ****, replace with Token
         > 
         
 pub fn get_unlocked_account_info(
@@ -28,6 +28,6 @@ pub fn get_unlocked_account_info(
             'a,
             P,
             S,
-            Token,
+            Token, // **** abigen generates tuple (...) here ****, replace with Token
         > 
 ```

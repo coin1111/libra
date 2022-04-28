@@ -33,13 +33,13 @@ talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep 
 # run agent
 ./run-agent.sh
 
-# run integratrion tests
+# run integration tests
 cd integration-tests
 ./run-integration-tests.sh
 ```
 
 ## Test 0L Bridge Agent
 ```
-# stop agent
 ./test-bridge-contract.sh
+# inspect output
 ```
