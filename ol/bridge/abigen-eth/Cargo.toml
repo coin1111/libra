@@ -1,5 +1,5 @@
 [package]
-name = "abigen-ol"
+name = "abigen-eth"
 version = "0.1.0"
 authors = ["coin1111 <celticsnow123@gmail.com>"]
 edition = "2018"

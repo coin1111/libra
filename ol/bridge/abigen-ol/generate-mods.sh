@@ -1,2 +1,0 @@
-cargo run --package abigen-ol --bin abigen-ol -- OLToken ../bridge-eth/abi/contracts/OLToken.sol/OLToken.json ../bridge-eth/src/oltoken_mod.rs
-cargo run --package abigen-ol --bin abigen-ol -- BridgeEscrow ../bridge-eth/abi/contracts/BridgeEscrow.sol/BridgeEscrow.json ../bridge-eth/src/bridge_escrow_mod.rs

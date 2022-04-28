@@ -6,7 +6,7 @@ fn main() -> anyhow::Result<()> {
     let mut args = std::env::args();
     args.next().unwrap(); // skip program name
     let help = ||{
-        println!("Usage: abigen-ol <contract-name> <contract-abi.json> [contract-abi.rs]");
+        println!("Usage: abigen-eth <contract-name> <contract-abi.json> [contract-abi.rs]");
         println!("Generate ETH contract abi for rust compiler");
         exit(0);
     };
