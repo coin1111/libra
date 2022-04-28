@@ -32,6 +32,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "abigen-ol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ethers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-contract-abigen",
+]
+
+[[package]]
 name = "abscissa_core"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -224,9 +233,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 dependencies = [
  "backtrace",
 ]
@@ -676,7 +685,7 @@ dependencies = [
  "diem-wallet",
  "diemdb",
  "dirs 2.0.2",
- "ethers",
+ "ethers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "fs_extra",
  "futures",
  "glob",
@@ -773,8 +782,8 @@ dependencies = [
 name = "bridge-eth"
 version = "0.1.0"
 dependencies = [
- "ethers",
- "ethers-core",
+ "ethers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-core 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.3",
  "serde_json",
  "uuid",
@@ -1728,6 +1737,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c15b8ec3b5755a188c141c1f6a98e76de31b936209bf066b647979e2a84764a9"
 dependencies = [
  "nix 0.20.0",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "curl"
+version = "0.4.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37d855aeef205b43f65a5001e0997d81f8efca7badad4fad7d897aa7f0d0651f"
+dependencies = [
+ "curl-sys",
+ "libc",
+ "openssl-probe",
+ "openssl-sys",
+ "schannel",
+ "socket2 0.4.4",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "curl-sys"
+version = "0.4.54+curl-7.83.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25debbc3365c3e7ee79e30918df5759e84dbd4485807a18829188abf1786ec4e"
+dependencies = [
+ "cc",
+ "libc",
+ "libz-sys",
+ "openssl-sys",
+ "pkg-config",
+ "vcpkg",
  "winapi 0.3.9",
 ]
 
@@ -3415,10 +3454,21 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e71399d9ead388c856d87dea797be41312d9d1a22ce96f0eef342e977c8b07e1"
 dependencies = [
- "ethers-contract",
- "ethers-core",
- "ethers-providers",
- "ethers-signers",
+ "ethers-contract 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-core 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-providers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-signers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ethers"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "ethers-contract 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-core 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-providers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-signers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
 ]
 
 [[package]]
@@ -3427,14 +3477,47 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bece759cb4b8a329a170357ef92c39b0a9cf297b6acdb7d4e09e59db0791a8c7"
 dependencies = [
- "ethers-core",
- "ethers-providers",
- "ethers-signers",
+ "ethers-core 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-providers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-signers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures",
  "once_cell",
  "rustc-hex",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "ethers-contract"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "ethers-core 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-providers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-signers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "futures",
+ "once_cell",
+ "rustc-hex",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "ethers-contract-abigen"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "Inflector",
+ "anyhow",
+ "curl",
+ "ethers-core 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "once_cell",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "rustc-hex",
+ "serde_json",
+ "syn 1.0.72",
+ "url",
 ]
 
 [[package]]
@@ -3458,13 +3541,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethers-core"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "arrayvec 0.5.2",
+ "ethabi-next",
+ "ethereum-types",
+ "glob",
+ "libsecp256k1",
+ "rand 0.7.3",
+ "rlp",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tiny-keccak 2.0.2",
+]
+
+[[package]]
 name = "ethers-providers"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba3d87ad5f8125f6227cdc59500d947a0e1f7846d1a137fb9bf8c2c428f23c6a"
 dependencies = [
  "async-trait",
- "ethers-core",
+ "ethers-core 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-core",
+ "futures-util",
+ "pin-project 0.4.29",
+ "reqwest 0.10.10",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio 0.2.25",
+ "url",
+]
+
+[[package]]
+name = "ethers-providers"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "async-trait",
+ "ethers-core 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
  "futures-core",
  "futures-util",
  "pin-project 0.4.29",
@@ -3482,8 +3602,20 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4bc7a6e9704e7b7335710c75b108e02920300e7902408ab9eb3a99d58bc41ec9"
 dependencies = [
- "ethers-core",
- "ethers-providers",
+ "ethers-core 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ethers-providers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-util",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "ethers-signers"
+version = "0.1.3"
+source = "git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125#bf7933afcd18ca46e2828160b341b5c77ab96125"
+dependencies = [
+ "ethers-core 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
+ "ethers-providers 0.1.3 (git+https://github.com/coin1111/abigen-ethers-rs-0.1.3?rev=bf7933afcd18ca46e2828160b341b5c77ab96125)",
  "futures-util",
  "serde",
  "thiserror",
@@ -4456,7 +4588,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project 1.0.5",
- "socket2",
+ "socket2 0.3.19",
  "tokio 0.2.25",
  "tower-service",
  "tracing",
@@ -4480,7 +4612,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project 1.0.5",
- "socket2",
+ "socket2 0.3.19",
  "tokio 1.11.0",
  "tower-service",
  "tracing",
@@ -4686,7 +4818,7 @@ dependencies = [
  "bridge-ol",
  "cli",
  "diem-types",
- "ethers",
+ "ethers 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.3",
  "ol-types",
  "tokio 0.2.25",
@@ -5104,6 +5236,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "libz-sys"
+version = "1.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92e7e15d7610cce1d9752e137625f14e61a28cd45929b6e12e47b50fe154ee2e"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
 name = "linked-hash-map"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5314,7 +5458,7 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a33c1b55807fbed163481b5ba66db4b2fa6cde694a5027be10fb724206c5897"
 dependencies = [
- "socket2",
+ "socket2 0.3.19",
  "winapi 0.3.9",
 ]
 
@@ -6250,7 +6394,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-vm-types",
- "nix 0.18.0",
+ "nix 0.20.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -8501,6 +8645,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "122e570113d28d773067fab24266b66753f6ea915758651696b6e35e49f88d6e"
 dependencies = [
  "cfg-if 1.0.0",
+ "libc",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "socket2"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
+dependencies = [
  "libc",
  "winapi 0.3.9",
 ]
