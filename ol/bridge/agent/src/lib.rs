@@ -17,4 +17,7 @@ pub mod prelude;
 pub mod node;
 pub mod agent;
 pub mod util;
+pub mod mgmt;
+pub mod check;
+pub mod cache;
 

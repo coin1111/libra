@@ -77,7 +77,7 @@ impl Runnable for AgentCmd {
                 }
             };
 
-            let agent = Agent::new(
+            let mut agent = Agent::new(
                 ol_escrow,
                 Node::new(ol_client, &cfg, is_swarm),
                 config_eth.map_or_else(|_| None, |x| Some(x)),

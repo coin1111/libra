@@ -1,3 +1,4 @@
+set -e
 pushd ../..
 cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice init --source-path $HOME/libra
 

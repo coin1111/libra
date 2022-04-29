@@ -242,7 +242,7 @@ impl Node {
     }
 
     /// Query BridgeEscrow locked vactor
-    pub fn query_locked(& self, query_type: QueryType) -> Result<String, Error> {
+    pub fn query_locked(& mut self, query_type: QueryType) -> Result<String, Error> {
         use QueryType::*;
         let print = match query_type {
             MoveValue {

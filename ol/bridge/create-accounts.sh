@@ -1,3 +1,4 @@
+set -e
 # pete
 cargo run -p txs -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice  create-account -a b471d15e523f4fbba50983ed0cb2bdf5770b2c65843b25ca12ca48091fc33cd8  -c 1
 

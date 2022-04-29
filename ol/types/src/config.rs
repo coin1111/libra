@@ -61,10 +61,11 @@ pub struct AppCfg {
 }
 
 /// Get a AppCfg object from toml file
-pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
-    // let mut config_toml = path.to_str().unwrap().to_owned()).expect("could not parse app config from file");
+pub fn parse_toml(path: Option<PathBuf>) -> Result<AppCfg, Error> {
+    let cfg_path = path.unwrap_or(dirs::home_dir().unwrap().join(".0L").join("0L.toml"));
+
     let mut toml_buf = "".to_string();
-    let mut file = File::open(&path)?;
+    let mut file = File::open(&cfg_path)?;
     file.read_to_string(&mut toml_buf)?;
 
 
@@ -74,8 +75,8 @@ pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
 
 /// Get a AppCfg object from toml file
 pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
-    let cfg: AppCfg = parse_toml(path)?;
-    cfg.save_file();
+    let cfg: AppCfg = parse_toml(Some(path))?;
+    cfg.save_file()?;
     Ok(())
 }
 
@@ -189,7 +190,7 @@ impl AppCfg {
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
             if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+                default_config.profile.upstream_nodes = vec![url.to_owned()];
                 let mut web_monitor_url = url.clone();
                 let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
                 default_config.chain_info.base_epoch = Some(e);
@@ -204,12 +205,12 @@ impl AppCfg {
 
         // skip questionnaire if CI
         if *IS_TEST {
-            default_config.save_file();
+            default_config.save_file()?;
 
             return Ok(default_config);
         }
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-        default_config.save_file();
+        default_config.save_file()?;
 
         Ok(default_config)
     }
@@ -221,11 +222,11 @@ impl AppCfg {
         swarm_path: PathBuf,
         node_home: PathBuf,
         source_path: Option<PathBuf>,
-    ) -> AppCfg {
+    ) -> Result<AppCfg, Error> {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
-        host_config.save_file();
-        host_config
+        host_config.save_file()?;
+        Ok(host_config)
     }
 
     /// get configs from swarm
@@ -239,10 +240,6 @@ impl AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
-
-        let url =
-            Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
-                .unwrap();
 
         // upstream configs
         let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
@@ -276,44 +273,26 @@ impl AppCfg {
         cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
-        cfg.profile.default_node = Some(url);
-        cfg.profile.upstream_nodes = Some(vec![upstream_url]);
+        cfg.profile.upstream_nodes = vec![upstream_url];
 
         cfg
     }
-    /// choose a node to connect to, either localhost or upstream
-    pub fn what_url(&self, use_upstream_url: bool) -> Url {
-        if use_upstream_url {
-            self.profile
-                .upstream_nodes
-                .clone()
-                .unwrap()
-                .into_iter()
-                .next()
-                .expect("no backup url provided in config toml")
-        } else {
-            self.profile
-                .default_node
-                .clone()
-                .expect("no url provided in config toml")
-        }
-    }
 
     /// save the config file to 0L.toml to the workspace home path
-    pub fn save_file(&self) {
-        let toml = toml::to_string(&self).unwrap();
+    pub fn save_file(&self) -> Result<(), Error>{
+        let toml = toml::to_string(&self)?;
         let home_path = &self.workspace.node_home.clone();
         // create home path if doesn't exist, usually only in dev/ci environments.
-        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
+        fs::create_dir_all(&home_path)?;
         let toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml file");
+        let mut file = fs::File::create(&toml_path)?;
+        file.write(&toml.as_bytes())?;
+
         println!(
             "\nhost configs initialized, file saved to: {:?}",
             &toml_path
         );
+        Ok(())
     }
 }
 
@@ -410,11 +389,11 @@ pub struct Profile {
     /// ip address of the validator fullnodee
     pub vfn_ip: Option<Ipv4Addr>,
 
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub default_node: Option<Url>,
+    // /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    // pub default_node: Option<Url>,
 
     /// Other nodes to connect for fallback connections
-    pub upstream_nodes: Option<Vec<Url>>,
+    pub upstream_nodes: Vec<Url>,
 
     /// Link to another delay tower.
     pub tower_link: Option<String>,
@@ -431,8 +410,8 @@ impl Default for Profile {
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             vfn_ip: "0.0.0.0".parse().ok(),
-            default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            // default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            upstream_nodes: vec!["http://localhost:8080".parse().expect("parse url")],
             tower_link: None,
         }
     }

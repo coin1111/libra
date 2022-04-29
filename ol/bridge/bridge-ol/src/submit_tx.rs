@@ -4,7 +4,7 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use anyhow::{Error, anyhow};
+use anyhow::{bail, Error, anyhow};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
@@ -224,7 +224,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         None => Err(anyhow!("cannot get swarm config").into()),
     }?;
     let toml_path = swarm_path.join("0").join("0L.toml");
-    let app_config: AppCfg = parse_toml(toml_path)?;
+    let app_config: AppCfg = parse_toml(Some(toml_path))?;
     tx_params(
         app_config,
         tx_config.url_opt,
@@ -238,6 +238,21 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
     )
 }
 
+/// Find a url to use for connecting a client.
+/// The default behavior is to search a randomized list of upsteam_peers in 0L.toml
+/// can optionally be forced to use the first peer on that list.
+pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error> {
+    // get the first in the list of upstreams
+    if use_first_upstream {
+        Ok(config.profile.upstream_nodes[0].to_owned())
+    } else {
+        if let Some(_) = config.chain_info.base_waypoint {
+            Ok(Url::parse("http://localhost:8080").expect("Couldn't create diem client"))
+        } else {
+           bail!("no base_waypoint provided in 0L.toml")
+        }
+    }
+}
 /// tx_parameters format
 pub fn tx_params(
     config:AppCfg,
@@ -251,7 +266,7 @@ pub fn tx_params(
     wallet_opt: Option<&WalletLibrary>,
 ) -> Result<TxParams, Error> {
     let url = url_opt.unwrap_or_else(|| {
-        config.what_url(use_upstream_url)
+        what_url(&config,use_upstream_url).unwrap()
     });
 
     let mut tx_params: TxParams = match swarm_path {
@@ -438,7 +453,7 @@ pub fn get_tx_params_from_keypair(
         auth_key: config.profile.auth_key,
         signer_address: config.profile.account,
         owner_address: config.profile.account,
-        url: config.what_url(use_upstream_url),
+        url: what_url(&config,use_upstream_url).unwrap(),
         waypoint,
         keypair,
         tx_cost: config.tx_configs.get_cost(tx_type),
