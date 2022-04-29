@@ -1,8 +1,8 @@
 [workspace]
-node_home = "/home/ruslan/swarm_temp/1"
-source_path = "/home/ruslan/libra"
+node_home = "$HOME/swarm_temp/1"
+source_path = "$HOME/libra"
 block_dir = "vdf_proofs"
-db_path = "/home/ruslan/swarm_temp/1/db"
+db_path = "$HOME/swarm_temp/1/db"
 
 [profile]
 account = "88e74dfed34420f2ad8032148280a84b"
