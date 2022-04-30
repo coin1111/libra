@@ -61,44 +61,6 @@
     "inputs": [
       {
         "internalType": "bytes16",
-        "name": "receiver_address",
-        "type": "bytes16"
-      },
-      {
-        "internalType": "uint64",
-        "name": "amount",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes16",
-        "name": "transfer_id",
-        "type": "bytes16"
-      }
-    ],
-    "name": "createTransferAccount",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender_this",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes16",
-        "name": "sender_other",
-        "type": "bytes16"
-      },
-      {
-        "internalType": "address payable",
-        "name": "receiver_this",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes16",
         "name": "receiver_other",
         "type": "bytes16"
       },
@@ -113,30 +75,7 @@
         "type": "bytes16"
       }
     ],
-    "name": "createTransferAccountAux",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address payable",
-        "name": "receiver_address",
-        "type": "address"
-      },
-      {
-        "internalType": "uint64",
-        "name": "amount",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes16",
-        "name": "transfer_id",
-        "type": "bytes16"
-      }
-    ],
-    "name": "createTransferAccountThis",
+    "name": "createTransferAccount",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
@@ -335,39 +274,6 @@
     "inputs": [
       {
         "internalType": "bytes16",
-        "name": "sender_address",
-        "type": "bytes16"
-      },
-      {
-        "internalType": "address payable",
-        "name": "receiver_address",
-        "type": "address"
-      },
-      {
-        "internalType": "uint64",
-        "name": "balance",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes16",
-        "name": "transfer_id",
-        "type": "bytes16"
-      }
-    ],
-    "name": "withdrawFromEscrow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender_this",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes16",
         "name": "sender_other",
         "type": "bytes16"
       },
@@ -387,35 +293,7 @@
         "type": "bytes16"
       }
     ],
-    "name": "withdrawFromEscrowAux",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender_address",
-        "type": "address"
-      },
-      {
-        "internalType": "address payable",
-        "name": "receiver_address",
-        "type": "address"
-      },
-      {
-        "internalType": "uint64",
-        "name": "balance",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes16",
-        "name": "transfer_id",
-        "type": "bytes16"
-      }
-    ],
-    "name": "withdrawFromEscrowThis",
+    "name": "withdrawFromEscrow",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

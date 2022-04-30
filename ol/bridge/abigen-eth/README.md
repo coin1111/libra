@@ -9,6 +9,7 @@ cargo run --package abigen-eth --bin abigen-eth --  <contract-name> <contract-ab
 ./generate-mods.sh
 ```
 
+## Note
 abigen has a bug and incorrectly generates code for bridge_escrow_mod.rs. To correct that replace tuple (...) in the signature with Token in the following 2 methods in this file :
 ```
 pub fn get_locked_account_info(
