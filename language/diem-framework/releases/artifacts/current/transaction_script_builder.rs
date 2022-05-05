@@ -1,3 +1,4 @@
+
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,17 +13,14 @@
 
 #![allow(clippy::unnecessary_wraps)]
 #![allow(unused_imports)]
-use diem_types::{
-    account_address::AccountAddress,
-    transaction::{Script, ScriptFunction, TransactionArgument, TransactionPayload},
-};
-use move_core_types::{
-    ident_str,
-    language_storage::{ModuleId, TypeTag},
-};
 use std::collections::BTreeMap as Map;
+use diem_types::account_address::{AccountAddress};
+use diem_types::transaction::{Script, TransactionArgument, TransactionPayload, ScriptFunction};
+use move_core_types::{ident_str};
+use move_core_types::language_storage::{TypeTag, ModuleId};
 
 type Bytes = Vec<u8>;
+
 
 /// Structured representation of a call into a known Move script.
 /// ```ignore
@@ -35,6 +33,7 @@ type Bytes = Vec<u8>;
 #[cfg_attr(feature = "fuzzing", derive(proptest_derive::Arbitrary))]
 #[cfg_attr(feature = "fuzzing", proptest(no_params))]
 pub enum ScriptCall {
+
     /// # Summary
     /// Adds a zero `Currency` balance to the sending `account`. This will enable `account` to
     /// send, receive, and hold `Diem::Diem<Currency>` coins. This transaction can be
@@ -64,7 +63,9 @@ pub enum ScriptCall {
     /// * `Script::create_child_vasp_account`
     /// * `Script::create_parent_vasp_account`
     /// * `Script::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Stores the sending accounts ability to rotate its authentication key with a designated recovery
@@ -106,7 +107,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::create_recovery_address`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -250,7 +253,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::burn`
     /// * `Script::cancel_burn`
-    BurnTxnFees { coin_type: TypeTag },
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
 
     /// # Summary
     /// Cancels and returns all coins held in the preburn area under
@@ -494,7 +499,8 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::add_recovery_rotation_capability`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    CreateRecoveryAddress {},
+    CreateRecoveryAddress {
+    },
 
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Diem
@@ -739,7 +745,10 @@ pub enum ScriptCall {
     /// * `Script::cancel_burn`
     /// * `Script::burn`
     /// * `Script::burn_txn_fees`
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// # Summary
     /// Rotates the authentication key of the sending account to the
@@ -767,7 +776,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -885,7 +896,9 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -918,7 +931,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -951,7 +967,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -1027,7 +1046,10 @@ pub enum ScriptCall {
     /// * `Script::create_parent_vasp_account`
     /// * `Script::create_designated_dealer`
     /// * `Script::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -1054,7 +1076,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration, and triggers a reconfiguration of the system to update the
@@ -1320,7 +1344,10 @@ pub enum ScriptCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                  | `account` is not the Diem Root account.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `DiemVersion::EINVALID_MAJOR_VERSION_NUMBER` | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateDiemVersion { sliding_nonce: u64, major: u64 },
+    UpdateDiemVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// # Summary
     /// Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
@@ -1430,6 +1457,7 @@ pub enum ScriptCall {
     },
 }
 
+
 /// Structured representation of a call into a known Move script function.
 /// ```ignore
 /// impl ScriptFunctionCall {
@@ -1441,6 +1469,7 @@ pub enum ScriptCall {
 #[cfg_attr(feature = "fuzzing", derive(proptest_derive::Arbitrary))]
 #[cfg_attr(feature = "fuzzing", proptest(no_params))]
 pub enum ScriptFunctionCall {
+
     /// # Summary
     /// Adds a zero `Currency` balance to the sending `account`. This will enable `account` to
     /// send, receive, and hold `Diem::Diem<Currency>` coins. This transaction can be
@@ -1599,6 +1628,7 @@ pub enum ScriptFunctionCall {
         validator_address: AccountAddress,
     },
 
+
     AutopayCreateInstruction {
         uid: u64,
         in_type: u8,
@@ -1607,19 +1637,26 @@ pub enum ScriptFunctionCall {
         value: u64,
     },
 
-    AutopayDisable {},
 
-    AutopayEnable {},
+    AutopayDisable {
+    },
+
+
+    AutopayEnable {
+    },
+
 
     BalanceTransfer {
         destination: AccountAddress,
         unscaled_value: u64,
     },
 
+
     BalanceTransferScaled {
         destination: AccountAddress,
         value: u64,
     },
+
 
     BridgeCloseTransfer {
         escrow: AccountAddress,
@@ -1627,7 +1664,10 @@ pub enum ScriptFunctionCall {
         close_other: bool,
     },
 
-    BridgeCreateEscrow {},
+
+    BridgeCreateEscrow {
+    },
+
 
     BridgeDeposit {
         escrow: AccountAddress,
@@ -1636,10 +1676,12 @@ pub enum ScriptFunctionCall {
         transfer_id: Bytes,
     },
 
+
     BridgeDepositFunds {
         escrow: AccountAddress,
         value: u64,
     },
+
 
     BridgeWithdraw {
         escrow: AccountAddress,
@@ -1648,6 +1690,7 @@ pub enum ScriptFunctionCall {
         balance: u64,
         transfer_id: Bytes,
     },
+
 
     BridgeWithdrawFunds {
         escrow: AccountAddress,
@@ -1808,11 +1851,13 @@ pub enum ScriptFunctionCall {
         amount: u64,
     },
 
-    /// claim a make whole payment, requires the index of the payment
-    /// in the MakeWhole module, which can be found using the
-    /// query_make_whole_payment, which should not be run as part of
+    /// claim a make whole payment, requires the index of the payment 
+    /// in the MakeWhole module, which can be found using the 
+    /// query_make_whole_payment, which should not be run as part of 
     /// the tx as it is relatively resource intensive (linear search)
-    ClaimMakeWhole {},
+    ClaimMakeWhole {
+    },
+
 
     CommunityTransfer {
         destination: AccountAddress,
@@ -1820,12 +1865,14 @@ pub enum ScriptFunctionCall {
         memo: Bytes,
     },
 
+
     CreateAccUser {
         challenge: Bytes,
         solution: Bytes,
         difficulty: u64,
         security: u64,
     },
+
 
     CreateAccVal {
         challenge: Bytes,
@@ -1985,7 +2032,8 @@ pub enum ScriptFunctionCall {
     /// | ----------------            | --------------            | -------------                                                                  |
     /// | `Errors::ALREADY_PUBLISHED` | `DiemId::EDIEM_ID_DOMAIN` | A `DiemId::DiemIdDomains` resource has already been published under `account`. |
     /// | `Errors::REQUIRES_ROLE`     | `Roles::EPARENT_VASP`     | The sending `account` was not a parent VASP account.                           |
-    CreateDiemIdDomains {},
+    CreateDiemIdDomains {
+    },
 
     /// # Summary
     /// Creates a Parent VASP account with the specified human name. Must be called by the Treasury Compliance account.
@@ -2074,7 +2122,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `Script::add_recovery_rotation_capability`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    CreateRecoveryAddress {},
+    CreateRecoveryAddress {
+    },
+
 
     CreateUserByCoinTx {
         account: AccountAddress,
@@ -2191,6 +2241,7 @@ pub enum ScriptFunctionCall {
         human_name: Bytes,
     },
 
+
     DemoE2e {
         world: u64,
     },
@@ -2243,7 +2294,9 @@ pub enum ScriptFunctionCall {
         to_freeze_account: AccountAddress,
     },
 
-    InitVouch {},
+
+    InitVouch {
+    },
 
     /// # Summary
     /// Initializes the Diem consensus config that is stored on-chain.  This
@@ -2271,7 +2324,10 @@ pub enum ScriptFunctionCall {
         sliding_nonce: u64,
     },
 
-    Join {},
+
+    Join {
+    },
+
 
     MinerstateCommit {
         challenge: Bytes,
@@ -2279,6 +2335,7 @@ pub enum ScriptFunctionCall {
         difficulty: u64,
         security: u64,
     },
+
 
     MinerstateCommitByOperator {
         owner_address: AccountAddress,
@@ -2288,7 +2345,9 @@ pub enum ScriptFunctionCall {
         security: u64,
     },
 
-    MinerstateHelper {},
+
+    MinerstateHelper {
+    },
 
     /// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
     OlDelegateVote {
@@ -2296,12 +2355,15 @@ pub enum ScriptFunctionCall {
     },
 
     /// First Bob must have delegation enabled, which can be done with:
-    OlEnableDelegation {},
+    OlEnableDelegation {
+    },
+
 
     OlOracleTx {
         id: u64,
         data: Bytes,
     },
+
 
     OlReconfigBulkUpdateSetup {
         alice: AccountAddress,
@@ -2312,7 +2374,8 @@ pub enum ScriptFunctionCall {
     },
 
     /// Alice can remove Bob as the delegate with this function.
-    OlRemoveDelegation {},
+    OlRemoveDelegation {
+    },
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -2788,6 +2851,7 @@ pub enum ScriptFunctionCall {
         public_key: Bytes,
     },
 
+
     SetBurnPref {
         to_community: bool,
     },
@@ -2978,6 +3042,7 @@ pub enum ScriptFunctionCall {
         operator_name: Bytes,
         operator_account: AccountAddress,
     },
+
 
     SetWalletType {
         type_of: u8,
@@ -3247,238 +3312,59 @@ pub enum ScriptFunctionCall {
         allow_minting: bool,
     },
 
-    ValAddSelf {},
+
+    ValAddSelf {
+    },
+
 
     VouchFor {
         val: AccountAddress,
     },
 }
 
+
 impl ScriptCall {
+
     /// Build a Diem `Script` from a structured object `ScriptCall`.
     pub fn encode(self) -> Script {
         use ScriptCall::*;
         match self {
-            AddCurrencyToAccount { currency } => encode_add_currency_to_account_script(currency),
-            AddRecoveryRotationCapability { recovery_address } => {
-                encode_add_recovery_rotation_capability_script(recovery_address)
-            }
-            AddValidatorAndReconfigure {
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            } => encode_add_validator_and_reconfigure_script(
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            ),
-            Burn {
-                token,
-                sliding_nonce,
-                preburn_address,
-            } => encode_burn_script(token, sliding_nonce, preburn_address),
-            BurnTxnFees { coin_type } => encode_burn_txn_fees_script(coin_type),
-            CancelBurn {
-                token,
-                preburn_address,
-            } => encode_cancel_burn_script(token, preburn_address),
-            CreateChildVaspAccount {
-                coin_type,
-                child_address,
-                auth_key_prefix,
-                add_all_currencies,
-                child_initial_balance,
-            } => encode_create_child_vasp_account_script(
-                coin_type,
-                child_address,
-                auth_key_prefix,
-                add_all_currencies,
-                child_initial_balance,
-            ),
-            CreateDesignatedDealer {
-                currency,
-                sliding_nonce,
-                addr,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            } => encode_create_designated_dealer_script(
-                currency,
-                sliding_nonce,
-                addr,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            ),
-            CreateParentVaspAccount {
-                coin_type,
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            } => encode_create_parent_vasp_account_script(
-                coin_type,
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            ),
-            CreateRecoveryAddress {} => encode_create_recovery_address_script(),
-            CreateValidatorAccount {
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            } => encode_create_validator_account_script(
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            ),
-            CreateValidatorOperatorAccount {
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            } => encode_create_validator_operator_account_script(
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            ),
-            FreezeAccount {
-                sliding_nonce,
-                to_freeze_account,
-            } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
-            PeerToPeerWithMetadata {
-                currency,
-                payee,
-                amount,
-                metadata,
-                metadata_signature,
-            } => encode_peer_to_peer_with_metadata_script(
-                currency,
-                payee,
-                amount,
-                metadata,
-                metadata_signature,
-            ),
-            Preburn { token, amount } => encode_preburn_script(token, amount),
-            PublishSharedEd25519PublicKey { public_key } => {
-                encode_publish_shared_ed25519_public_key_script(public_key)
-            }
-            RegisterValidatorConfig {
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            } => encode_register_validator_config_script(
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            ),
-            RemoveValidatorAndReconfigure {
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            } => encode_remove_validator_and_reconfigure_script(
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            ),
-            RotateAuthenticationKey { new_key } => encode_rotate_authentication_key_script(new_key),
-            RotateAuthenticationKeyWithNonce {
-                sliding_nonce,
-                new_key,
-            } => encode_rotate_authentication_key_with_nonce_script(sliding_nonce, new_key),
-            RotateAuthenticationKeyWithNonceAdmin {
-                sliding_nonce,
-                new_key,
-            } => encode_rotate_authentication_key_with_nonce_admin_script(sliding_nonce, new_key),
-            RotateAuthenticationKeyWithRecoveryAddress {
-                recovery_address,
-                to_recover,
-                new_key,
-            } => encode_rotate_authentication_key_with_recovery_address_script(
-                recovery_address,
-                to_recover,
-                new_key,
-            ),
-            RotateDualAttestationInfo { new_url, new_key } => {
-                encode_rotate_dual_attestation_info_script(new_url, new_key)
-            }
-            RotateSharedEd25519PublicKey { public_key } => {
-                encode_rotate_shared_ed25519_public_key_script(public_key)
-            }
-            SetValidatorConfigAndReconfigure {
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            } => encode_set_validator_config_and_reconfigure_script(
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            ),
-            SetValidatorOperator {
-                operator_name,
-                operator_account,
-            } => encode_set_validator_operator_script(operator_name, operator_account),
-            SetValidatorOperatorWithNonceAdmin {
-                sliding_nonce,
-                operator_name,
-                operator_account,
-            } => encode_set_validator_operator_with_nonce_admin_script(
-                sliding_nonce,
-                operator_name,
-                operator_account,
-            ),
-            TieredMint {
-                coin_type,
-                sliding_nonce,
-                designated_dealer_address,
-                mint_amount,
-                tier_index,
-            } => encode_tiered_mint_script(
-                coin_type,
-                sliding_nonce,
-                designated_dealer_address,
-                mint_amount,
-                tier_index,
-            ),
-            UnfreezeAccount {
-                sliding_nonce,
-                to_unfreeze_account,
-            } => encode_unfreeze_account_script(sliding_nonce, to_unfreeze_account),
-            UpdateDiemVersion {
-                sliding_nonce,
-                major,
-            } => encode_update_diem_version_script(sliding_nonce, major),
-            UpdateDualAttestationLimit {
-                sliding_nonce,
-                new_micro_xdx_limit,
-            } => encode_update_dual_attestation_limit_script(sliding_nonce, new_micro_xdx_limit),
-            UpdateExchangeRate {
-                currency,
-                sliding_nonce,
-                new_exchange_rate_numerator,
-                new_exchange_rate_denominator,
-            } => encode_update_exchange_rate_script(
-                currency,
-                sliding_nonce,
-                new_exchange_rate_numerator,
-                new_exchange_rate_denominator,
-            ),
-            UpdateMintingAbility {
-                currency,
-                allow_minting,
-            } => encode_update_minting_ability_script(currency, allow_minting),
+            AddCurrencyToAccount{currency} => encode_add_currency_to_account_script(currency),
+            AddRecoveryRotationCapability{recovery_address} => encode_add_recovery_rotation_capability_script(recovery_address),
+            AddValidatorAndReconfigure{sliding_nonce, validator_name, validator_address} => encode_add_validator_and_reconfigure_script(sliding_nonce, validator_name, validator_address),
+            Burn{token, sliding_nonce, preburn_address} => encode_burn_script(token, sliding_nonce, preburn_address),
+            BurnTxnFees{coin_type} => encode_burn_txn_fees_script(coin_type),
+            CancelBurn{token, preburn_address} => encode_cancel_burn_script(token, preburn_address),
+            CreateChildVaspAccount{coin_type, child_address, auth_key_prefix, add_all_currencies, child_initial_balance} => encode_create_child_vasp_account_script(coin_type, child_address, auth_key_prefix, add_all_currencies, child_initial_balance),
+            CreateDesignatedDealer{currency, sliding_nonce, addr, auth_key_prefix, human_name, add_all_currencies} => encode_create_designated_dealer_script(currency, sliding_nonce, addr, auth_key_prefix, human_name, add_all_currencies),
+            CreateParentVaspAccount{coin_type, sliding_nonce, new_account_address, auth_key_prefix, human_name, add_all_currencies} => encode_create_parent_vasp_account_script(coin_type, sliding_nonce, new_account_address, auth_key_prefix, human_name, add_all_currencies),
+            CreateRecoveryAddress{} => encode_create_recovery_address_script(),
+            CreateValidatorAccount{sliding_nonce, new_account_address, auth_key_prefix, human_name} => encode_create_validator_account_script(sliding_nonce, new_account_address, auth_key_prefix, human_name),
+            CreateValidatorOperatorAccount{sliding_nonce, new_account_address, auth_key_prefix, human_name} => encode_create_validator_operator_account_script(sliding_nonce, new_account_address, auth_key_prefix, human_name),
+            FreezeAccount{sliding_nonce, to_freeze_account} => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            PeerToPeerWithMetadata{currency, payee, amount, metadata, metadata_signature} => encode_peer_to_peer_with_metadata_script(currency, payee, amount, metadata, metadata_signature),
+            Preburn{token, amount} => encode_preburn_script(token, amount),
+            PublishSharedEd25519PublicKey{public_key} => encode_publish_shared_ed25519_public_key_script(public_key),
+            RegisterValidatorConfig{validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses} => encode_register_validator_config_script(validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses),
+            RemoveValidatorAndReconfigure{sliding_nonce, validator_name, validator_address} => encode_remove_validator_and_reconfigure_script(sliding_nonce, validator_name, validator_address),
+            RotateAuthenticationKey{new_key} => encode_rotate_authentication_key_script(new_key),
+            RotateAuthenticationKeyWithNonce{sliding_nonce, new_key} => encode_rotate_authentication_key_with_nonce_script(sliding_nonce, new_key),
+            RotateAuthenticationKeyWithNonceAdmin{sliding_nonce, new_key} => encode_rotate_authentication_key_with_nonce_admin_script(sliding_nonce, new_key),
+            RotateAuthenticationKeyWithRecoveryAddress{recovery_address, to_recover, new_key} => encode_rotate_authentication_key_with_recovery_address_script(recovery_address, to_recover, new_key),
+            RotateDualAttestationInfo{new_url, new_key} => encode_rotate_dual_attestation_info_script(new_url, new_key),
+            RotateSharedEd25519PublicKey{public_key} => encode_rotate_shared_ed25519_public_key_script(public_key),
+            SetValidatorConfigAndReconfigure{validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses} => encode_set_validator_config_and_reconfigure_script(validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses),
+            SetValidatorOperator{operator_name, operator_account} => encode_set_validator_operator_script(operator_name, operator_account),
+            SetValidatorOperatorWithNonceAdmin{sliding_nonce, operator_name, operator_account} => encode_set_validator_operator_with_nonce_admin_script(sliding_nonce, operator_name, operator_account),
+            TieredMint{coin_type, sliding_nonce, designated_dealer_address, mint_amount, tier_index} => encode_tiered_mint_script(coin_type, sliding_nonce, designated_dealer_address, mint_amount, tier_index),
+            UnfreezeAccount{sliding_nonce, to_unfreeze_account} => encode_unfreeze_account_script(sliding_nonce, to_unfreeze_account),
+            UpdateDiemVersion{sliding_nonce, major} => encode_update_diem_version_script(sliding_nonce, major),
+            UpdateDualAttestationLimit{sliding_nonce, new_micro_xdx_limit} => encode_update_dual_attestation_limit_script(sliding_nonce, new_micro_xdx_limit),
+            UpdateExchangeRate{currency, sliding_nonce, new_exchange_rate_numerator, new_exchange_rate_denominator} => encode_update_exchange_rate_script(currency, sliding_nonce, new_exchange_rate_numerator, new_exchange_rate_denominator),
+            UpdateMintingAbility{currency, allow_minting} => encode_update_minting_ability_script(currency, allow_minting),
         }
     }
+
 
     /// Try to recognize a Diem `Script` and convert it into a structured object `ScriptCall`.
     pub fn decode(script: &Script) -> Option<ScriptCall> {
@@ -3512,12 +3398,8 @@ impl ScriptCall {
             RemoveValidatorAndReconfigure { .. } => "remove_validator_and_reconfigure",
             RotateAuthenticationKey { .. } => "rotate_authentication_key",
             RotateAuthenticationKeyWithNonce { .. } => "rotate_authentication_key_with_nonce",
-            RotateAuthenticationKeyWithNonceAdmin { .. } => {
-                "rotate_authentication_key_with_nonce_admin"
-            }
-            RotateAuthenticationKeyWithRecoveryAddress { .. } => {
-                "rotate_authentication_key_with_recovery_address"
-            }
+            RotateAuthenticationKeyWithNonceAdmin { .. } => "rotate_authentication_key_with_nonce_admin",
+            RotateAuthenticationKeyWithRecoveryAddress { .. } => "rotate_authentication_key_with_recovery_address",
             RotateDualAttestationInfo { .. } => "rotate_dual_attestation_info",
             RotateSharedEd25519PublicKey { .. } => "rotate_shared_ed25519_public_key",
             SetValidatorConfigAndReconfigure { .. } => "set_validator_config_and_reconfigure",
@@ -3531,439 +3413,94 @@ impl ScriptCall {
             UpdateMintingAbility { .. } => "update_minting_ability",
         }
     }
+
+
 }
 
 impl ScriptFunctionCall {
+
     /// Build a Diem `TransactionPayload` from a structured object `ScriptFunctionCall`.
     pub fn encode(self) -> TransactionPayload {
         use ScriptFunctionCall::*;
         match self {
-            AddCurrencyToAccount { currency } => {
-                encode_add_currency_to_account_script_function(currency)
-            }
-            AddDiemIdDomain { address, domain } => {
-                encode_add_diem_id_domain_script_function(address, domain)
-            }
-            AddRecoveryRotationCapability { recovery_address } => {
-                encode_add_recovery_rotation_capability_script_function(recovery_address)
-            }
-            AddValidatorAndReconfigure {
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            } => encode_add_validator_and_reconfigure_script_function(
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            ),
-            AutopayCreateInstruction {
-                uid,
-                in_type,
-                payee,
-                end_epoch,
-                value,
-            } => encode_autopay_create_instruction_script_function(
-                uid, in_type, payee, end_epoch, value,
-            ),
-            AutopayDisable {} => encode_autopay_disable_script_function(),
-            AutopayEnable {} => encode_autopay_enable_script_function(),
-            BalanceTransfer {
-                destination,
-                unscaled_value,
-            } => encode_balance_transfer_script_function(destination, unscaled_value),
-            BalanceTransferScaled { destination, value } => {
-                encode_balance_transfer_scaled_script_function(destination, value)
-            }
-            BridgeCloseTransfer {
-                escrow,
-                transfer_id,
-                close_other,
-            } => encode_bridge_close_transfer_script_function(escrow, transfer_id, close_other),
-            BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
-            BridgeDeposit {
-                escrow,
-                receiver_other,
-                value,
-                transfer_id,
-            } => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
-            BridgeDepositFunds { escrow, value } => {
-                encode_bridge_deposit_funds_script_function(escrow, value)
-            }
-            BridgeWithdraw {
-                escrow,
-                sender_other,
-                receiver,
-                balance,
-                transfer_id,
-            } => encode_bridge_withdraw_script_function(
-                escrow,
-                sender_other,
-                receiver,
-                balance,
-                transfer_id,
-            ),
-            BridgeWithdrawFunds {
-                escrow,
-                receiver,
-                balance,
-            } => encode_bridge_withdraw_funds_script_function(escrow, receiver, balance),
-            BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
-            BurnWithAmount {
-                token,
-                sliding_nonce,
-                preburn_address,
-                amount,
-            } => encode_burn_with_amount_script_function(
-                token,
-                sliding_nonce,
-                preburn_address,
-                amount,
-            ),
-            CancelBurnWithAmount {
-                token,
-                preburn_address,
-                amount,
-            } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
-            ClaimMakeWhole {} => encode_claim_make_whole_script_function(),
-            CommunityTransfer {
-                destination,
-                unscaled_value,
-                memo,
-            } => encode_community_transfer_script_function(destination, unscaled_value, memo),
-            CreateAccUser {
-                challenge,
-                solution,
-                difficulty,
-                security,
-            } => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
-            CreateAccVal {
-                challenge,
-                solution,
-                difficulty,
-                security,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            } => encode_create_acc_val_script_function(
-                challenge,
-                solution,
-                difficulty,
-                security,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            ),
-            CreateChildVaspAccount {
-                coin_type,
-                child_address,
-                auth_key_prefix,
-                add_all_currencies,
-                child_initial_balance,
-            } => encode_create_child_vasp_account_script_function(
-                coin_type,
-                child_address,
-                auth_key_prefix,
-                add_all_currencies,
-                child_initial_balance,
-            ),
-            CreateDesignatedDealer {
-                currency,
-                sliding_nonce,
-                addr,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            } => encode_create_designated_dealer_script_function(
-                currency,
-                sliding_nonce,
-                addr,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            ),
-            CreateDiemIdDomains {} => encode_create_diem_id_domains_script_function(),
-            CreateParentVaspAccount {
-                coin_type,
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            } => encode_create_parent_vasp_account_script_function(
-                coin_type,
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-                add_all_currencies,
-            ),
-            CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
-            CreateUserByCoinTx {
-                account,
-                authkey_prefix,
-                unscaled_value,
-            } => encode_create_user_by_coin_tx_script_function(
-                account,
-                authkey_prefix,
-                unscaled_value,
-            ),
-            CreateValidatorAccount {
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            } => encode_create_validator_account_script_function(
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            ),
-            CreateValidatorOperatorAccount {
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            } => encode_create_validator_operator_account_script_function(
-                sliding_nonce,
-                new_account_address,
-                auth_key_prefix,
-                human_name,
-            ),
-            DemoE2e { world } => encode_demo_e2e_script_function(world),
-            FreezeAccount {
-                sliding_nonce,
-                to_freeze_account,
-            } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
-            InitVouch {} => encode_init_vouch_script_function(),
-            InitializeDiemConsensusConfig { sliding_nonce } => {
-                encode_initialize_diem_consensus_config_script_function(sliding_nonce)
-            }
-            Join {} => encode_join_script_function(),
-            MinerstateCommit {
-                challenge,
-                solution,
-                difficulty,
-                security,
-            } => {
-                encode_minerstate_commit_script_function(challenge, solution, difficulty, security)
-            }
-            MinerstateCommitByOperator {
-                owner_address,
-                challenge,
-                solution,
-                difficulty,
-                security,
-            } => encode_minerstate_commit_by_operator_script_function(
-                owner_address,
-                challenge,
-                solution,
-                difficulty,
-                security,
-            ),
-            MinerstateHelper {} => encode_minerstate_helper_script_function(),
-            OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
-            OlEnableDelegation {} => encode_ol_enable_delegation_script_function(),
-            OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
-            OlReconfigBulkUpdateSetup {
-                alice,
-                bob,
-                carol,
-                sha,
-                ram,
-            } => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
-            OlRemoveDelegation {} => encode_ol_remove_delegation_script_function(),
-            PeerToPeerWithMetadata {
-                currency,
-                payee,
-                amount,
-                metadata,
-                metadata_signature,
-            } => encode_peer_to_peer_with_metadata_script_function(
-                currency,
-                payee,
-                amount,
-                metadata,
-                metadata_signature,
-            ),
-            Preburn { token, amount } => encode_preburn_script_function(token, amount),
-            PublishSharedEd25519PublicKey { public_key } => {
-                encode_publish_shared_ed25519_public_key_script_function(public_key)
-            }
-            RegisterValidatorConfig {
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            } => encode_register_validator_config_script_function(
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            ),
-            RemoveDiemIdDomain { address, domain } => {
-                encode_remove_diem_id_domain_script_function(address, domain)
-            }
-            RemoveValidatorAndReconfigure {
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            } => encode_remove_validator_and_reconfigure_script_function(
-                sliding_nonce,
-                validator_name,
-                validator_address,
-            ),
-            RotateAuthenticationKey { new_key } => {
-                encode_rotate_authentication_key_script_function(new_key)
-            }
-            RotateAuthenticationKeyWithNonce {
-                sliding_nonce,
-                new_key,
-            } => {
-                encode_rotate_authentication_key_with_nonce_script_function(sliding_nonce, new_key)
-            }
-            RotateAuthenticationKeyWithNonceAdmin {
-                sliding_nonce,
-                new_key,
-            } => encode_rotate_authentication_key_with_nonce_admin_script_function(
-                sliding_nonce,
-                new_key,
-            ),
-            RotateAuthenticationKeyWithRecoveryAddress {
-                recovery_address,
-                to_recover,
-                new_key,
-            } => encode_rotate_authentication_key_with_recovery_address_script_function(
-                recovery_address,
-                to_recover,
-                new_key,
-            ),
-            RotateDualAttestationInfo { new_url, new_key } => {
-                encode_rotate_dual_attestation_info_script_function(new_url, new_key)
-            }
-            RotateSharedEd25519PublicKey { public_key } => {
-                encode_rotate_shared_ed25519_public_key_script_function(public_key)
-            }
-            SetBurnPref { to_community } => encode_set_burn_pref_script_function(to_community),
-            SetGasConstants {
-                sliding_nonce,
-                global_memory_per_byte_cost,
-                global_memory_per_byte_write_cost,
-                min_transaction_gas_units,
-                large_transaction_cutoff,
-                intrinsic_gas_per_byte,
-                maximum_number_of_gas_units,
-                min_price_per_gas_unit,
-                max_price_per_gas_unit,
-                max_transaction_size_in_bytes,
-                gas_unit_scaling_factor,
-                default_account_size,
-            } => encode_set_gas_constants_script_function(
-                sliding_nonce,
-                global_memory_per_byte_cost,
-                global_memory_per_byte_write_cost,
-                min_transaction_gas_units,
-                large_transaction_cutoff,
-                intrinsic_gas_per_byte,
-                maximum_number_of_gas_units,
-                min_price_per_gas_unit,
-                max_price_per_gas_unit,
-                max_transaction_size_in_bytes,
-                gas_unit_scaling_factor,
-                default_account_size,
-            ),
-            SetValidatorConfigAndReconfigure {
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            } => encode_set_validator_config_and_reconfigure_script_function(
-                validator_account,
-                consensus_pubkey,
-                validator_network_addresses,
-                fullnode_network_addresses,
-            ),
-            SetValidatorOperator {
-                operator_name,
-                operator_account,
-            } => encode_set_validator_operator_script_function(operator_name, operator_account),
-            SetValidatorOperatorWithNonceAdmin {
-                sliding_nonce,
-                operator_name,
-                operator_account,
-            } => encode_set_validator_operator_with_nonce_admin_script_function(
-                sliding_nonce,
-                operator_name,
-                operator_account,
-            ),
-            SetWalletType { type_of } => encode_set_wallet_type_script_function(type_of),
-            TieredMint {
-                coin_type,
-                sliding_nonce,
-                designated_dealer_address,
-                mint_amount,
-                tier_index,
-            } => encode_tiered_mint_script_function(
-                coin_type,
-                sliding_nonce,
-                designated_dealer_address,
-                mint_amount,
-                tier_index,
-            ),
-            UnfreezeAccount {
-                sliding_nonce,
-                to_unfreeze_account,
-            } => encode_unfreeze_account_script_function(sliding_nonce, to_unfreeze_account),
-            UpdateDiemConsensusConfig {
-                sliding_nonce,
-                config,
-            } => encode_update_diem_consensus_config_script_function(sliding_nonce, config),
-            UpdateDiemVersion {
-                sliding_nonce,
-                major,
-            } => encode_update_diem_version_script_function(sliding_nonce, major),
-            UpdateDualAttestationLimit {
-                sliding_nonce,
-                new_micro_xdx_limit,
-            } => encode_update_dual_attestation_limit_script_function(
-                sliding_nonce,
-                new_micro_xdx_limit,
-            ),
-            UpdateExchangeRate {
-                currency,
-                sliding_nonce,
-                new_exchange_rate_numerator,
-                new_exchange_rate_denominator,
-            } => encode_update_exchange_rate_script_function(
-                currency,
-                sliding_nonce,
-                new_exchange_rate_numerator,
-                new_exchange_rate_denominator,
-            ),
-            UpdateMintingAbility {
-                currency,
-                allow_minting,
-            } => encode_update_minting_ability_script_function(currency, allow_minting),
-            ValAddSelf {} => encode_val_add_self_script_function(),
-            VouchFor { val } => encode_vouch_for_script_function(val),
+            AddCurrencyToAccount{currency} => encode_add_currency_to_account_script_function(currency),
+            AddDiemIdDomain{address, domain} => encode_add_diem_id_domain_script_function(address, domain),
+            AddRecoveryRotationCapability{recovery_address} => encode_add_recovery_rotation_capability_script_function(recovery_address),
+            AddValidatorAndReconfigure{sliding_nonce, validator_name, validator_address} => encode_add_validator_and_reconfigure_script_function(sliding_nonce, validator_name, validator_address),
+            AutopayCreateInstruction{uid, in_type, payee, end_epoch, value} => encode_autopay_create_instruction_script_function(uid, in_type, payee, end_epoch, value),
+            AutopayDisable{} => encode_autopay_disable_script_function(),
+            AutopayEnable{} => encode_autopay_enable_script_function(),
+            BalanceTransfer{destination, unscaled_value} => encode_balance_transfer_script_function(destination, unscaled_value),
+            BalanceTransferScaled{destination, value} => encode_balance_transfer_scaled_script_function(destination, value),
+            BridgeCloseTransfer{escrow, transfer_id, close_other} => encode_bridge_close_transfer_script_function(escrow, transfer_id, close_other),
+            BridgeCreateEscrow{} => encode_bridge_create_escrow_script_function(),
+            BridgeDeposit{escrow, receiver_other, value, transfer_id} => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
+            BridgeDepositFunds{escrow, value} => encode_bridge_deposit_funds_script_function(escrow, value),
+            BridgeWithdraw{escrow, sender_other, receiver, balance, transfer_id} => encode_bridge_withdraw_script_function(escrow, sender_other, receiver, balance, transfer_id),
+            BridgeWithdrawFunds{escrow, receiver, balance} => encode_bridge_withdraw_funds_script_function(escrow, receiver, balance),
+            BurnTxnFees{coin_type} => encode_burn_txn_fees_script_function(coin_type),
+            BurnWithAmount{token, sliding_nonce, preburn_address, amount} => encode_burn_with_amount_script_function(token, sliding_nonce, preburn_address, amount),
+            CancelBurnWithAmount{token, preburn_address, amount} => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
+            ClaimMakeWhole{} => encode_claim_make_whole_script_function(),
+            CommunityTransfer{destination, unscaled_value, memo} => encode_community_transfer_script_function(destination, unscaled_value, memo),
+            CreateAccUser{challenge, solution, difficulty, security} => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
+            CreateAccVal{challenge, solution, difficulty, security, ow_human_name, op_address, op_auth_key_prefix, op_consensus_pubkey, op_validator_network_addresses, op_fullnode_network_addresses, op_human_name} => encode_create_acc_val_script_function(challenge, solution, difficulty, security, ow_human_name, op_address, op_auth_key_prefix, op_consensus_pubkey, op_validator_network_addresses, op_fullnode_network_addresses, op_human_name),
+            CreateChildVaspAccount{coin_type, child_address, auth_key_prefix, add_all_currencies, child_initial_balance} => encode_create_child_vasp_account_script_function(coin_type, child_address, auth_key_prefix, add_all_currencies, child_initial_balance),
+            CreateDesignatedDealer{currency, sliding_nonce, addr, auth_key_prefix, human_name, add_all_currencies} => encode_create_designated_dealer_script_function(currency, sliding_nonce, addr, auth_key_prefix, human_name, add_all_currencies),
+            CreateDiemIdDomains{} => encode_create_diem_id_domains_script_function(),
+            CreateParentVaspAccount{coin_type, sliding_nonce, new_account_address, auth_key_prefix, human_name, add_all_currencies} => encode_create_parent_vasp_account_script_function(coin_type, sliding_nonce, new_account_address, auth_key_prefix, human_name, add_all_currencies),
+            CreateRecoveryAddress{} => encode_create_recovery_address_script_function(),
+            CreateUserByCoinTx{account, authkey_prefix, unscaled_value} => encode_create_user_by_coin_tx_script_function(account, authkey_prefix, unscaled_value),
+            CreateValidatorAccount{sliding_nonce, new_account_address, auth_key_prefix, human_name} => encode_create_validator_account_script_function(sliding_nonce, new_account_address, auth_key_prefix, human_name),
+            CreateValidatorOperatorAccount{sliding_nonce, new_account_address, auth_key_prefix, human_name} => encode_create_validator_operator_account_script_function(sliding_nonce, new_account_address, auth_key_prefix, human_name),
+            DemoE2e{world} => encode_demo_e2e_script_function(world),
+            FreezeAccount{sliding_nonce, to_freeze_account} => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
+            InitVouch{} => encode_init_vouch_script_function(),
+            InitializeDiemConsensusConfig{sliding_nonce} => encode_initialize_diem_consensus_config_script_function(sliding_nonce),
+            Join{} => encode_join_script_function(),
+            MinerstateCommit{challenge, solution, difficulty, security} => encode_minerstate_commit_script_function(challenge, solution, difficulty, security),
+            MinerstateCommitByOperator{owner_address, challenge, solution, difficulty, security} => encode_minerstate_commit_by_operator_script_function(owner_address, challenge, solution, difficulty, security),
+            MinerstateHelper{} => encode_minerstate_helper_script_function(),
+            OlDelegateVote{dest} => encode_ol_delegate_vote_script_function(dest),
+            OlEnableDelegation{} => encode_ol_enable_delegation_script_function(),
+            OlOracleTx{id, data} => encode_ol_oracle_tx_script_function(id, data),
+            OlReconfigBulkUpdateSetup{alice, bob, carol, sha, ram} => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
+            OlRemoveDelegation{} => encode_ol_remove_delegation_script_function(),
+            PeerToPeerWithMetadata{currency, payee, amount, metadata, metadata_signature} => encode_peer_to_peer_with_metadata_script_function(currency, payee, amount, metadata, metadata_signature),
+            Preburn{token, amount} => encode_preburn_script_function(token, amount),
+            PublishSharedEd25519PublicKey{public_key} => encode_publish_shared_ed25519_public_key_script_function(public_key),
+            RegisterValidatorConfig{validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses} => encode_register_validator_config_script_function(validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses),
+            RemoveDiemIdDomain{address, domain} => encode_remove_diem_id_domain_script_function(address, domain),
+            RemoveValidatorAndReconfigure{sliding_nonce, validator_name, validator_address} => encode_remove_validator_and_reconfigure_script_function(sliding_nonce, validator_name, validator_address),
+            RotateAuthenticationKey{new_key} => encode_rotate_authentication_key_script_function(new_key),
+            RotateAuthenticationKeyWithNonce{sliding_nonce, new_key} => encode_rotate_authentication_key_with_nonce_script_function(sliding_nonce, new_key),
+            RotateAuthenticationKeyWithNonceAdmin{sliding_nonce, new_key} => encode_rotate_authentication_key_with_nonce_admin_script_function(sliding_nonce, new_key),
+            RotateAuthenticationKeyWithRecoveryAddress{recovery_address, to_recover, new_key} => encode_rotate_authentication_key_with_recovery_address_script_function(recovery_address, to_recover, new_key),
+            RotateDualAttestationInfo{new_url, new_key} => encode_rotate_dual_attestation_info_script_function(new_url, new_key),
+            RotateSharedEd25519PublicKey{public_key} => encode_rotate_shared_ed25519_public_key_script_function(public_key),
+            SetBurnPref{to_community} => encode_set_burn_pref_script_function(to_community),
+            SetGasConstants{sliding_nonce, global_memory_per_byte_cost, global_memory_per_byte_write_cost, min_transaction_gas_units, large_transaction_cutoff, intrinsic_gas_per_byte, maximum_number_of_gas_units, min_price_per_gas_unit, max_price_per_gas_unit, max_transaction_size_in_bytes, gas_unit_scaling_factor, default_account_size} => encode_set_gas_constants_script_function(sliding_nonce, global_memory_per_byte_cost, global_memory_per_byte_write_cost, min_transaction_gas_units, large_transaction_cutoff, intrinsic_gas_per_byte, maximum_number_of_gas_units, min_price_per_gas_unit, max_price_per_gas_unit, max_transaction_size_in_bytes, gas_unit_scaling_factor, default_account_size),
+            SetValidatorConfigAndReconfigure{validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses} => encode_set_validator_config_and_reconfigure_script_function(validator_account, consensus_pubkey, validator_network_addresses, fullnode_network_addresses),
+            SetValidatorOperator{operator_name, operator_account} => encode_set_validator_operator_script_function(operator_name, operator_account),
+            SetValidatorOperatorWithNonceAdmin{sliding_nonce, operator_name, operator_account} => encode_set_validator_operator_with_nonce_admin_script_function(sliding_nonce, operator_name, operator_account),
+            SetWalletType{type_of} => encode_set_wallet_type_script_function(type_of),
+            TieredMint{coin_type, sliding_nonce, designated_dealer_address, mint_amount, tier_index} => encode_tiered_mint_script_function(coin_type, sliding_nonce, designated_dealer_address, mint_amount, tier_index),
+            UnfreezeAccount{sliding_nonce, to_unfreeze_account} => encode_unfreeze_account_script_function(sliding_nonce, to_unfreeze_account),
+            UpdateDiemConsensusConfig{sliding_nonce, config} => encode_update_diem_consensus_config_script_function(sliding_nonce, config),
+            UpdateDiemVersion{sliding_nonce, major} => encode_update_diem_version_script_function(sliding_nonce, major),
+            UpdateDualAttestationLimit{sliding_nonce, new_micro_xdx_limit} => encode_update_dual_attestation_limit_script_function(sliding_nonce, new_micro_xdx_limit),
+            UpdateExchangeRate{currency, sliding_nonce, new_exchange_rate_numerator, new_exchange_rate_denominator} => encode_update_exchange_rate_script_function(currency, sliding_nonce, new_exchange_rate_numerator, new_exchange_rate_denominator),
+            UpdateMintingAbility{currency, allow_minting} => encode_update_minting_ability_script_function(currency, allow_minting),
+            ValAddSelf{} => encode_val_add_self_script_function(),
+            VouchFor{val} => encode_vouch_for_script_function(val),
         }
     }
+
 
     /// Try to recognize a Diem `TransactionPayload` and convert it into a structured object `ScriptFunctionCall`.
     pub fn decode(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
         if let TransactionPayload::ScriptFunction(script) = payload {
-            match SCRIPT_FUNCTION_DECODER_MAP.get(&format!(
-                "{}{}",
-                script.module().name(),
-                script.function()
-            )) {
+            match SCRIPT_FUNCTION_DECODER_MAP.get(&format!("{}{}", script.module().name(), script.function())) {
                 Some(decoder) => decoder(payload),
                 None => None,
             }
@@ -3971,6 +3508,7 @@ impl ScriptFunctionCall {
             None
         }
     }
+
 }
 
 /// # Summary
@@ -4005,9 +3543,9 @@ impl ScriptFunctionCall {
 pub fn encode_add_currency_to_account_script_function(currency: TypeTag) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("add_currency_to_account").to_owned(),
         vec![currency],
         vec![],
@@ -4038,21 +3576,15 @@ pub fn encode_add_currency_to_account_script_function(currency: TypeTag) -> Tran
 /// | `Errors::NOT_PUBLISHED`    | `DiemId::EDIEM_ID_DOMAINS_NOT_PUBLISHED` | `address` does not have a `DiemId::DiemIdDomains` resource published under it.                                                         |
 /// | `Errors::INVALID_ARGUMENT` | `DiemId::EDOMAIN_ALREADY_EXISTS`         | The `domain` already exists in the list of `DiemId::DiemIdDomain`s  in the `DiemId::DiemIdDomains` resource published under `address`. |
 /// | `Errors::INVALID_ARGUMENT` | `DiemId::EINVALID_DIEM_ID_DOMAIN`        | The `domain` is greater in length than `DiemId::DOMAIN_LENGTH`.                                                                        |
-pub fn encode_add_diem_id_domain_script_function(
-    address: AccountAddress,
-    domain: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_add_diem_id_domain_script_function(address: AccountAddress, domain: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("add_diem_id_domain").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&address).unwrap(),
-            bcs::to_bytes(&domain).unwrap(),
-        ],
+        vec![bcs::to_bytes(&address).unwrap(), bcs::to_bytes(&domain).unwrap()],
     ))
 }
 
@@ -4096,14 +3628,12 @@ pub fn encode_add_diem_id_domain_script_function(
 /// # Related Scripts
 /// * `AccountAdministrationScripts::create_recovery_address`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-pub fn encode_add_recovery_rotation_capability_script_function(
-    recovery_address: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_add_recovery_rotation_capability_script_function(recovery_address: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("add_recovery_rotation_capability").to_owned(),
         vec![],
         vec![bcs::to_bytes(&recovery_address).unwrap()],
@@ -4156,223 +3686,158 @@ pub fn encode_add_recovery_rotation_capability_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_add_validator_and_reconfigure_script_function(
-    sliding_nonce: u64,
-    validator_name: Vec<u8>,
-    validator_address: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_add_validator_and_reconfigure_script_function(sliding_nonce: u64, validator_name: Vec<u8>, validator_address: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("add_validator_and_reconfigure").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&validator_name).unwrap(),
-            bcs::to_bytes(&validator_address).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&validator_name).unwrap(), bcs::to_bytes(&validator_address).unwrap()],
     ))
 }
 
-pub fn encode_autopay_create_instruction_script_function(
-    uid: u64,
-    in_type: u8,
-    payee: AccountAddress,
-    end_epoch: u64,
-    value: u64,
-) -> TransactionPayload {
+
+pub fn encode_autopay_create_instruction_script_function(uid: u64, in_type: u8, payee: AccountAddress, end_epoch: u64, value: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AutoPayScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AutoPayScripts").to_owned(),
+                ),
         ident_str!("autopay_create_instruction").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&uid).unwrap(),
-            bcs::to_bytes(&in_type).unwrap(),
-            bcs::to_bytes(&payee).unwrap(),
-            bcs::to_bytes(&end_epoch).unwrap(),
-            bcs::to_bytes(&value).unwrap(),
-        ],
+        vec![bcs::to_bytes(&uid).unwrap(), bcs::to_bytes(&in_type).unwrap(), bcs::to_bytes(&payee).unwrap(), bcs::to_bytes(&end_epoch).unwrap(), bcs::to_bytes(&value).unwrap()],
     ))
 }
+
 
 pub fn encode_autopay_disable_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AutoPayScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AutoPayScripts").to_owned(),
+                ),
         ident_str!("autopay_disable").to_owned(),
         vec![],
         vec![],
     ))
 }
 
+
 pub fn encode_autopay_enable_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AutoPayScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AutoPayScripts").to_owned(),
+                ),
         ident_str!("autopay_enable").to_owned(),
         vec![],
         vec![],
     ))
 }
 
-pub fn encode_balance_transfer_script_function(
-    destination: AccountAddress,
-    unscaled_value: u64,
-) -> TransactionPayload {
+
+pub fn encode_balance_transfer_script_function(destination: AccountAddress, unscaled_value: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TransferScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TransferScripts").to_owned(),
+                ),
         ident_str!("balance_transfer").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&destination).unwrap(),
-            bcs::to_bytes(&unscaled_value).unwrap(),
-        ],
+        vec![bcs::to_bytes(&destination).unwrap(), bcs::to_bytes(&unscaled_value).unwrap()],
     ))
 }
 
-pub fn encode_balance_transfer_scaled_script_function(
-    destination: AccountAddress,
-    value: u64,
-) -> TransactionPayload {
+
+pub fn encode_balance_transfer_scaled_script_function(destination: AccountAddress, value: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TransferScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TransferScripts").to_owned(),
+                ),
         ident_str!("balance_transfer_scaled").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&destination).unwrap(),
-            bcs::to_bytes(&value).unwrap(),
-        ],
+        vec![bcs::to_bytes(&destination).unwrap(), bcs::to_bytes(&value).unwrap()],
     ))
 }
 
-pub fn encode_bridge_close_transfer_script_function(
-    escrow: AccountAddress,
-    transfer_id: Vec<u8>,
-    close_other: bool,
-) -> TransactionPayload {
+
+pub fn encode_bridge_close_transfer_script_function(escrow: AccountAddress, transfer_id: Vec<u8>, close_other: bool) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_close_transfer").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&transfer_id).unwrap(),
-            bcs::to_bytes(&close_other).unwrap(),
-        ],
+        vec![bcs::to_bytes(&escrow).unwrap(), bcs::to_bytes(&transfer_id).unwrap(), bcs::to_bytes(&close_other).unwrap()],
     ))
 }
+
 
 pub fn encode_bridge_create_escrow_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_create_escrow").to_owned(),
         vec![],
         vec![],
     ))
 }
 
-pub fn encode_bridge_deposit_script_function(
-    escrow: AccountAddress,
-    receiver_other: Vec<u8>,
-    value: u64,
-    transfer_id: Vec<u8>,
-) -> TransactionPayload {
+
+pub fn encode_bridge_deposit_script_function(escrow: AccountAddress, receiver_other: Vec<u8>, value: u64, transfer_id: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_deposit").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&receiver_other).unwrap(),
-            bcs::to_bytes(&value).unwrap(),
-            bcs::to_bytes(&transfer_id).unwrap(),
-        ],
+        vec![bcs::to_bytes(&escrow).unwrap(), bcs::to_bytes(&receiver_other).unwrap(), bcs::to_bytes(&value).unwrap(), bcs::to_bytes(&transfer_id).unwrap()],
     ))
 }
 
-pub fn encode_bridge_deposit_funds_script_function(
-    escrow: AccountAddress,
-    value: u64,
-) -> TransactionPayload {
+
+pub fn encode_bridge_deposit_funds_script_function(escrow: AccountAddress, value: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_deposit_funds").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&value).unwrap(),
-        ],
+        vec![bcs::to_bytes(&escrow).unwrap(), bcs::to_bytes(&value).unwrap()],
     ))
 }
 
-pub fn encode_bridge_withdraw_script_function(
-    escrow: AccountAddress,
-    sender_other: Vec<u8>,
-    receiver: AccountAddress,
-    balance: u64,
-    transfer_id: Vec<u8>,
-) -> TransactionPayload {
+
+pub fn encode_bridge_withdraw_script_function(escrow: AccountAddress, sender_other: Vec<u8>, receiver: AccountAddress, balance: u64, transfer_id: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_withdraw").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&sender_other).unwrap(),
-            bcs::to_bytes(&receiver).unwrap(),
-            bcs::to_bytes(&balance).unwrap(),
-            bcs::to_bytes(&transfer_id).unwrap(),
-        ],
+        vec![bcs::to_bytes(&escrow).unwrap(), bcs::to_bytes(&sender_other).unwrap(), bcs::to_bytes(&receiver).unwrap(), bcs::to_bytes(&balance).unwrap(), bcs::to_bytes(&transfer_id).unwrap()],
     ))
 }
 
-pub fn encode_bridge_withdraw_funds_script_function(
-    escrow: AccountAddress,
-    receiver: AccountAddress,
-    balance: u64,
-) -> TransactionPayload {
+
+pub fn encode_bridge_withdraw_funds_script_function(escrow: AccountAddress, receiver: AccountAddress, balance: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BridgeScripts").to_owned(),
+                ),
         ident_str!("bridge_withdraw_funds").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&receiver).unwrap(),
-            bcs::to_bytes(&balance).unwrap(),
-        ],
+        vec![bcs::to_bytes(&escrow).unwrap(), bcs::to_bytes(&receiver).unwrap(), bcs::to_bytes(&balance).unwrap()],
     ))
 }
 
@@ -4414,9 +3879,9 @@ pub fn encode_bridge_withdraw_funds_script_function(
 pub fn encode_burn_txn_fees_script_function(coin_type: TypeTag) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("burn_txn_fees").to_owned(),
         vec![coin_type],
         vec![],
@@ -4476,24 +3941,15 @@ pub fn encode_burn_txn_fees_script_function(coin_type: TypeTag) -> TransactionPa
 /// * `TreasuryComplianceScripts::burn_txn_fees`
 /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
 /// * `TreasuryComplianceScripts::preburn`
-pub fn encode_burn_with_amount_script_function(
-    token: TypeTag,
-    sliding_nonce: u64,
-    preburn_address: AccountAddress,
-    amount: u64,
-) -> TransactionPayload {
+pub fn encode_burn_with_amount_script_function(token: TypeTag, sliding_nonce: u64, preburn_address: AccountAddress, amount: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("burn_with_amount").to_owned(),
         vec![token],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&preburn_address).unwrap(),
-            bcs::to_bytes(&amount).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&preburn_address).unwrap(), bcs::to_bytes(&amount).unwrap()],
     ))
 }
 
@@ -4545,116 +4001,70 @@ pub fn encode_burn_with_amount_script_function(
 /// * `TreasuryComplianceScripts::burn_txn_fees`
 /// * `TreasuryComplianceScripts::burn_with_amount`
 /// * `TreasuryComplianceScripts::preburn`
-pub fn encode_cancel_burn_with_amount_script_function(
-    token: TypeTag,
-    preburn_address: AccountAddress,
-    amount: u64,
-) -> TransactionPayload {
+pub fn encode_cancel_burn_with_amount_script_function(token: TypeTag, preburn_address: AccountAddress, amount: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("cancel_burn_with_amount").to_owned(),
         vec![token],
-        vec![
-            bcs::to_bytes(&preburn_address).unwrap(),
-            bcs::to_bytes(&amount).unwrap(),
-        ],
+        vec![bcs::to_bytes(&preburn_address).unwrap(), bcs::to_bytes(&amount).unwrap()],
     ))
 }
 
-/// claim a make whole payment, requires the index of the payment
-/// in the MakeWhole module, which can be found using the
-/// query_make_whole_payment, which should not be run as part of
+/// claim a make whole payment, requires the index of the payment 
+/// in the MakeWhole module, which can be found using the 
+/// query_make_whole_payment, which should not be run as part of 
 /// the tx as it is relatively resource intensive (linear search)
 pub fn encode_claim_make_whole_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountScripts").to_owned(),
+                ),
         ident_str!("claim_make_whole").to_owned(),
         vec![],
         vec![],
     ))
 }
 
-pub fn encode_community_transfer_script_function(
-    destination: AccountAddress,
-    unscaled_value: u64,
-    memo: Vec<u8>,
-) -> TransactionPayload {
+
+pub fn encode_community_transfer_script_function(destination: AccountAddress, unscaled_value: u64, memo: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TransferScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TransferScripts").to_owned(),
+                ),
         ident_str!("community_transfer").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&destination).unwrap(),
-            bcs::to_bytes(&unscaled_value).unwrap(),
-            bcs::to_bytes(&memo).unwrap(),
-        ],
+        vec![bcs::to_bytes(&destination).unwrap(), bcs::to_bytes(&unscaled_value).unwrap(), bcs::to_bytes(&memo).unwrap()],
     ))
 }
 
-pub fn encode_create_acc_user_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-) -> TransactionPayload {
+
+pub fn encode_create_acc_user_script_function(challenge: Vec<u8>, solution: Vec<u8>, difficulty: u64, security: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountScripts").to_owned(),
+                ),
         ident_str!("create_acc_user").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
-        ],
+        vec![bcs::to_bytes(&challenge).unwrap(), bcs::to_bytes(&solution).unwrap(), bcs::to_bytes(&difficulty).unwrap(), bcs::to_bytes(&security).unwrap()],
     ))
 }
 
-pub fn encode_create_acc_val_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-    ow_human_name: Vec<u8>,
-    op_address: AccountAddress,
-    op_auth_key_prefix: Vec<u8>,
-    op_consensus_pubkey: Vec<u8>,
-    op_validator_network_addresses: Vec<u8>,
-    op_fullnode_network_addresses: Vec<u8>,
-    op_human_name: Vec<u8>,
-) -> TransactionPayload {
+
+pub fn encode_create_acc_val_script_function(challenge: Vec<u8>, solution: Vec<u8>, difficulty: u64, security: u64, ow_human_name: Vec<u8>, op_address: AccountAddress, op_auth_key_prefix: Vec<u8>, op_consensus_pubkey: Vec<u8>, op_validator_network_addresses: Vec<u8>, op_fullnode_network_addresses: Vec<u8>, op_human_name: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountScripts").to_owned(),
+                ),
         ident_str!("create_acc_val").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
-            bcs::to_bytes(&ow_human_name).unwrap(),
-            bcs::to_bytes(&op_address).unwrap(),
-            bcs::to_bytes(&op_auth_key_prefix).unwrap(),
-            bcs::to_bytes(&op_consensus_pubkey).unwrap(),
-            bcs::to_bytes(&op_validator_network_addresses).unwrap(),
-            bcs::to_bytes(&op_fullnode_network_addresses).unwrap(),
-            bcs::to_bytes(&op_human_name).unwrap(),
-        ],
+        vec![bcs::to_bytes(&challenge).unwrap(), bcs::to_bytes(&solution).unwrap(), bcs::to_bytes(&difficulty).unwrap(), bcs::to_bytes(&security).unwrap(), bcs::to_bytes(&ow_human_name).unwrap(), bcs::to_bytes(&op_address).unwrap(), bcs::to_bytes(&op_auth_key_prefix).unwrap(), bcs::to_bytes(&op_consensus_pubkey).unwrap(), bcs::to_bytes(&op_validator_network_addresses).unwrap(), bcs::to_bytes(&op_fullnode_network_addresses).unwrap(), bcs::to_bytes(&op_human_name).unwrap()],
     ))
 }
 
@@ -4716,26 +4126,15 @@ pub fn encode_create_acc_val_script_function(
 /// * `AccountAdministrationScripts::rotate_authentication_key`
 /// * `AccountAdministrationScripts::add_recovery_rotation_capability`
 /// * `AccountAdministrationScripts::create_recovery_address`
-pub fn encode_create_child_vasp_account_script_function(
-    coin_type: TypeTag,
-    child_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    add_all_currencies: bool,
-    child_initial_balance: u64,
-) -> TransactionPayload {
+pub fn encode_create_child_vasp_account_script_function(coin_type: TypeTag, child_address: AccountAddress, auth_key_prefix: Vec<u8>, add_all_currencies: bool, child_initial_balance: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountCreationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountCreationScripts").to_owned(),
+                ),
         ident_str!("create_child_vasp_account").to_owned(),
         vec![coin_type],
-        vec![
-            bcs::to_bytes(&child_address).unwrap(),
-            bcs::to_bytes(&auth_key_prefix).unwrap(),
-            bcs::to_bytes(&add_all_currencies).unwrap(),
-            bcs::to_bytes(&child_initial_balance).unwrap(),
-        ],
+        vec![bcs::to_bytes(&child_address).unwrap(), bcs::to_bytes(&auth_key_prefix).unwrap(), bcs::to_bytes(&add_all_currencies).unwrap(), bcs::to_bytes(&child_initial_balance).unwrap()],
     ))
 }
 
@@ -4789,28 +4188,15 @@ pub fn encode_create_child_vasp_account_script_function(
 /// * `TreasuryComplianceScripts::tiered_mint`
 /// * `PaymentScripts::peer_to_peer_with_metadata`
 /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-pub fn encode_create_designated_dealer_script_function(
-    currency: TypeTag,
-    sliding_nonce: u64,
-    addr: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-    add_all_currencies: bool,
-) -> TransactionPayload {
+pub fn encode_create_designated_dealer_script_function(currency: TypeTag, sliding_nonce: u64, addr: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>, add_all_currencies: bool) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountCreationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountCreationScripts").to_owned(),
+                ),
         ident_str!("create_designated_dealer").to_owned(),
         vec![currency],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&addr).unwrap(),
-            bcs::to_bytes(&auth_key_prefix).unwrap(),
-            bcs::to_bytes(&human_name).unwrap(),
-            bcs::to_bytes(&add_all_currencies).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&addr).unwrap(), bcs::to_bytes(&auth_key_prefix).unwrap(), bcs::to_bytes(&human_name).unwrap(), bcs::to_bytes(&add_all_currencies).unwrap()],
     ))
 }
 
@@ -4836,9 +4222,9 @@ pub fn encode_create_designated_dealer_script_function(
 pub fn encode_create_diem_id_domains_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("create_diem_id_domains").to_owned(),
         vec![],
         vec![],
@@ -4893,28 +4279,15 @@ pub fn encode_create_diem_id_domains_script_function() -> TransactionPayload {
 /// * `AccountAdministrationScripts::add_recovery_rotation_capability`
 /// * `AccountAdministrationScripts::create_recovery_address`
 /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-pub fn encode_create_parent_vasp_account_script_function(
-    coin_type: TypeTag,
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-    add_all_currencies: bool,
-) -> TransactionPayload {
+pub fn encode_create_parent_vasp_account_script_function(coin_type: TypeTag, sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>, add_all_currencies: bool) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountCreationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountCreationScripts").to_owned(),
+                ),
         ident_str!("create_parent_vasp_account").to_owned(),
         vec![coin_type],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_account_address).unwrap(),
-            bcs::to_bytes(&auth_key_prefix).unwrap(),
-            bcs::to_bytes(&human_name).unwrap(),
-            bcs::to_bytes(&add_all_currencies).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_account_address).unwrap(), bcs::to_bytes(&auth_key_prefix).unwrap(), bcs::to_bytes(&human_name).unwrap(), bcs::to_bytes(&add_all_currencies).unwrap()],
     ))
 }
 
@@ -4951,32 +4324,25 @@ pub fn encode_create_parent_vasp_account_script_function(
 pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("create_recovery_address").to_owned(),
         vec![],
         vec![],
     ))
 }
 
-pub fn encode_create_user_by_coin_tx_script_function(
-    account: AccountAddress,
-    authkey_prefix: Vec<u8>,
-    unscaled_value: u64,
-) -> TransactionPayload {
+
+pub fn encode_create_user_by_coin_tx_script_function(account: AccountAddress, authkey_prefix: Vec<u8>, unscaled_value: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountScripts").to_owned(),
+                ),
         ident_str!("create_user_by_coin_tx").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&account).unwrap(),
-            bcs::to_bytes(&authkey_prefix).unwrap(),
-            bcs::to_bytes(&unscaled_value).unwrap(),
-        ],
+        vec![bcs::to_bytes(&account).unwrap(), bcs::to_bytes(&authkey_prefix).unwrap(), bcs::to_bytes(&unscaled_value).unwrap()],
     ))
 }
 
@@ -5029,25 +4395,15 @@ pub fn encode_create_user_by_coin_tx_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_create_validator_account_script_function(
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_create_validator_account_script_function(sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountCreationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountCreationScripts").to_owned(),
+                ),
         ident_str!("create_validator_account").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_account_address).unwrap(),
-            bcs::to_bytes(&auth_key_prefix).unwrap(),
-            bcs::to_bytes(&human_name).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_account_address).unwrap(), bcs::to_bytes(&auth_key_prefix).unwrap(), bcs::to_bytes(&human_name).unwrap()],
     ))
 }
 
@@ -5097,34 +4453,25 @@ pub fn encode_create_validator_account_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_create_validator_operator_account_script_function(
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_create_validator_operator_account_script_function(sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountCreationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountCreationScripts").to_owned(),
+                ),
         ident_str!("create_validator_operator_account").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_account_address).unwrap(),
-            bcs::to_bytes(&auth_key_prefix).unwrap(),
-            bcs::to_bytes(&human_name).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_account_address).unwrap(), bcs::to_bytes(&auth_key_prefix).unwrap(), bcs::to_bytes(&human_name).unwrap()],
     ))
 }
+
 
 pub fn encode_demo_e2e_script_function(world: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("DemoScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("DemoScripts").to_owned(),
+                ),
         ident_str!("demo_e2e").to_owned(),
         vec![],
         vec![bcs::to_bytes(&world).unwrap()],
@@ -5174,30 +4521,25 @@ pub fn encode_demo_e2e_script_function(world: u64) -> TransactionPayload {
 ///
 /// # Related Scripts
 /// * `TreasuryComplianceScripts::unfreeze_account`
-pub fn encode_freeze_account_script_function(
-    sliding_nonce: u64,
-    to_freeze_account: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_freeze_account_script_function(sliding_nonce: u64, to_freeze_account: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("freeze_account").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&to_freeze_account).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&to_freeze_account).unwrap()],
     ))
 }
+
 
 pub fn encode_init_vouch_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("VouchScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("VouchScripts").to_owned(),
+                ),
         ident_str!("init_vouch").to_owned(),
         vec![],
         vec![],
@@ -5226,84 +4568,64 @@ pub fn encode_init_vouch_script_function() -> TransactionPayload {
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
 /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-pub fn encode_initialize_diem_consensus_config_script_function(
-    sliding_nonce: u64,
-) -> TransactionPayload {
+pub fn encode_initialize_diem_consensus_config_script_function(sliding_nonce: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("SystemAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("SystemAdministrationScripts").to_owned(),
+                ),
         ident_str!("initialize_diem_consensus_config").to_owned(),
         vec![],
         vec![bcs::to_bytes(&sliding_nonce).unwrap()],
     ))
 }
 
+
 pub fn encode_join_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorScripts").to_owned(),
+                ),
         ident_str!("join").to_owned(),
         vec![],
         vec![],
     ))
 }
 
-pub fn encode_minerstate_commit_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-) -> TransactionPayload {
+
+pub fn encode_minerstate_commit_script_function(challenge: Vec<u8>, solution: Vec<u8>, difficulty: u64, security: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerStateScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TowerStateScripts").to_owned(),
+                ),
         ident_str!("minerstate_commit").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
-        ],
+        vec![bcs::to_bytes(&challenge).unwrap(), bcs::to_bytes(&solution).unwrap(), bcs::to_bytes(&difficulty).unwrap(), bcs::to_bytes(&security).unwrap()],
     ))
 }
 
-pub fn encode_minerstate_commit_by_operator_script_function(
-    owner_address: AccountAddress,
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-) -> TransactionPayload {
+
+pub fn encode_minerstate_commit_by_operator_script_function(owner_address: AccountAddress, challenge: Vec<u8>, solution: Vec<u8>, difficulty: u64, security: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerStateScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TowerStateScripts").to_owned(),
+                ),
         ident_str!("minerstate_commit_by_operator").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&owner_address).unwrap(),
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
-        ],
+        vec![bcs::to_bytes(&owner_address).unwrap(), bcs::to_bytes(&challenge).unwrap(), bcs::to_bytes(&solution).unwrap(), bcs::to_bytes(&difficulty).unwrap(), bcs::to_bytes(&security).unwrap()],
     ))
 }
+
 
 pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerStateScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TowerStateScripts").to_owned(),
+                ),
         ident_str!("minerstate_helper").to_owned(),
         vec![],
         vec![],
@@ -5314,9 +4636,9 @@ pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
 pub fn encode_ol_delegate_vote_script_function(dest: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("OracleScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("OracleScripts").to_owned(),
+                ),
         ident_str!("ol_delegate_vote").to_owned(),
         vec![],
         vec![bcs::to_bytes(&dest).unwrap()],
@@ -5327,48 +4649,38 @@ pub fn encode_ol_delegate_vote_script_function(dest: AccountAddress) -> Transact
 pub fn encode_ol_enable_delegation_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("OracleScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("OracleScripts").to_owned(),
+                ),
         ident_str!("ol_enable_delegation").to_owned(),
         vec![],
         vec![],
     ))
 }
 
+
 pub fn encode_ol_oracle_tx_script_function(id: u64, data: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("OracleScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("OracleScripts").to_owned(),
+                ),
         ident_str!("ol_oracle_tx").to_owned(),
         vec![],
         vec![bcs::to_bytes(&id).unwrap(), bcs::to_bytes(&data).unwrap()],
     ))
 }
 
-pub fn encode_ol_reconfig_bulk_update_setup_script_function(
-    alice: AccountAddress,
-    bob: AccountAddress,
-    carol: AccountAddress,
-    sha: AccountAddress,
-    ram: AccountAddress,
-) -> TransactionPayload {
+
+pub fn encode_ol_reconfig_bulk_update_setup_script_function(alice: AccountAddress, bob: AccountAddress, carol: AccountAddress, sha: AccountAddress, ram: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorScripts").to_owned(),
+                ),
         ident_str!("ol_reconfig_bulk_update_setup").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&alice).unwrap(),
-            bcs::to_bytes(&bob).unwrap(),
-            bcs::to_bytes(&carol).unwrap(),
-            bcs::to_bytes(&sha).unwrap(),
-            bcs::to_bytes(&ram).unwrap(),
-        ],
+        vec![bcs::to_bytes(&alice).unwrap(), bcs::to_bytes(&bob).unwrap(), bcs::to_bytes(&carol).unwrap(), bcs::to_bytes(&sha).unwrap(), bcs::to_bytes(&ram).unwrap()],
     ))
 }
 
@@ -5376,9 +4688,9 @@ pub fn encode_ol_reconfig_bulk_update_setup_script_function(
 pub fn encode_ol_remove_delegation_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("OracleScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("OracleScripts").to_owned(),
+                ),
         ident_str!("ol_remove_delegation").to_owned(),
         vec![],
         vec![],
@@ -5439,26 +4751,15 @@ pub fn encode_ol_remove_delegation_script_function() -> TransactionPayload {
 /// * `AccountCreationScripts::create_child_vasp_account`
 /// * `AccountCreationScripts::create_parent_vasp_account`
 /// * `AccountAdministrationScripts::add_currency_to_account`
-pub fn encode_peer_to_peer_with_metadata_script_function(
-    currency: TypeTag,
-    payee: AccountAddress,
-    amount: u64,
-    metadata: Vec<u8>,
-    metadata_signature: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_peer_to_peer_with_metadata_script_function(currency: TypeTag, payee: AccountAddress, amount: u64, metadata: Vec<u8>, metadata_signature: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("PaymentScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("PaymentScripts").to_owned(),
+                ),
         ident_str!("peer_to_peer_with_metadata").to_owned(),
         vec![currency],
-        vec![
-            bcs::to_bytes(&payee).unwrap(),
-            bcs::to_bytes(&amount).unwrap(),
-            bcs::to_bytes(&metadata).unwrap(),
-            bcs::to_bytes(&metadata_signature).unwrap(),
-        ],
+        vec![bcs::to_bytes(&payee).unwrap(), bcs::to_bytes(&amount).unwrap(), bcs::to_bytes(&metadata).unwrap(), bcs::to_bytes(&metadata_signature).unwrap()],
     ))
 }
 
@@ -5508,9 +4809,9 @@ pub fn encode_peer_to_peer_with_metadata_script_function(
 pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("preburn").to_owned(),
         vec![token],
         vec![bcs::to_bytes(&amount).unwrap()],
@@ -5544,14 +4845,12 @@ pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> Transactio
 ///
 /// # Related Scripts
 /// * `AccountAdministrationScripts::rotate_shared_ed25519_public_key`
-pub fn encode_publish_shared_ed25519_public_key_script_function(
-    public_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_publish_shared_ed25519_public_key_script_function(public_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("publish_shared_ed25519_public_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&public_key).unwrap()],
@@ -5594,25 +4893,15 @@ pub fn encode_publish_shared_ed25519_public_key_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_register_validator_config_script_function(
-    validator_account: AccountAddress,
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_register_validator_config_script_function(validator_account: AccountAddress, consensus_pubkey: Vec<u8>, validator_network_addresses: Vec<u8>, fullnode_network_addresses: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("register_validator_config").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&validator_account).unwrap(),
-            bcs::to_bytes(&consensus_pubkey).unwrap(),
-            bcs::to_bytes(&validator_network_addresses).unwrap(),
-            bcs::to_bytes(&fullnode_network_addresses).unwrap(),
-        ],
+        vec![bcs::to_bytes(&validator_account).unwrap(), bcs::to_bytes(&consensus_pubkey).unwrap(), bcs::to_bytes(&validator_network_addresses).unwrap(), bcs::to_bytes(&fullnode_network_addresses).unwrap()],
     ))
 }
 
@@ -5640,21 +4929,15 @@ pub fn encode_register_validator_config_script_function(
 /// | `Errors::NOT_PUBLISHED`    | `DiemId::EDIEM_ID_DOMAINS_NOT_PUBLISHED` | `address` does not have a `DiemId::DiemIdDomains` resource published under it.                                                         |
 /// | `Errors::INVALID_ARGUMENT` | `DiemId::EINVALID_DIEM_ID_DOMAIN`        | The `domain` is greater in length than `DiemId::DOMAIN_LENGTH`.                                                                        |
 /// | `Errors::INVALID_ARGUMENT` | `DiemId::EDOMAIN_NOT_FOUND`              | The `domain` does not exist in the list of `DiemId::DiemIdDomain`s  in the `DiemId::DiemIdDomains` resource published under `address`. |
-pub fn encode_remove_diem_id_domain_script_function(
-    address: AccountAddress,
-    domain: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_remove_diem_id_domain_script_function(address: AccountAddress, domain: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("remove_diem_id_domain").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&address).unwrap(),
-            bcs::to_bytes(&domain).unwrap(),
-        ],
+        vec![bcs::to_bytes(&address).unwrap(), bcs::to_bytes(&domain).unwrap()],
     ))
 }
 
@@ -5700,23 +4983,15 @@ pub fn encode_remove_diem_id_domain_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_remove_validator_and_reconfigure_script_function(
-    sliding_nonce: u64,
-    validator_name: Vec<u8>,
-    validator_address: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_remove_validator_and_reconfigure_script_function(sliding_nonce: u64, validator_name: Vec<u8>, validator_address: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("remove_validator_and_reconfigure").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&validator_name).unwrap(),
-            bcs::to_bytes(&validator_address).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&validator_name).unwrap(), bcs::to_bytes(&validator_address).unwrap()],
     ))
 }
 
@@ -5748,9 +5023,9 @@ pub fn encode_remove_validator_and_reconfigure_script_function(
 pub fn encode_rotate_authentication_key_script_function(new_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_authentication_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&new_key).unwrap()],
@@ -5789,21 +5064,15 @@ pub fn encode_rotate_authentication_key_script_function(new_key: Vec<u8>) -> Tra
 /// * `AccountAdministrationScripts::rotate_authentication_key`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-pub fn encode_rotate_authentication_key_with_nonce_script_function(
-    sliding_nonce: u64,
-    new_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_rotate_authentication_key_with_nonce_script_function(sliding_nonce: u64, new_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_authentication_key_with_nonce").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_key).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_key).unwrap()],
     ))
 }
 
@@ -5839,21 +5108,15 @@ pub fn encode_rotate_authentication_key_with_nonce_script_function(
 /// * `AccountAdministrationScripts::rotate_authentication_key`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-pub fn encode_rotate_authentication_key_with_nonce_admin_script_function(
-    sliding_nonce: u64,
-    new_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_rotate_authentication_key_with_nonce_admin_script_function(sliding_nonce: u64, new_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_authentication_key_with_nonce_admin").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_key).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_key).unwrap()],
     ))
 }
 
@@ -5890,23 +5153,15 @@ pub fn encode_rotate_authentication_key_with_nonce_admin_script_function(
 /// * `AccountAdministrationScripts::rotate_authentication_key`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
 /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
-pub fn encode_rotate_authentication_key_with_recovery_address_script_function(
-    recovery_address: AccountAddress,
-    to_recover: AccountAddress,
-    new_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_rotate_authentication_key_with_recovery_address_script_function(recovery_address: AccountAddress, to_recover: AccountAddress, new_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_authentication_key_with_recovery_address").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&recovery_address).unwrap(),
-            bcs::to_bytes(&to_recover).unwrap(),
-            bcs::to_bytes(&new_key).unwrap(),
-        ],
+        vec![bcs::to_bytes(&recovery_address).unwrap(), bcs::to_bytes(&to_recover).unwrap(), bcs::to_bytes(&new_key).unwrap()],
     ))
 }
 
@@ -5946,21 +5201,15 @@ pub fn encode_rotate_authentication_key_with_recovery_address_script_function(
 /// * `AccountCreationScripts::create_parent_vasp_account`
 /// * `AccountCreationScripts::create_designated_dealer`
 /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-pub fn encode_rotate_dual_attestation_info_script_function(
-    new_url: Vec<u8>,
-    new_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_rotate_dual_attestation_info_script_function(new_url: Vec<u8>, new_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_dual_attestation_info").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&new_url).unwrap(),
-            bcs::to_bytes(&new_key).unwrap(),
-        ],
+        vec![bcs::to_bytes(&new_url).unwrap(), bcs::to_bytes(&new_key).unwrap()],
     ))
 }
 
@@ -5990,26 +5239,25 @@ pub fn encode_rotate_dual_attestation_info_script_function(
 ///
 /// # Related Scripts
 /// * `AccountAdministrationScripts::publish_shared_ed25519_public_key`
-pub fn encode_rotate_shared_ed25519_public_key_script_function(
-    public_key: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_rotate_shared_ed25519_public_key_script_function(public_key: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("AccountAdministrationScripts").to_owned(),
+                ),
         ident_str!("rotate_shared_ed25519_public_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&public_key).unwrap()],
     ))
 }
 
+
 pub fn encode_set_burn_pref_script_function(to_community: bool) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BurnScript").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("BurnScript").to_owned(),
+                ),
         ident_str!("set_burn_pref").to_owned(),
         vec![],
         vec![bcs::to_bytes(&to_community).unwrap()],
@@ -6050,41 +5298,15 @@ pub fn encode_set_burn_pref_script_function(to_community: bool) -> TransactionPa
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`              | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`     | The `sliding_nonce` has been previously recorded.                                          |
 /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                 | `account` is not the Diem Root account.                                                    |
-pub fn encode_set_gas_constants_script_function(
-    sliding_nonce: u64,
-    global_memory_per_byte_cost: u64,
-    global_memory_per_byte_write_cost: u64,
-    min_transaction_gas_units: u64,
-    large_transaction_cutoff: u64,
-    intrinsic_gas_per_byte: u64,
-    maximum_number_of_gas_units: u64,
-    min_price_per_gas_unit: u64,
-    max_price_per_gas_unit: u64,
-    max_transaction_size_in_bytes: u64,
-    gas_unit_scaling_factor: u64,
-    default_account_size: u64,
-) -> TransactionPayload {
+pub fn encode_set_gas_constants_script_function(sliding_nonce: u64, global_memory_per_byte_cost: u64, global_memory_per_byte_write_cost: u64, min_transaction_gas_units: u64, large_transaction_cutoff: u64, intrinsic_gas_per_byte: u64, maximum_number_of_gas_units: u64, min_price_per_gas_unit: u64, max_price_per_gas_unit: u64, max_transaction_size_in_bytes: u64, gas_unit_scaling_factor: u64, default_account_size: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("SystemAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("SystemAdministrationScripts").to_owned(),
+                ),
         ident_str!("set_gas_constants").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&global_memory_per_byte_cost).unwrap(),
-            bcs::to_bytes(&global_memory_per_byte_write_cost).unwrap(),
-            bcs::to_bytes(&min_transaction_gas_units).unwrap(),
-            bcs::to_bytes(&large_transaction_cutoff).unwrap(),
-            bcs::to_bytes(&intrinsic_gas_per_byte).unwrap(),
-            bcs::to_bytes(&maximum_number_of_gas_units).unwrap(),
-            bcs::to_bytes(&min_price_per_gas_unit).unwrap(),
-            bcs::to_bytes(&max_price_per_gas_unit).unwrap(),
-            bcs::to_bytes(&max_transaction_size_in_bytes).unwrap(),
-            bcs::to_bytes(&gas_unit_scaling_factor).unwrap(),
-            bcs::to_bytes(&default_account_size).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&global_memory_per_byte_cost).unwrap(), bcs::to_bytes(&global_memory_per_byte_write_cost).unwrap(), bcs::to_bytes(&min_transaction_gas_units).unwrap(), bcs::to_bytes(&large_transaction_cutoff).unwrap(), bcs::to_bytes(&intrinsic_gas_per_byte).unwrap(), bcs::to_bytes(&maximum_number_of_gas_units).unwrap(), bcs::to_bytes(&min_price_per_gas_unit).unwrap(), bcs::to_bytes(&max_price_per_gas_unit).unwrap(), bcs::to_bytes(&max_transaction_size_in_bytes).unwrap(), bcs::to_bytes(&gas_unit_scaling_factor).unwrap(), bcs::to_bytes(&default_account_size).unwrap()],
     ))
 }
 
@@ -6125,25 +5347,15 @@ pub fn encode_set_gas_constants_script_function(
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::register_validator_config`
-pub fn encode_set_validator_config_and_reconfigure_script_function(
-    validator_account: AccountAddress,
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_set_validator_config_and_reconfigure_script_function(validator_account: AccountAddress, consensus_pubkey: Vec<u8>, validator_network_addresses: Vec<u8>, fullnode_network_addresses: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("set_validator_config_and_reconfigure").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&validator_account).unwrap(),
-            bcs::to_bytes(&consensus_pubkey).unwrap(),
-            bcs::to_bytes(&validator_network_addresses).unwrap(),
-            bcs::to_bytes(&fullnode_network_addresses).unwrap(),
-        ],
+        vec![bcs::to_bytes(&validator_account).unwrap(), bcs::to_bytes(&consensus_pubkey).unwrap(), bcs::to_bytes(&validator_network_addresses).unwrap(), bcs::to_bytes(&fullnode_network_addresses).unwrap()],
     ))
 }
 
@@ -6185,21 +5397,15 @@ pub fn encode_set_validator_config_and_reconfigure_script_function(
 /// * `ValidatorAdministrationScripts::add_validator_and_reconfigure`
 /// * `ValidatorAdministrationScripts::set_validator_operator_with_nonce_admin`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_set_validator_operator_script_function(
-    operator_name: Vec<u8>,
-    operator_account: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_set_validator_operator_script_function(operator_name: Vec<u8>, operator_account: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("set_validator_operator").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&operator_name).unwrap(),
-            bcs::to_bytes(&operator_account).unwrap(),
-        ],
+        vec![bcs::to_bytes(&operator_name).unwrap(), bcs::to_bytes(&operator_account).unwrap()],
     ))
 }
 
@@ -6248,32 +5454,25 @@ pub fn encode_set_validator_operator_script_function(
 /// * `ValidatorAdministrationScripts::add_validator_and_reconfigure`
 /// * `ValidatorAdministrationScripts::set_validator_operator`
 /// * `ValidatorAdministrationScripts::set_validator_config_and_reconfigure`
-pub fn encode_set_validator_operator_with_nonce_admin_script_function(
-    sliding_nonce: u64,
-    operator_name: Vec<u8>,
-    operator_account: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_set_validator_operator_with_nonce_admin_script_function(sliding_nonce: u64, operator_name: Vec<u8>, operator_account: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorAdministrationScripts").to_owned(),
+                ),
         ident_str!("set_validator_operator_with_nonce_admin").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&operator_name).unwrap(),
-            bcs::to_bytes(&operator_account).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&operator_name).unwrap(), bcs::to_bytes(&operator_account).unwrap()],
     ))
 }
+
 
 pub fn encode_set_wallet_type_script_function(type_of: u8) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("WalletScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("WalletScripts").to_owned(),
+                ),
         ident_str!("set_wallet_type").to_owned(),
         vec![],
         vec![bcs::to_bytes(&type_of).unwrap()],
@@ -6332,26 +5531,15 @@ pub fn encode_set_wallet_type_script_function(type_of: u8) -> TransactionPayload
 /// * `AccountCreationScripts::create_designated_dealer`
 /// * `PaymentScripts::peer_to_peer_with_metadata`
 /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-pub fn encode_tiered_mint_script_function(
-    coin_type: TypeTag,
-    sliding_nonce: u64,
-    designated_dealer_address: AccountAddress,
-    mint_amount: u64,
-    tier_index: u64,
-) -> TransactionPayload {
+pub fn encode_tiered_mint_script_function(coin_type: TypeTag, sliding_nonce: u64, designated_dealer_address: AccountAddress, mint_amount: u64, tier_index: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("tiered_mint").to_owned(),
         vec![coin_type],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&designated_dealer_address).unwrap(),
-            bcs::to_bytes(&mint_amount).unwrap(),
-            bcs::to_bytes(&tier_index).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&designated_dealer_address).unwrap(), bcs::to_bytes(&mint_amount).unwrap(), bcs::to_bytes(&tier_index).unwrap()],
     ))
 }
 
@@ -6388,21 +5576,15 @@ pub fn encode_tiered_mint_script_function(
 ///
 /// # Related Scripts
 /// * `TreasuryComplianceScripts::freeze_account`
-pub fn encode_unfreeze_account_script_function(
-    sliding_nonce: u64,
-    to_unfreeze_account: AccountAddress,
-) -> TransactionPayload {
+pub fn encode_unfreeze_account_script_function(sliding_nonce: u64, to_unfreeze_account: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("unfreeze_account").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&to_unfreeze_account).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&to_unfreeze_account).unwrap()],
     ))
 }
 
@@ -6429,21 +5611,15 @@ pub fn encode_unfreeze_account_script_function(
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
 /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-pub fn encode_update_diem_consensus_config_script_function(
-    sliding_nonce: u64,
-    config: Vec<u8>,
-) -> TransactionPayload {
+pub fn encode_update_diem_consensus_config_script_function(sliding_nonce: u64, config: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("SystemAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("SystemAdministrationScripts").to_owned(),
+                ),
         ident_str!("update_diem_consensus_config").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&config).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&config).unwrap()],
     ))
 }
 
@@ -6473,21 +5649,15 @@ pub fn encode_update_diem_consensus_config_script_function(
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
 /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
 /// | `Errors::INVALID_ARGUMENT` | `DiemVersion::EINVALID_MAJOR_VERSION_NUMBER`  | `major` is less-than or equal to the current major version stored on-chain.                |
-pub fn encode_update_diem_version_script_function(
-    sliding_nonce: u64,
-    major: u64,
-) -> TransactionPayload {
+pub fn encode_update_diem_version_script_function(sliding_nonce: u64, major: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("SystemAdministrationScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("SystemAdministrationScripts").to_owned(),
+                ),
         ident_str!("update_diem_version").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&major).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&major).unwrap()],
     ))
 }
 
@@ -6519,21 +5689,15 @@ pub fn encode_update_diem_version_script_function(
 /// # Related Scripts
 /// * `TreasuryComplianceScripts::update_exchange_rate`
 /// * `TreasuryComplianceScripts::update_minting_ability`
-pub fn encode_update_dual_attestation_limit_script_function(
-    sliding_nonce: u64,
-    new_micro_xdx_limit: u64,
-) -> TransactionPayload {
+pub fn encode_update_dual_attestation_limit_script_function(sliding_nonce: u64, new_micro_xdx_limit: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("update_dual_attestation_limit").to_owned(),
         vec![],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_micro_xdx_limit).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_micro_xdx_limit).unwrap()],
     ))
 }
 
@@ -6572,24 +5736,15 @@ pub fn encode_update_dual_attestation_limit_script_function(
 /// # Related Scripts
 /// * `TreasuryComplianceScripts::update_dual_attestation_limit`
 /// * `TreasuryComplianceScripts::update_minting_ability`
-pub fn encode_update_exchange_rate_script_function(
-    currency: TypeTag,
-    sliding_nonce: u64,
-    new_exchange_rate_numerator: u64,
-    new_exchange_rate_denominator: u64,
-) -> TransactionPayload {
+pub fn encode_update_exchange_rate_script_function(currency: TypeTag, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("update_exchange_rate").to_owned(),
         vec![currency],
-        vec![
-            bcs::to_bytes(&sliding_nonce).unwrap(),
-            bcs::to_bytes(&new_exchange_rate_numerator).unwrap(),
-            bcs::to_bytes(&new_exchange_rate_denominator).unwrap(),
-        ],
+        vec![bcs::to_bytes(&sliding_nonce).unwrap(), bcs::to_bytes(&new_exchange_rate_numerator).unwrap(), bcs::to_bytes(&new_exchange_rate_denominator).unwrap()],
     ))
 }
 
@@ -6620,39 +5775,38 @@ pub fn encode_update_exchange_rate_script_function(
 /// # Related Scripts
 /// * `TreasuryComplianceScripts::update_dual_attestation_limit`
 /// * `TreasuryComplianceScripts::update_exchange_rate`
-pub fn encode_update_minting_ability_script_function(
-    currency: TypeTag,
-    allow_minting: bool,
-) -> TransactionPayload {
+pub fn encode_update_minting_ability_script_function(currency: TypeTag, allow_minting: bool) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TreasuryComplianceScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("TreasuryComplianceScripts").to_owned(),
+                ),
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
     ))
 }
 
+
 pub fn encode_val_add_self_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("ValidatorScripts").to_owned(),
+                ),
         ident_str!("val_add_self").to_owned(),
         vec![],
         vec![],
     ))
 }
 
+
 pub fn encode_vouch_for_script_function(val: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("VouchScripts").to_owned(),
-        ),
+                    AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                    ident_str!("VouchScripts").to_owned(),
+                ),
         ident_str!("vouch_for").to_owned(),
         vec![],
         vec![bcs::to_bytes(&val).unwrap()],
@@ -6789,19 +5943,11 @@ pub fn encode_add_recovery_rotation_capability_script(recovery_address: AccountA
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_add_validator_and_reconfigure_script(
-    sliding_nonce: u64,
-    validator_name: Vec<u8>,
-    validator_address: AccountAddress,
-) -> Script {
+pub fn encode_add_validator_and_reconfigure_script(sliding_nonce: u64, validator_name: Vec<u8>, validator_address: AccountAddress) -> Script {
     Script::new(
         ADD_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U8Vector(validator_name),
-            TransactionArgument::Address(validator_address),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U8Vector(validator_name), TransactionArgument::Address(validator_address)],
     )
 }
 
@@ -6855,18 +6001,11 @@ pub fn encode_add_validator_and_reconfigure_script(
 /// * `Script::burn_txn_fees`
 /// * `Script::cancel_burn`
 /// * `Script::preburn`
-pub fn encode_burn_script(
-    token: TypeTag,
-    sliding_nonce: u64,
-    preburn_address: AccountAddress,
-) -> Script {
+pub fn encode_burn_script(token: TypeTag, sliding_nonce: u64, preburn_address: AccountAddress) -> Script {
     Script::new(
         BURN_CODE.to_vec(),
         vec![token],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(preburn_address),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(preburn_address)],
     )
 }
 
@@ -6906,7 +6045,11 @@ pub fn encode_burn_script(
 /// * `Script::burn`
 /// * `Script::cancel_burn`
 pub fn encode_burn_txn_fees_script(coin_type: TypeTag) -> Script {
-    Script::new(BURN_TXN_FEES_CODE.to_vec(), vec![coin_type], vec![])
+    Script::new(
+        BURN_TXN_FEES_CODE.to_vec(),
+        vec![coin_type],
+        vec![],
+    )
 }
 
 /// # Summary
@@ -7017,22 +6160,11 @@ pub fn encode_cancel_burn_script(token: TypeTag, preburn_address: AccountAddress
 /// * `Script::rotate_authentication_key`
 /// * `Script::add_recovery_rotation_capability`
 /// * `Script::create_recovery_address`
-pub fn encode_create_child_vasp_account_script(
-    coin_type: TypeTag,
-    child_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    add_all_currencies: bool,
-    child_initial_balance: u64,
-) -> Script {
+pub fn encode_create_child_vasp_account_script(coin_type: TypeTag, child_address: AccountAddress, auth_key_prefix: Vec<u8>, add_all_currencies: bool, child_initial_balance: u64) -> Script {
     Script::new(
         CREATE_CHILD_VASP_ACCOUNT_CODE.to_vec(),
         vec![coin_type],
-        vec![
-            TransactionArgument::Address(child_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::Bool(add_all_currencies),
-            TransactionArgument::U64(child_initial_balance),
-        ],
+        vec![TransactionArgument::Address(child_address), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::Bool(add_all_currencies), TransactionArgument::U64(child_initial_balance)],
     )
 }
 
@@ -7078,24 +6210,11 @@ pub fn encode_create_child_vasp_account_script(
 /// * `Script::tiered_mint`
 /// * `Script::peer_to_peer_with_metadata`
 /// * `Script::rotate_dual_attestation_info`
-pub fn encode_create_designated_dealer_script(
-    currency: TypeTag,
-    sliding_nonce: u64,
-    addr: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-    add_all_currencies: bool,
-) -> Script {
+pub fn encode_create_designated_dealer_script(currency: TypeTag, sliding_nonce: u64, addr: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>, add_all_currencies: bool) -> Script {
     Script::new(
         CREATE_DESIGNATED_DEALER_CODE.to_vec(),
         vec![currency],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(addr),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U8Vector(human_name),
-            TransactionArgument::Bool(add_all_currencies),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(addr), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U8Vector(human_name), TransactionArgument::Bool(add_all_currencies)],
     )
 }
 
@@ -7139,24 +6258,11 @@ pub fn encode_create_designated_dealer_script(
 /// * `Script::add_recovery_rotation_capability`
 /// * `Script::create_recovery_address`
 /// * `Script::rotate_dual_attestation_info`
-pub fn encode_create_parent_vasp_account_script(
-    coin_type: TypeTag,
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-    add_all_currencies: bool,
-) -> Script {
+pub fn encode_create_parent_vasp_account_script(coin_type: TypeTag, sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>, add_all_currencies: bool) -> Script {
     Script::new(
         CREATE_PARENT_VASP_ACCOUNT_CODE.to_vec(),
         vec![coin_type],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(new_account_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U8Vector(human_name),
-            TransactionArgument::Bool(add_all_currencies),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(new_account_address), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U8Vector(human_name), TransactionArgument::Bool(add_all_currencies)],
     )
 }
 
@@ -7190,7 +6296,11 @@ pub fn encode_create_parent_vasp_account_script(
 /// * `Script::add_recovery_rotation_capability`
 /// * `Script::rotate_authentication_key_with_recovery_address`
 pub fn encode_create_recovery_address_script() -> Script {
-    Script::new(CREATE_RECOVERY_ADDRESS_CODE.to_vec(), vec![], vec![])
+    Script::new(
+        CREATE_RECOVERY_ADDRESS_CODE.to_vec(),
+        vec![],
+        vec![],
+    )
 }
 
 /// # Summary
@@ -7234,21 +6344,11 @@ pub fn encode_create_recovery_address_script() -> Script {
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_create_validator_account_script(
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-) -> Script {
+pub fn encode_create_validator_account_script(sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>) -> Script {
     Script::new(
         CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(new_account_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U8Vector(human_name),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(new_account_address), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U8Vector(human_name)],
     )
 }
 
@@ -7290,21 +6390,11 @@ pub fn encode_create_validator_account_script(
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_create_validator_operator_account_script(
-    sliding_nonce: u64,
-    new_account_address: AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    human_name: Vec<u8>,
-) -> Script {
+pub fn encode_create_validator_operator_account_script(sliding_nonce: u64, new_account_address: AccountAddress, auth_key_prefix: Vec<u8>, human_name: Vec<u8>) -> Script {
     Script::new(
         CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(new_account_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U8Vector(human_name),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(new_account_address), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U8Vector(human_name)],
     )
 }
 
@@ -7351,17 +6441,11 @@ pub fn encode_create_validator_operator_account_script(
 ///
 /// # Related Scripts
 /// * `Script::unfreeze_account`
-pub fn encode_freeze_account_script(
-    sliding_nonce: u64,
-    to_freeze_account: AccountAddress,
-) -> Script {
+pub fn encode_freeze_account_script(sliding_nonce: u64, to_freeze_account: AccountAddress) -> Script {
     Script::new(
         FREEZE_ACCOUNT_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(to_freeze_account),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(to_freeze_account)],
     )
 }
 
@@ -7416,22 +6500,11 @@ pub fn encode_freeze_account_script(
 /// * `Script::create_child_vasp_account`
 /// * `Script::create_parent_vasp_account`
 /// * `Script::add_currency_to_account`
-pub fn encode_peer_to_peer_with_metadata_script(
-    currency: TypeTag,
-    payee: AccountAddress,
-    amount: u64,
-    metadata: Vec<u8>,
-    metadata_signature: Vec<u8>,
-) -> Script {
+pub fn encode_peer_to_peer_with_metadata_script(currency: TypeTag, payee: AccountAddress, amount: u64, metadata: Vec<u8>, metadata_signature: Vec<u8>) -> Script {
     Script::new(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
         vec![currency],
-        vec![
-            TransactionArgument::Address(payee),
-            TransactionArgument::U64(amount),
-            TransactionArgument::U8Vector(metadata),
-            TransactionArgument::U8Vector(metadata_signature),
-        ],
+        vec![TransactionArgument::Address(payee), TransactionArgument::U64(amount), TransactionArgument::U8Vector(metadata), TransactionArgument::U8Vector(metadata_signature)],
     )
 }
 
@@ -7556,21 +6629,11 @@ pub fn encode_publish_shared_ed25519_public_key_script(public_key: Vec<u8>) -> S
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_register_validator_config_script(
-    validator_account: AccountAddress,
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
-) -> Script {
+pub fn encode_register_validator_config_script(validator_account: AccountAddress, consensus_pubkey: Vec<u8>, validator_network_addresses: Vec<u8>, fullnode_network_addresses: Vec<u8>) -> Script {
     Script::new(
         REGISTER_VALIDATOR_CONFIG_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::Address(validator_account),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_addresses),
-            TransactionArgument::U8Vector(fullnode_network_addresses),
-        ],
+        vec![TransactionArgument::Address(validator_account), TransactionArgument::U8Vector(consensus_pubkey), TransactionArgument::U8Vector(validator_network_addresses), TransactionArgument::U8Vector(fullnode_network_addresses)],
     )
 }
 
@@ -7616,19 +6679,11 @@ pub fn encode_register_validator_config_script(
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_remove_validator_and_reconfigure_script(
-    sliding_nonce: u64,
-    validator_name: Vec<u8>,
-    validator_address: AccountAddress,
-) -> Script {
+pub fn encode_remove_validator_and_reconfigure_script(sliding_nonce: u64, validator_name: Vec<u8>, validator_address: AccountAddress) -> Script {
     Script::new(
         REMOVE_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U8Vector(validator_name),
-            TransactionArgument::Address(validator_address),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U8Vector(validator_name), TransactionArgument::Address(validator_address)],
     )
 }
 
@@ -7696,17 +6751,11 @@ pub fn encode_rotate_authentication_key_script(new_key: Vec<u8>) -> Script {
 /// * `Script::rotate_authentication_key`
 /// * `Script::rotate_authentication_key_with_nonce_admin`
 /// * `Script::rotate_authentication_key_with_recovery_address`
-pub fn encode_rotate_authentication_key_with_nonce_script(
-    sliding_nonce: u64,
-    new_key: Vec<u8>,
-) -> Script {
+pub fn encode_rotate_authentication_key_with_nonce_script(sliding_nonce: u64, new_key: Vec<u8>) -> Script {
     Script::new(
         ROTATE_AUTHENTICATION_KEY_WITH_NONCE_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U8Vector(new_key),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U8Vector(new_key)],
     )
 }
 
@@ -7741,17 +6790,11 @@ pub fn encode_rotate_authentication_key_with_nonce_script(
 /// * `Script::rotate_authentication_key`
 /// * `Script::rotate_authentication_key_with_nonce`
 /// * `Script::rotate_authentication_key_with_recovery_address`
-pub fn encode_rotate_authentication_key_with_nonce_admin_script(
-    sliding_nonce: u64,
-    new_key: Vec<u8>,
-) -> Script {
+pub fn encode_rotate_authentication_key_with_nonce_admin_script(sliding_nonce: u64, new_key: Vec<u8>) -> Script {
     Script::new(
         ROTATE_AUTHENTICATION_KEY_WITH_NONCE_ADMIN_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U8Vector(new_key),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U8Vector(new_key)],
     )
 }
 
@@ -7787,19 +6830,11 @@ pub fn encode_rotate_authentication_key_with_nonce_admin_script(
 /// * `Script::rotate_authentication_key`
 /// * `Script::rotate_authentication_key_with_nonce`
 /// * `Script::rotate_authentication_key_with_nonce_admin`
-pub fn encode_rotate_authentication_key_with_recovery_address_script(
-    recovery_address: AccountAddress,
-    to_recover: AccountAddress,
-    new_key: Vec<u8>,
-) -> Script {
+pub fn encode_rotate_authentication_key_with_recovery_address_script(recovery_address: AccountAddress, to_recover: AccountAddress, new_key: Vec<u8>) -> Script {
     Script::new(
         ROTATE_AUTHENTICATION_KEY_WITH_RECOVERY_ADDRESS_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::Address(recovery_address),
-            TransactionArgument::Address(to_recover),
-            TransactionArgument::U8Vector(new_key),
-        ],
+        vec![TransactionArgument::Address(recovery_address), TransactionArgument::Address(to_recover), TransactionArgument::U8Vector(new_key)],
     )
 }
 
@@ -7843,10 +6878,7 @@ pub fn encode_rotate_dual_attestation_info_script(new_url: Vec<u8>, new_key: Vec
     Script::new(
         ROTATE_DUAL_ATTESTATION_INFO_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U8Vector(new_url),
-            TransactionArgument::U8Vector(new_key),
-        ],
+        vec![TransactionArgument::U8Vector(new_url), TransactionArgument::U8Vector(new_key)],
     )
 }
 
@@ -7920,21 +6952,11 @@ pub fn encode_rotate_shared_ed25519_public_key_script(public_key: Vec<u8>) -> Sc
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::register_validator_config`
-pub fn encode_set_validator_config_and_reconfigure_script(
-    validator_account: AccountAddress,
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
-) -> Script {
+pub fn encode_set_validator_config_and_reconfigure_script(validator_account: AccountAddress, consensus_pubkey: Vec<u8>, validator_network_addresses: Vec<u8>, fullnode_network_addresses: Vec<u8>) -> Script {
     Script::new(
         SET_VALIDATOR_CONFIG_AND_RECONFIGURE_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::Address(validator_account),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_addresses),
-            TransactionArgument::U8Vector(fullnode_network_addresses),
-        ],
+        vec![TransactionArgument::Address(validator_account), TransactionArgument::U8Vector(consensus_pubkey), TransactionArgument::U8Vector(validator_network_addresses), TransactionArgument::U8Vector(fullnode_network_addresses)],
     )
 }
 
@@ -7976,17 +6998,11 @@ pub fn encode_set_validator_config_and_reconfigure_script(
 /// * `Script::add_validator_and_reconfigure`
 /// * `Script::set_validator_operator_with_nonce_admin`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_set_validator_operator_script(
-    operator_name: Vec<u8>,
-    operator_account: AccountAddress,
-) -> Script {
+pub fn encode_set_validator_operator_script(operator_name: Vec<u8>, operator_account: AccountAddress) -> Script {
     Script::new(
         SET_VALIDATOR_OPERATOR_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U8Vector(operator_name),
-            TransactionArgument::Address(operator_account),
-        ],
+        vec![TransactionArgument::U8Vector(operator_name), TransactionArgument::Address(operator_account)],
     )
 }
 
@@ -8035,19 +7051,11 @@ pub fn encode_set_validator_operator_script(
 /// * `Script::add_validator_and_reconfigure`
 /// * `Script::set_validator_operator`
 /// * `Script::set_validator_config_and_reconfigure`
-pub fn encode_set_validator_operator_with_nonce_admin_script(
-    sliding_nonce: u64,
-    operator_name: Vec<u8>,
-    operator_account: AccountAddress,
-) -> Script {
+pub fn encode_set_validator_operator_with_nonce_admin_script(sliding_nonce: u64, operator_name: Vec<u8>, operator_account: AccountAddress) -> Script {
     Script::new(
         SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U8Vector(operator_name),
-            TransactionArgument::Address(operator_account),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U8Vector(operator_name), TransactionArgument::Address(operator_account)],
     )
 }
 
@@ -8105,22 +7113,11 @@ pub fn encode_set_validator_operator_with_nonce_admin_script(
 /// * `Script::create_designated_dealer`
 /// * `Script::peer_to_peer_with_metadata`
 /// * `Script::rotate_dual_attestation_info`
-pub fn encode_tiered_mint_script(
-    coin_type: TypeTag,
-    sliding_nonce: u64,
-    designated_dealer_address: AccountAddress,
-    mint_amount: u64,
-    tier_index: u64,
-) -> Script {
+pub fn encode_tiered_mint_script(coin_type: TypeTag, sliding_nonce: u64, designated_dealer_address: AccountAddress, mint_amount: u64, tier_index: u64) -> Script {
     Script::new(
         TIERED_MINT_CODE.to_vec(),
         vec![coin_type],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(designated_dealer_address),
-            TransactionArgument::U64(mint_amount),
-            TransactionArgument::U64(tier_index),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(designated_dealer_address), TransactionArgument::U64(mint_amount), TransactionArgument::U64(tier_index)],
     )
 }
 
@@ -8157,17 +7154,11 @@ pub fn encode_tiered_mint_script(
 ///
 /// # Related Scripts
 /// * `Script::freeze_account`
-pub fn encode_unfreeze_account_script(
-    sliding_nonce: u64,
-    to_unfreeze_account: AccountAddress,
-) -> Script {
+pub fn encode_unfreeze_account_script(sliding_nonce: u64, to_unfreeze_account: AccountAddress) -> Script {
     Script::new(
         UNFREEZE_ACCOUNT_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::Address(to_unfreeze_account),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::Address(to_unfreeze_account)],
     )
 }
 
@@ -8201,10 +7192,7 @@ pub fn encode_update_diem_version_script(sliding_nonce: u64, major: u64) -> Scri
     Script::new(
         UPDATE_DIEM_VERSION_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U64(major),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U64(major)],
     )
 }
 
@@ -8236,17 +7224,11 @@ pub fn encode_update_diem_version_script(sliding_nonce: u64, major: u64) -> Scri
 /// # Related Scripts
 /// * `Script::update_exchange_rate`
 /// * `Script::update_minting_ability`
-pub fn encode_update_dual_attestation_limit_script(
-    sliding_nonce: u64,
-    new_micro_xdx_limit: u64,
-) -> Script {
+pub fn encode_update_dual_attestation_limit_script(sliding_nonce: u64, new_micro_xdx_limit: u64) -> Script {
     Script::new(
         UPDATE_DUAL_ATTESTATION_LIMIT_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U64(new_micro_xdx_limit),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U64(new_micro_xdx_limit)],
     )
 }
 
@@ -8285,20 +7267,11 @@ pub fn encode_update_dual_attestation_limit_script(
 /// # Related Scripts
 /// * `Script::update_dual_attestation_limit`
 /// * `Script::update_minting_ability`
-pub fn encode_update_exchange_rate_script(
-    currency: TypeTag,
-    sliding_nonce: u64,
-    new_exchange_rate_numerator: u64,
-    new_exchange_rate_denominator: u64,
-) -> Script {
+pub fn encode_update_exchange_rate_script(currency: TypeTag, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64) -> Script {
     Script::new(
         UPDATE_EXCHANGE_RATE_CODE.to_vec(),
         vec![currency],
-        vec![
-            TransactionArgument::U64(sliding_nonce),
-            TransactionArgument::U64(new_exchange_rate_numerator),
-            TransactionArgument::U64(new_exchange_rate_denominator),
-        ],
+        vec![TransactionArgument::U64(sliding_nonce), TransactionArgument::U64(new_exchange_rate_numerator), TransactionArgument::U64(new_exchange_rate_denominator)],
     )
 }
 
@@ -8337,411 +7310,357 @@ pub fn encode_update_minting_ability_script(currency: TypeTag, allow_minting: bo
     )
 }
 
-fn decode_add_currency_to_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_add_currency_to_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::AddCurrencyToAccount {
-            currency: script.ty_args().get(0)?.clone(),
+            currency : script.ty_args().get(0)?.clone(),
         })
     } else {
         None
     }
 }
 
-fn decode_add_diem_id_domain_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_add_diem_id_domain_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::AddDiemIdDomain {
-            address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            domain: bcs::from_bytes(script.args().get(1)?).ok()?,
+            address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            domain : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_add_recovery_rotation_capability_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_add_recovery_rotation_capability_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::AddRecoveryRotationCapability {
-            recovery_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            recovery_address : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_add_validator_and_reconfigure_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_add_validator_and_reconfigure_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::AddValidatorAndReconfigure {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            validator_name: bcs::from_bytes(script.args().get(1)?).ok()?,
-            validator_address: bcs::from_bytes(script.args().get(2)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            validator_name : bcs::from_bytes(script.args().get(1)?).ok()?,
+            validator_address : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_autopay_create_instruction_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_autopay_create_instruction_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::AutopayCreateInstruction {
-            uid: bcs::from_bytes(script.args().get(0)?).ok()?,
-            in_type: bcs::from_bytes(script.args().get(1)?).ok()?,
-            payee: bcs::from_bytes(script.args().get(2)?).ok()?,
-            end_epoch: bcs::from_bytes(script.args().get(3)?).ok()?,
-            value: bcs::from_bytes(script.args().get(4)?).ok()?,
+            uid : bcs::from_bytes(script.args().get(0)?).ok()?,
+            in_type : bcs::from_bytes(script.args().get(1)?).ok()?,
+            payee : bcs::from_bytes(script.args().get(2)?).ok()?,
+            end_epoch : bcs::from_bytes(script.args().get(3)?).ok()?,
+            value : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_autopay_disable_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_autopay_disable_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::AutopayDisable {})
+        Some(ScriptFunctionCall::AutopayDisable {
+        })
     } else {
         None
     }
 }
 
-fn decode_autopay_enable_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_autopay_enable_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::AutopayEnable {})
+        Some(ScriptFunctionCall::AutopayEnable {
+        })
     } else {
         None
     }
 }
 
-fn decode_balance_transfer_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_balance_transfer_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BalanceTransfer {
-            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
-            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
+            destination : bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_balance_transfer_scaled_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_balance_transfer_scaled_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BalanceTransferScaled {
-            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
-            value: bcs::from_bytes(script.args().get(1)?).ok()?,
+            destination : bcs::from_bytes(script.args().get(0)?).ok()?,
+            value : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_bridge_close_transfer_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_close_transfer_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeCloseTransfer {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
-            close_other: bcs::from_bytes(script.args().get(2)?).ok()?,
+            escrow : bcs::from_bytes(script.args().get(0)?).ok()?,
+            transfer_id : bcs::from_bytes(script.args().get(1)?).ok()?,
+            close_other : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_bridge_create_escrow_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_create_escrow_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::BridgeCreateEscrow {})
+        Some(ScriptFunctionCall::BridgeCreateEscrow {
+        })
     } else {
         None
     }
 }
 
-fn decode_bridge_deposit_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_deposit_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeDeposit {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            receiver_other: bcs::from_bytes(script.args().get(1)?).ok()?,
-            value: bcs::from_bytes(script.args().get(2)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
+            escrow : bcs::from_bytes(script.args().get(0)?).ok()?,
+            receiver_other : bcs::from_bytes(script.args().get(1)?).ok()?,
+            value : bcs::from_bytes(script.args().get(2)?).ok()?,
+            transfer_id : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_bridge_deposit_funds_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_deposit_funds_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeDepositFunds {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            value: bcs::from_bytes(script.args().get(1)?).ok()?,
+            escrow : bcs::from_bytes(script.args().get(0)?).ok()?,
+            value : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_bridge_withdraw_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_withdraw_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeWithdraw {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            sender_other: bcs::from_bytes(script.args().get(1)?).ok()?,
-            receiver: bcs::from_bytes(script.args().get(2)?).ok()?,
-            balance: bcs::from_bytes(script.args().get(3)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(4)?).ok()?,
+            escrow : bcs::from_bytes(script.args().get(0)?).ok()?,
+            sender_other : bcs::from_bytes(script.args().get(1)?).ok()?,
+            receiver : bcs::from_bytes(script.args().get(2)?).ok()?,
+            balance : bcs::from_bytes(script.args().get(3)?).ok()?,
+            transfer_id : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_bridge_withdraw_funds_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_bridge_withdraw_funds_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BridgeWithdrawFunds {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            receiver: bcs::from_bytes(script.args().get(1)?).ok()?,
-            balance: bcs::from_bytes(script.args().get(2)?).ok()?,
+            escrow : bcs::from_bytes(script.args().get(0)?).ok()?,
+            receiver : bcs::from_bytes(script.args().get(1)?).ok()?,
+            balance : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_burn_txn_fees_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_burn_txn_fees_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BurnTxnFees {
-            coin_type: script.ty_args().get(0)?.clone(),
+            coin_type : script.ty_args().get(0)?.clone(),
         })
     } else {
         None
     }
 }
 
-fn decode_burn_with_amount_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_burn_with_amount_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BurnWithAmount {
-            token: script.ty_args().get(0)?.clone(),
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            preburn_address: bcs::from_bytes(script.args().get(1)?).ok()?,
-            amount: bcs::from_bytes(script.args().get(2)?).ok()?,
+            token : script.ty_args().get(0)?.clone(),
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            preburn_address : bcs::from_bytes(script.args().get(1)?).ok()?,
+            amount : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_cancel_burn_with_amount_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_cancel_burn_with_amount_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CancelBurnWithAmount {
-            token: script.ty_args().get(0)?.clone(),
-            preburn_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            amount: bcs::from_bytes(script.args().get(1)?).ok()?,
+            token : script.ty_args().get(0)?.clone(),
+            preburn_address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            amount : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_claim_make_whole_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_claim_make_whole_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::ClaimMakeWhole {})
+        Some(ScriptFunctionCall::ClaimMakeWhole {
+        })
     } else {
         None
     }
 }
 
-fn decode_community_transfer_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_community_transfer_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CommunityTransfer {
-            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
-            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
-            memo: bcs::from_bytes(script.args().get(2)?).ok()?,
+            destination : bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value : bcs::from_bytes(script.args().get(1)?).ok()?,
+            memo : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_acc_user_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_acc_user_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateAccUser {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
-            security: bcs::from_bytes(script.args().get(3)?).ok()?,
+            challenge : bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution : bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty : bcs::from_bytes(script.args().get(2)?).ok()?,
+            security : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_acc_val_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_acc_val_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateAccVal {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
-            security: bcs::from_bytes(script.args().get(3)?).ok()?,
-            ow_human_name: bcs::from_bytes(script.args().get(4)?).ok()?,
-            op_address: bcs::from_bytes(script.args().get(5)?).ok()?,
-            op_auth_key_prefix: bcs::from_bytes(script.args().get(6)?).ok()?,
-            op_consensus_pubkey: bcs::from_bytes(script.args().get(7)?).ok()?,
-            op_validator_network_addresses: bcs::from_bytes(script.args().get(8)?).ok()?,
-            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(9)?).ok()?,
-            op_human_name: bcs::from_bytes(script.args().get(10)?).ok()?,
+            challenge : bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution : bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty : bcs::from_bytes(script.args().get(2)?).ok()?,
+            security : bcs::from_bytes(script.args().get(3)?).ok()?,
+            ow_human_name : bcs::from_bytes(script.args().get(4)?).ok()?,
+            op_address : bcs::from_bytes(script.args().get(5)?).ok()?,
+            op_auth_key_prefix : bcs::from_bytes(script.args().get(6)?).ok()?,
+            op_consensus_pubkey : bcs::from_bytes(script.args().get(7)?).ok()?,
+            op_validator_network_addresses : bcs::from_bytes(script.args().get(8)?).ok()?,
+            op_fullnode_network_addresses : bcs::from_bytes(script.args().get(9)?).ok()?,
+            op_human_name : bcs::from_bytes(script.args().get(10)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_child_vasp_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_child_vasp_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateChildVaspAccount {
-            coin_type: script.ty_args().get(0)?.clone(),
-            child_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            auth_key_prefix: bcs::from_bytes(script.args().get(1)?).ok()?,
-            add_all_currencies: bcs::from_bytes(script.args().get(2)?).ok()?,
-            child_initial_balance: bcs::from_bytes(script.args().get(3)?).ok()?,
+            coin_type : script.ty_args().get(0)?.clone(),
+            child_address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            auth_key_prefix : bcs::from_bytes(script.args().get(1)?).ok()?,
+            add_all_currencies : bcs::from_bytes(script.args().get(2)?).ok()?,
+            child_initial_balance : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_designated_dealer_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_designated_dealer_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateDesignatedDealer {
-            currency: script.ty_args().get(0)?.clone(),
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            addr: bcs::from_bytes(script.args().get(1)?).ok()?,
-            auth_key_prefix: bcs::from_bytes(script.args().get(2)?).ok()?,
-            human_name: bcs::from_bytes(script.args().get(3)?).ok()?,
-            add_all_currencies: bcs::from_bytes(script.args().get(4)?).ok()?,
+            currency : script.ty_args().get(0)?.clone(),
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            addr : bcs::from_bytes(script.args().get(1)?).ok()?,
+            auth_key_prefix : bcs::from_bytes(script.args().get(2)?).ok()?,
+            human_name : bcs::from_bytes(script.args().get(3)?).ok()?,
+            add_all_currencies : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_diem_id_domains_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_diem_id_domains_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::CreateDiemIdDomains {})
+        Some(ScriptFunctionCall::CreateDiemIdDomains {
+        })
     } else {
         None
     }
 }
 
-fn decode_create_parent_vasp_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_parent_vasp_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateParentVaspAccount {
-            coin_type: script.ty_args().get(0)?.clone(),
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_account_address: bcs::from_bytes(script.args().get(1)?).ok()?,
-            auth_key_prefix: bcs::from_bytes(script.args().get(2)?).ok()?,
-            human_name: bcs::from_bytes(script.args().get(3)?).ok()?,
-            add_all_currencies: bcs::from_bytes(script.args().get(4)?).ok()?,
+            coin_type : script.ty_args().get(0)?.clone(),
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_account_address : bcs::from_bytes(script.args().get(1)?).ok()?,
+            auth_key_prefix : bcs::from_bytes(script.args().get(2)?).ok()?,
+            human_name : bcs::from_bytes(script.args().get(3)?).ok()?,
+            add_all_currencies : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_recovery_address_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_recovery_address_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::CreateRecoveryAddress {})
+        Some(ScriptFunctionCall::CreateRecoveryAddress {
+        })
     } else {
         None
     }
 }
 
-fn decode_create_user_by_coin_tx_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_user_by_coin_tx_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateUserByCoinTx {
-            account: bcs::from_bytes(script.args().get(0)?).ok()?,
-            authkey_prefix: bcs::from_bytes(script.args().get(1)?).ok()?,
-            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            account : bcs::from_bytes(script.args().get(0)?).ok()?,
+            authkey_prefix : bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_validator_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_validator_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateValidatorAccount {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_account_address: bcs::from_bytes(script.args().get(1)?).ok()?,
-            auth_key_prefix: bcs::from_bytes(script.args().get(2)?).ok()?,
-            human_name: bcs::from_bytes(script.args().get(3)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_account_address : bcs::from_bytes(script.args().get(1)?).ok()?,
+            auth_key_prefix : bcs::from_bytes(script.args().get(2)?).ok()?,
+            human_name : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_create_validator_operator_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_create_validator_operator_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CreateValidatorOperatorAccount {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_account_address: bcs::from_bytes(script.args().get(1)?).ok()?,
-            auth_key_prefix: bcs::from_bytes(script.args().get(2)?).ok()?,
-            human_name: bcs::from_bytes(script.args().get(3)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_account_address : bcs::from_bytes(script.args().get(1)?).ok()?,
+            auth_key_prefix : bcs::from_bytes(script.args().get(2)?).ok()?,
+            human_name : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8751,20 +7670,18 @@ fn decode_create_validator_operator_account_script_function(
 fn decode_demo_e2e_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::DemoE2e {
-            world: bcs::from_bytes(script.args().get(0)?).ok()?,
+            world : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_freeze_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_freeze_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::FreezeAccount {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            to_freeze_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_freeze_account : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
@@ -8773,18 +7690,17 @@ fn decode_freeze_account_script_function(
 
 fn decode_init_vouch_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::InitVouch {})
+        Some(ScriptFunctionCall::InitVouch {
+        })
     } else {
         None
     }
 }
 
-fn decode_initialize_diem_consensus_config_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_initialize_diem_consensus_config_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::InitializeDiemConsensusConfig {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -8793,70 +7709,63 @@ fn decode_initialize_diem_consensus_config_script_function(
 
 fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::Join {})
+        Some(ScriptFunctionCall::Join {
+        })
     } else {
         None
     }
 }
 
-fn decode_minerstate_commit_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_minerstate_commit_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::MinerstateCommit {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
-            security: bcs::from_bytes(script.args().get(3)?).ok()?,
+            challenge : bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution : bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty : bcs::from_bytes(script.args().get(2)?).ok()?,
+            security : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_minerstate_commit_by_operator_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_minerstate_commit_by_operator_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::MinerstateCommitByOperator {
-            owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(2)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(3)?).ok()?,
-            security: bcs::from_bytes(script.args().get(4)?).ok()?,
+            owner_address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            challenge : bcs::from_bytes(script.args().get(1)?).ok()?,
+            solution : bcs::from_bytes(script.args().get(2)?).ok()?,
+            difficulty : bcs::from_bytes(script.args().get(3)?).ok()?,
+            security : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_minerstate_helper_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_minerstate_helper_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::MinerstateHelper {})
+        Some(ScriptFunctionCall::MinerstateHelper {
+        })
     } else {
         None
     }
 }
 
-fn decode_ol_delegate_vote_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_ol_delegate_vote_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::OlDelegateVote {
-            dest: bcs::from_bytes(script.args().get(0)?).ok()?,
+            dest : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_ol_enable_delegation_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_ol_enable_delegation_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::OlEnableDelegation {})
+        Some(ScriptFunctionCall::OlEnableDelegation {
+        })
     } else {
         None
     }
@@ -8865,50 +7774,45 @@ fn decode_ol_enable_delegation_script_function(
 fn decode_ol_oracle_tx_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::OlOracleTx {
-            id: bcs::from_bytes(script.args().get(0)?).ok()?,
-            data: bcs::from_bytes(script.args().get(1)?).ok()?,
+            id : bcs::from_bytes(script.args().get(0)?).ok()?,
+            data : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_ol_reconfig_bulk_update_setup_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_ol_reconfig_bulk_update_setup_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::OlReconfigBulkUpdateSetup {
-            alice: bcs::from_bytes(script.args().get(0)?).ok()?,
-            bob: bcs::from_bytes(script.args().get(1)?).ok()?,
-            carol: bcs::from_bytes(script.args().get(2)?).ok()?,
-            sha: bcs::from_bytes(script.args().get(3)?).ok()?,
-            ram: bcs::from_bytes(script.args().get(4)?).ok()?,
+            alice : bcs::from_bytes(script.args().get(0)?).ok()?,
+            bob : bcs::from_bytes(script.args().get(1)?).ok()?,
+            carol : bcs::from_bytes(script.args().get(2)?).ok()?,
+            sha : bcs::from_bytes(script.args().get(3)?).ok()?,
+            ram : bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_ol_remove_delegation_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_ol_remove_delegation_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::OlRemoveDelegation {})
+        Some(ScriptFunctionCall::OlRemoveDelegation {
+        })
     } else {
         None
     }
 }
 
-fn decode_peer_to_peer_with_metadata_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_peer_to_peer_with_metadata_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::PeerToPeerWithMetadata {
-            currency: script.ty_args().get(0)?.clone(),
-            payee: bcs::from_bytes(script.args().get(0)?).ok()?,
-            amount: bcs::from_bytes(script.args().get(1)?).ok()?,
-            metadata: bcs::from_bytes(script.args().get(2)?).ok()?,
-            metadata_signature: bcs::from_bytes(script.args().get(3)?).ok()?,
+            currency : script.ty_args().get(0)?.clone(),
+            payee : bcs::from_bytes(script.args().get(0)?).ok()?,
+            amount : bcs::from_bytes(script.args().get(1)?).ok()?,
+            metadata : bcs::from_bytes(script.args().get(2)?).ok()?,
+            metadata_signature : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8918,230 +7822,196 @@ fn decode_peer_to_peer_with_metadata_script_function(
 fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::Preburn {
-            token: script.ty_args().get(0)?.clone(),
-            amount: bcs::from_bytes(script.args().get(0)?).ok()?,
+            token : script.ty_args().get(0)?.clone(),
+            amount : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_publish_shared_ed25519_public_key_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_publish_shared_ed25519_public_key_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::PublishSharedEd25519PublicKey {
-            public_key: bcs::from_bytes(script.args().get(0)?).ok()?,
+            public_key : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_register_validator_config_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_register_validator_config_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RegisterValidatorConfig {
-            validator_account: bcs::from_bytes(script.args().get(0)?).ok()?,
-            consensus_pubkey: bcs::from_bytes(script.args().get(1)?).ok()?,
-            validator_network_addresses: bcs::from_bytes(script.args().get(2)?).ok()?,
-            fullnode_network_addresses: bcs::from_bytes(script.args().get(3)?).ok()?,
+            validator_account : bcs::from_bytes(script.args().get(0)?).ok()?,
+            consensus_pubkey : bcs::from_bytes(script.args().get(1)?).ok()?,
+            validator_network_addresses : bcs::from_bytes(script.args().get(2)?).ok()?,
+            fullnode_network_addresses : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_remove_diem_id_domain_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_remove_diem_id_domain_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RemoveDiemIdDomain {
-            address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            domain: bcs::from_bytes(script.args().get(1)?).ok()?,
+            address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            domain : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_remove_validator_and_reconfigure_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_remove_validator_and_reconfigure_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RemoveValidatorAndReconfigure {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            validator_name: bcs::from_bytes(script.args().get(1)?).ok()?,
-            validator_address: bcs::from_bytes(script.args().get(2)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            validator_name : bcs::from_bytes(script.args().get(1)?).ok()?,
+            validator_address : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_rotate_authentication_key_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_authentication_key_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateAuthenticationKey {
-            new_key: bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_key : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_rotate_authentication_key_with_nonce_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_authentication_key_with_nonce_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateAuthenticationKeyWithNonce {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_key: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_key : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_rotate_authentication_key_with_nonce_admin_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_authentication_key_with_nonce_admin_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateAuthenticationKeyWithNonceAdmin {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_key: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_key : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_rotate_authentication_key_with_recovery_address_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_authentication_key_with_recovery_address_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(
-            ScriptFunctionCall::RotateAuthenticationKeyWithRecoveryAddress {
-                recovery_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-                to_recover: bcs::from_bytes(script.args().get(1)?).ok()?,
-                new_key: bcs::from_bytes(script.args().get(2)?).ok()?,
-            },
-        )
+        Some(ScriptFunctionCall::RotateAuthenticationKeyWithRecoveryAddress {
+            recovery_address : bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_recover : bcs::from_bytes(script.args().get(1)?).ok()?,
+            new_key : bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
     } else {
         None
     }
 }
 
-fn decode_rotate_dual_attestation_info_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_dual_attestation_info_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateDualAttestationInfo {
-            new_url: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_key: bcs::from_bytes(script.args().get(1)?).ok()?,
+            new_url : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_key : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_rotate_shared_ed25519_public_key_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_rotate_shared_ed25519_public_key_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateSharedEd25519PublicKey {
-            public_key: bcs::from_bytes(script.args().get(0)?).ok()?,
+            public_key : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_burn_pref_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_burn_pref_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetBurnPref {
-            to_community: bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_community : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_gas_constants_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_gas_constants_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetGasConstants {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            global_memory_per_byte_cost: bcs::from_bytes(script.args().get(1)?).ok()?,
-            global_memory_per_byte_write_cost: bcs::from_bytes(script.args().get(2)?).ok()?,
-            min_transaction_gas_units: bcs::from_bytes(script.args().get(3)?).ok()?,
-            large_transaction_cutoff: bcs::from_bytes(script.args().get(4)?).ok()?,
-            intrinsic_gas_per_byte: bcs::from_bytes(script.args().get(5)?).ok()?,
-            maximum_number_of_gas_units: bcs::from_bytes(script.args().get(6)?).ok()?,
-            min_price_per_gas_unit: bcs::from_bytes(script.args().get(7)?).ok()?,
-            max_price_per_gas_unit: bcs::from_bytes(script.args().get(8)?).ok()?,
-            max_transaction_size_in_bytes: bcs::from_bytes(script.args().get(9)?).ok()?,
-            gas_unit_scaling_factor: bcs::from_bytes(script.args().get(10)?).ok()?,
-            default_account_size: bcs::from_bytes(script.args().get(11)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            global_memory_per_byte_cost : bcs::from_bytes(script.args().get(1)?).ok()?,
+            global_memory_per_byte_write_cost : bcs::from_bytes(script.args().get(2)?).ok()?,
+            min_transaction_gas_units : bcs::from_bytes(script.args().get(3)?).ok()?,
+            large_transaction_cutoff : bcs::from_bytes(script.args().get(4)?).ok()?,
+            intrinsic_gas_per_byte : bcs::from_bytes(script.args().get(5)?).ok()?,
+            maximum_number_of_gas_units : bcs::from_bytes(script.args().get(6)?).ok()?,
+            min_price_per_gas_unit : bcs::from_bytes(script.args().get(7)?).ok()?,
+            max_price_per_gas_unit : bcs::from_bytes(script.args().get(8)?).ok()?,
+            max_transaction_size_in_bytes : bcs::from_bytes(script.args().get(9)?).ok()?,
+            gas_unit_scaling_factor : bcs::from_bytes(script.args().get(10)?).ok()?,
+            default_account_size : bcs::from_bytes(script.args().get(11)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_validator_config_and_reconfigure_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_validator_config_and_reconfigure_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetValidatorConfigAndReconfigure {
-            validator_account: bcs::from_bytes(script.args().get(0)?).ok()?,
-            consensus_pubkey: bcs::from_bytes(script.args().get(1)?).ok()?,
-            validator_network_addresses: bcs::from_bytes(script.args().get(2)?).ok()?,
-            fullnode_network_addresses: bcs::from_bytes(script.args().get(3)?).ok()?,
+            validator_account : bcs::from_bytes(script.args().get(0)?).ok()?,
+            consensus_pubkey : bcs::from_bytes(script.args().get(1)?).ok()?,
+            validator_network_addresses : bcs::from_bytes(script.args().get(2)?).ok()?,
+            fullnode_network_addresses : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_validator_operator_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_validator_operator_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetValidatorOperator {
-            operator_name: bcs::from_bytes(script.args().get(0)?).ok()?,
-            operator_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+            operator_name : bcs::from_bytes(script.args().get(0)?).ok()?,
+            operator_account : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_validator_operator_with_nonce_admin_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_validator_operator_with_nonce_admin_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetValidatorOperatorWithNonceAdmin {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            operator_name: bcs::from_bytes(script.args().get(1)?).ok()?,
-            operator_account: bcs::from_bytes(script.args().get(2)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            operator_name : bcs::from_bytes(script.args().get(1)?).ok()?,
+            operator_account : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_set_wallet_type_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_set_wallet_type_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::SetWalletType {
-            type_of: bcs::from_bytes(script.args().get(0)?).ok()?,
+            type_of : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -9151,91 +8021,79 @@ fn decode_set_wallet_type_script_function(
 fn decode_tiered_mint_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::TieredMint {
-            coin_type: script.ty_args().get(0)?.clone(),
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            designated_dealer_address: bcs::from_bytes(script.args().get(1)?).ok()?,
-            mint_amount: bcs::from_bytes(script.args().get(2)?).ok()?,
-            tier_index: bcs::from_bytes(script.args().get(3)?).ok()?,
+            coin_type : script.ty_args().get(0)?.clone(),
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            designated_dealer_address : bcs::from_bytes(script.args().get(1)?).ok()?,
+            mint_amount : bcs::from_bytes(script.args().get(2)?).ok()?,
+            tier_index : bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_unfreeze_account_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_unfreeze_account_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UnfreezeAccount {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            to_unfreeze_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_unfreeze_account : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_update_diem_consensus_config_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_update_diem_consensus_config_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdateDiemConsensusConfig {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            config: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            config : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_update_diem_version_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_update_diem_version_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdateDiemVersion {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            major: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            major : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_update_dual_attestation_limit_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_update_dual_attestation_limit_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdateDualAttestationLimit {
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_micro_xdx_limit: bcs::from_bytes(script.args().get(1)?).ok()?,
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_micro_xdx_limit : bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_update_exchange_rate_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_update_exchange_rate_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdateExchangeRate {
-            currency: script.ty_args().get(0)?.clone(),
-            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
-            new_exchange_rate_numerator: bcs::from_bytes(script.args().get(1)?).ok()?,
-            new_exchange_rate_denominator: bcs::from_bytes(script.args().get(2)?).ok()?,
+            currency : script.ty_args().get(0)?.clone(),
+            sliding_nonce : bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_exchange_rate_numerator : bcs::from_bytes(script.args().get(1)?).ok()?,
+            new_exchange_rate_denominator : bcs::from_bytes(script.args().get(2)?).ok()?,
         })
     } else {
         None
     }
 }
 
-fn decode_update_minting_ability_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
+fn decode_update_minting_ability_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdateMintingAbility {
-            currency: script.ty_args().get(0)?.clone(),
-            allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
+            currency : script.ty_args().get(0)?.clone(),
+            allow_minting : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -9244,7 +8102,8 @@ fn decode_update_minting_ability_script_function(
 
 fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::ValAddSelf {})
+        Some(ScriptFunctionCall::ValAddSelf {
+        })
     } else {
         None
     }
@@ -9253,7 +8112,7 @@ fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<S
 fn decode_vouch_for_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::VouchFor {
-            val: bcs::from_bytes(script.args().get(0)?).ok()?,
+            val : bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -9262,692 +8121,375 @@ fn decode_vouch_for_script_function(payload: &TransactionPayload) -> Option<Scri
 
 fn decode_add_currency_to_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddCurrencyToAccount {
-        currency: script.ty_args().get(0)?.clone(),
+        currency : script.ty_args().get(0)?.clone(),
     })
 }
 
 fn decode_add_recovery_rotation_capability_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddRecoveryRotationCapability {
-        recovery_address: decode_address_argument(script.args().get(0)?.clone())?,
+        recovery_address : decode_address_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_add_validator_and_reconfigure_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddValidatorAndReconfigure {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        validator_name: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        validator_address: decode_address_argument(script.args().get(2)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        validator_name : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        validator_address : decode_address_argument(script.args().get(2)?.clone())?,
     })
 }
 
 fn decode_burn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::Burn {
-        token: script.ty_args().get(0)?.clone(),
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        preburn_address: decode_address_argument(script.args().get(1)?.clone())?,
+        token : script.ty_args().get(0)?.clone(),
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        preburn_address : decode_address_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_burn_txn_fees_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::BurnTxnFees {
-        coin_type: script.ty_args().get(0)?.clone(),
+        coin_type : script.ty_args().get(0)?.clone(),
     })
 }
 
 fn decode_cancel_burn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CancelBurn {
-        token: script.ty_args().get(0)?.clone(),
-        preburn_address: decode_address_argument(script.args().get(0)?.clone())?,
+        token : script.ty_args().get(0)?.clone(),
+        preburn_address : decode_address_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_create_child_vasp_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateChildVaspAccount {
-        coin_type: script.ty_args().get(0)?.clone(),
-        child_address: decode_address_argument(script.args().get(0)?.clone())?,
-        auth_key_prefix: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        add_all_currencies: decode_bool_argument(script.args().get(2)?.clone())?,
-        child_initial_balance: decode_u64_argument(script.args().get(3)?.clone())?,
+        coin_type : script.ty_args().get(0)?.clone(),
+        child_address : decode_address_argument(script.args().get(0)?.clone())?,
+        auth_key_prefix : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        add_all_currencies : decode_bool_argument(script.args().get(2)?.clone())?,
+        child_initial_balance : decode_u64_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_create_designated_dealer_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateDesignatedDealer {
-        currency: script.ty_args().get(0)?.clone(),
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        addr: decode_address_argument(script.args().get(1)?.clone())?,
-        auth_key_prefix: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(3)?.clone())?,
-        add_all_currencies: decode_bool_argument(script.args().get(4)?.clone())?,
+        currency : script.ty_args().get(0)?.clone(),
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        addr : decode_address_argument(script.args().get(1)?.clone())?,
+        auth_key_prefix : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        human_name : decode_u8vector_argument(script.args().get(3)?.clone())?,
+        add_all_currencies : decode_bool_argument(script.args().get(4)?.clone())?,
     })
 }
 
 fn decode_create_parent_vasp_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateParentVaspAccount {
-        coin_type: script.ty_args().get(0)?.clone(),
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_account_address: decode_address_argument(script.args().get(1)?.clone())?,
-        auth_key_prefix: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(3)?.clone())?,
-        add_all_currencies: decode_bool_argument(script.args().get(4)?.clone())?,
+        coin_type : script.ty_args().get(0)?.clone(),
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_account_address : decode_address_argument(script.args().get(1)?.clone())?,
+        auth_key_prefix : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        human_name : decode_u8vector_argument(script.args().get(3)?.clone())?,
+        add_all_currencies : decode_bool_argument(script.args().get(4)?.clone())?,
     })
 }
 
 fn decode_create_recovery_address_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::CreateRecoveryAddress {})
+    Some(ScriptCall::CreateRecoveryAddress {
+    })
 }
 
 fn decode_create_validator_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateValidatorAccount {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_account_address: decode_address_argument(script.args().get(1)?.clone())?,
-        auth_key_prefix: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_account_address : decode_address_argument(script.args().get(1)?.clone())?,
+        auth_key_prefix : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        human_name : decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_create_validator_operator_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateValidatorOperatorAccount {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_account_address: decode_address_argument(script.args().get(1)?.clone())?,
-        auth_key_prefix: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_account_address : decode_address_argument(script.args().get(1)?.clone())?,
+        auth_key_prefix : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        human_name : decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::FreezeAccount {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        to_freeze_account: decode_address_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        to_freeze_account : decode_address_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::PeerToPeerWithMetadata {
-        currency: script.ty_args().get(0)?.clone(),
-        payee: decode_address_argument(script.args().get(0)?.clone())?,
-        amount: decode_u64_argument(script.args().get(1)?.clone())?,
-        metadata: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        metadata_signature: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        currency : script.ty_args().get(0)?.clone(),
+        payee : decode_address_argument(script.args().get(0)?.clone())?,
+        amount : decode_u64_argument(script.args().get(1)?.clone())?,
+        metadata : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        metadata_signature : decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_preburn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::Preburn {
-        token: script.ty_args().get(0)?.clone(),
-        amount: decode_u64_argument(script.args().get(0)?.clone())?,
+        token : script.ty_args().get(0)?.clone(),
+        amount : decode_u64_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_publish_shared_ed25519_public_key_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::PublishSharedEd25519PublicKey {
-        public_key: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        public_key : decode_u8vector_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_register_validator_config_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RegisterValidatorConfig {
-        validator_account: decode_address_argument(script.args().get(0)?.clone())?,
-        consensus_pubkey: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        validator_network_addresses: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        fullnode_network_addresses: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        validator_account : decode_address_argument(script.args().get(0)?.clone())?,
+        consensus_pubkey : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        validator_network_addresses : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        fullnode_network_addresses : decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_remove_validator_and_reconfigure_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RemoveValidatorAndReconfigure {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        validator_name: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        validator_address: decode_address_argument(script.args().get(2)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        validator_name : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        validator_address : decode_address_argument(script.args().get(2)?.clone())?,
     })
 }
 
 fn decode_rotate_authentication_key_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateAuthenticationKey {
-        new_key: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        new_key : decode_u8vector_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_rotate_authentication_key_with_nonce_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateAuthenticationKeyWithNonce {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_key: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_key : decode_u8vector_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_rotate_authentication_key_with_nonce_admin_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateAuthenticationKeyWithNonceAdmin {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_key: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_key : decode_u8vector_argument(script.args().get(1)?.clone())?,
     })
 }
 
-fn decode_rotate_authentication_key_with_recovery_address_script(
-    script: &Script,
-) -> Option<ScriptCall> {
+fn decode_rotate_authentication_key_with_recovery_address_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateAuthenticationKeyWithRecoveryAddress {
-        recovery_address: decode_address_argument(script.args().get(0)?.clone())?,
-        to_recover: decode_address_argument(script.args().get(1)?.clone())?,
-        new_key: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        recovery_address : decode_address_argument(script.args().get(0)?.clone())?,
+        to_recover : decode_address_argument(script.args().get(1)?.clone())?,
+        new_key : decode_u8vector_argument(script.args().get(2)?.clone())?,
     })
 }
 
 fn decode_rotate_dual_attestation_info_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateDualAttestationInfo {
-        new_url: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        new_key: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        new_url : decode_u8vector_argument(script.args().get(0)?.clone())?,
+        new_key : decode_u8vector_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_rotate_shared_ed25519_public_key_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RotateSharedEd25519PublicKey {
-        public_key: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        public_key : decode_u8vector_argument(script.args().get(0)?.clone())?,
     })
 }
 
 fn decode_set_validator_config_and_reconfigure_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::SetValidatorConfigAndReconfigure {
-        validator_account: decode_address_argument(script.args().get(0)?.clone())?,
-        consensus_pubkey: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        validator_network_addresses: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        fullnode_network_addresses: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        validator_account : decode_address_argument(script.args().get(0)?.clone())?,
+        consensus_pubkey : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        validator_network_addresses : decode_u8vector_argument(script.args().get(2)?.clone())?,
+        fullnode_network_addresses : decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_set_validator_operator_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::SetValidatorOperator {
-        operator_name: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        operator_account: decode_address_argument(script.args().get(1)?.clone())?,
+        operator_name : decode_u8vector_argument(script.args().get(0)?.clone())?,
+        operator_account : decode_address_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_set_validator_operator_with_nonce_admin_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::SetValidatorOperatorWithNonceAdmin {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        operator_name: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        operator_account: decode_address_argument(script.args().get(2)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        operator_name : decode_u8vector_argument(script.args().get(1)?.clone())?,
+        operator_account : decode_address_argument(script.args().get(2)?.clone())?,
     })
 }
 
 fn decode_tiered_mint_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::TieredMint {
-        coin_type: script.ty_args().get(0)?.clone(),
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        designated_dealer_address: decode_address_argument(script.args().get(1)?.clone())?,
-        mint_amount: decode_u64_argument(script.args().get(2)?.clone())?,
-        tier_index: decode_u64_argument(script.args().get(3)?.clone())?,
+        coin_type : script.ty_args().get(0)?.clone(),
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        designated_dealer_address : decode_address_argument(script.args().get(1)?.clone())?,
+        mint_amount : decode_u64_argument(script.args().get(2)?.clone())?,
+        tier_index : decode_u64_argument(script.args().get(3)?.clone())?,
     })
 }
 
 fn decode_unfreeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UnfreezeAccount {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        to_unfreeze_account: decode_address_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        to_unfreeze_account : decode_address_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_update_diem_version_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UpdateDiemVersion {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        major: decode_u64_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        major : decode_u64_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_update_dual_attestation_limit_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UpdateDualAttestationLimit {
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_micro_xdx_limit: decode_u64_argument(script.args().get(1)?.clone())?,
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_micro_xdx_limit : decode_u64_argument(script.args().get(1)?.clone())?,
     })
 }
 
 fn decode_update_exchange_rate_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UpdateExchangeRate {
-        currency: script.ty_args().get(0)?.clone(),
-        sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
-        new_exchange_rate_numerator: decode_u64_argument(script.args().get(1)?.clone())?,
-        new_exchange_rate_denominator: decode_u64_argument(script.args().get(2)?.clone())?,
+        currency : script.ty_args().get(0)?.clone(),
+        sliding_nonce : decode_u64_argument(script.args().get(0)?.clone())?,
+        new_exchange_rate_numerator : decode_u64_argument(script.args().get(1)?.clone())?,
+        new_exchange_rate_denominator : decode_u64_argument(script.args().get(2)?.clone())?,
     })
 }
 
 fn decode_update_minting_ability_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UpdateMintingAbility {
-        currency: script.ty_args().get(0)?.clone(),
-        allow_minting: decode_bool_argument(script.args().get(0)?.clone())?,
+        currency : script.ty_args().get(0)?.clone(),
+        allow_minting : decode_bool_argument(script.args().get(0)?.clone())?,
     })
 }
 
-type TransactionScriptDecoderMap = std::collections::HashMap<
-    Vec<u8>,
-    Box<dyn Fn(&Script) -> Option<ScriptCall> + std::marker::Sync + std::marker::Send>,
->;
+type TransactionScriptDecoderMap = std::collections::HashMap<Vec<u8>, Box<dyn Fn(&Script) -> Option<ScriptCall> + std::marker::Sync + std::marker::Send>>;
 
-static TRANSACTION_SCRIPT_DECODER_MAP: once_cell::sync::Lazy<TransactionScriptDecoderMap> =
-    once_cell::sync::Lazy::new(|| {
-        let mut map: TransactionScriptDecoderMap = std::collections::HashMap::new();
-        map.insert(
-            ADD_CURRENCY_TO_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_add_currency_to_account_script),
-        );
-        map.insert(
-            ADD_RECOVERY_ROTATION_CAPABILITY_CODE.to_vec(),
-            Box::new(decode_add_recovery_rotation_capability_script),
-        );
-        map.insert(
-            ADD_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
-            Box::new(decode_add_validator_and_reconfigure_script),
-        );
-        map.insert(BURN_CODE.to_vec(), Box::new(decode_burn_script));
-        map.insert(
-            BURN_TXN_FEES_CODE.to_vec(),
-            Box::new(decode_burn_txn_fees_script),
-        );
-        map.insert(
-            CANCEL_BURN_CODE.to_vec(),
-            Box::new(decode_cancel_burn_script),
-        );
-        map.insert(
-            CREATE_CHILD_VASP_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_create_child_vasp_account_script),
-        );
-        map.insert(
-            CREATE_DESIGNATED_DEALER_CODE.to_vec(),
-            Box::new(decode_create_designated_dealer_script),
-        );
-        map.insert(
-            CREATE_PARENT_VASP_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_create_parent_vasp_account_script),
-        );
-        map.insert(
-            CREATE_RECOVERY_ADDRESS_CODE.to_vec(),
-            Box::new(decode_create_recovery_address_script),
-        );
-        map.insert(
-            CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_create_validator_account_script),
-        );
-        map.insert(
-            CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_create_validator_operator_account_script),
-        );
-        map.insert(
-            FREEZE_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_freeze_account_script),
-        );
-        map.insert(
-            PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
-            Box::new(decode_peer_to_peer_with_metadata_script),
-        );
-        map.insert(PREBURN_CODE.to_vec(), Box::new(decode_preburn_script));
-        map.insert(
-            PUBLISH_SHARED_ED25519_PUBLIC_KEY_CODE.to_vec(),
-            Box::new(decode_publish_shared_ed25519_public_key_script),
-        );
-        map.insert(
-            REGISTER_VALIDATOR_CONFIG_CODE.to_vec(),
-            Box::new(decode_register_validator_config_script),
-        );
-        map.insert(
-            REMOVE_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
-            Box::new(decode_remove_validator_and_reconfigure_script),
-        );
-        map.insert(
-            ROTATE_AUTHENTICATION_KEY_CODE.to_vec(),
-            Box::new(decode_rotate_authentication_key_script),
-        );
-        map.insert(
-            ROTATE_AUTHENTICATION_KEY_WITH_NONCE_CODE.to_vec(),
-            Box::new(decode_rotate_authentication_key_with_nonce_script),
-        );
-        map.insert(
-            ROTATE_AUTHENTICATION_KEY_WITH_NONCE_ADMIN_CODE.to_vec(),
-            Box::new(decode_rotate_authentication_key_with_nonce_admin_script),
-        );
-        map.insert(
-            ROTATE_AUTHENTICATION_KEY_WITH_RECOVERY_ADDRESS_CODE.to_vec(),
-            Box::new(decode_rotate_authentication_key_with_recovery_address_script),
-        );
-        map.insert(
-            ROTATE_DUAL_ATTESTATION_INFO_CODE.to_vec(),
-            Box::new(decode_rotate_dual_attestation_info_script),
-        );
-        map.insert(
-            ROTATE_SHARED_ED25519_PUBLIC_KEY_CODE.to_vec(),
-            Box::new(decode_rotate_shared_ed25519_public_key_script),
-        );
-        map.insert(
-            SET_VALIDATOR_CONFIG_AND_RECONFIGURE_CODE.to_vec(),
-            Box::new(decode_set_validator_config_and_reconfigure_script),
-        );
-        map.insert(
-            SET_VALIDATOR_OPERATOR_CODE.to_vec(),
-            Box::new(decode_set_validator_operator_script),
-        );
-        map.insert(
-            SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE.to_vec(),
-            Box::new(decode_set_validator_operator_with_nonce_admin_script),
-        );
-        map.insert(
-            TIERED_MINT_CODE.to_vec(),
-            Box::new(decode_tiered_mint_script),
-        );
-        map.insert(
-            UNFREEZE_ACCOUNT_CODE.to_vec(),
-            Box::new(decode_unfreeze_account_script),
-        );
-        map.insert(
-            UPDATE_DIEM_VERSION_CODE.to_vec(),
-            Box::new(decode_update_diem_version_script),
-        );
-        map.insert(
-            UPDATE_DUAL_ATTESTATION_LIMIT_CODE.to_vec(),
-            Box::new(decode_update_dual_attestation_limit_script),
-        );
-        map.insert(
-            UPDATE_EXCHANGE_RATE_CODE.to_vec(),
-            Box::new(decode_update_exchange_rate_script),
-        );
-        map.insert(
-            UPDATE_MINTING_ABILITY_CODE.to_vec(),
-            Box::new(decode_update_minting_ability_script),
-        );
-        map
-    });
+static TRANSACTION_SCRIPT_DECODER_MAP: once_cell::sync::Lazy<TransactionScriptDecoderMap> = once_cell::sync::Lazy::new(|| {
+    let mut map : TransactionScriptDecoderMap = std::collections::HashMap::new();
+    map.insert(ADD_CURRENCY_TO_ACCOUNT_CODE.to_vec(), Box::new(decode_add_currency_to_account_script));
+    map.insert(ADD_RECOVERY_ROTATION_CAPABILITY_CODE.to_vec(), Box::new(decode_add_recovery_rotation_capability_script));
+    map.insert(ADD_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(), Box::new(decode_add_validator_and_reconfigure_script));
+    map.insert(BURN_CODE.to_vec(), Box::new(decode_burn_script));
+    map.insert(BURN_TXN_FEES_CODE.to_vec(), Box::new(decode_burn_txn_fees_script));
+    map.insert(CANCEL_BURN_CODE.to_vec(), Box::new(decode_cancel_burn_script));
+    map.insert(CREATE_CHILD_VASP_ACCOUNT_CODE.to_vec(), Box::new(decode_create_child_vasp_account_script));
+    map.insert(CREATE_DESIGNATED_DEALER_CODE.to_vec(), Box::new(decode_create_designated_dealer_script));
+    map.insert(CREATE_PARENT_VASP_ACCOUNT_CODE.to_vec(), Box::new(decode_create_parent_vasp_account_script));
+    map.insert(CREATE_RECOVERY_ADDRESS_CODE.to_vec(), Box::new(decode_create_recovery_address_script));
+    map.insert(CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(), Box::new(decode_create_validator_account_script));
+    map.insert(CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE.to_vec(), Box::new(decode_create_validator_operator_account_script));
+    map.insert(FREEZE_ACCOUNT_CODE.to_vec(), Box::new(decode_freeze_account_script));
+    map.insert(PEER_TO_PEER_WITH_METADATA_CODE.to_vec(), Box::new(decode_peer_to_peer_with_metadata_script));
+    map.insert(PREBURN_CODE.to_vec(), Box::new(decode_preburn_script));
+    map.insert(PUBLISH_SHARED_ED25519_PUBLIC_KEY_CODE.to_vec(), Box::new(decode_publish_shared_ed25519_public_key_script));
+    map.insert(REGISTER_VALIDATOR_CONFIG_CODE.to_vec(), Box::new(decode_register_validator_config_script));
+    map.insert(REMOVE_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(), Box::new(decode_remove_validator_and_reconfigure_script));
+    map.insert(ROTATE_AUTHENTICATION_KEY_CODE.to_vec(), Box::new(decode_rotate_authentication_key_script));
+    map.insert(ROTATE_AUTHENTICATION_KEY_WITH_NONCE_CODE.to_vec(), Box::new(decode_rotate_authentication_key_with_nonce_script));
+    map.insert(ROTATE_AUTHENTICATION_KEY_WITH_NONCE_ADMIN_CODE.to_vec(), Box::new(decode_rotate_authentication_key_with_nonce_admin_script));
+    map.insert(ROTATE_AUTHENTICATION_KEY_WITH_RECOVERY_ADDRESS_CODE.to_vec(), Box::new(decode_rotate_authentication_key_with_recovery_address_script));
+    map.insert(ROTATE_DUAL_ATTESTATION_INFO_CODE.to_vec(), Box::new(decode_rotate_dual_attestation_info_script));
+    map.insert(ROTATE_SHARED_ED25519_PUBLIC_KEY_CODE.to_vec(), Box::new(decode_rotate_shared_ed25519_public_key_script));
+    map.insert(SET_VALIDATOR_CONFIG_AND_RECONFIGURE_CODE.to_vec(), Box::new(decode_set_validator_config_and_reconfigure_script));
+    map.insert(SET_VALIDATOR_OPERATOR_CODE.to_vec(), Box::new(decode_set_validator_operator_script));
+    map.insert(SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE.to_vec(), Box::new(decode_set_validator_operator_with_nonce_admin_script));
+    map.insert(TIERED_MINT_CODE.to_vec(), Box::new(decode_tiered_mint_script));
+    map.insert(UNFREEZE_ACCOUNT_CODE.to_vec(), Box::new(decode_unfreeze_account_script));
+    map.insert(UPDATE_DIEM_VERSION_CODE.to_vec(), Box::new(decode_update_diem_version_script));
+    map.insert(UPDATE_DUAL_ATTESTATION_LIMIT_CODE.to_vec(), Box::new(decode_update_dual_attestation_limit_script));
+    map.insert(UPDATE_EXCHANGE_RATE_CODE.to_vec(), Box::new(decode_update_exchange_rate_script));
+    map.insert(UPDATE_MINTING_ABILITY_CODE.to_vec(), Box::new(decode_update_minting_ability_script));
+    map
+});
 
-type ScriptFunctionDecoderMap = std::collections::HashMap<
-    String,
-    Box<
-        dyn Fn(&TransactionPayload) -> Option<ScriptFunctionCall>
-            + std::marker::Sync
-            + std::marker::Send,
-    >,
->;
+type ScriptFunctionDecoderMap = std::collections::HashMap<String, Box<dyn Fn(&TransactionPayload) -> Option<ScriptFunctionCall> + std::marker::Sync + std::marker::Send>>;
 
-static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderMap> =
-    once_cell::sync::Lazy::new(|| {
-        let mut map: ScriptFunctionDecoderMap = std::collections::HashMap::new();
-        map.insert(
-            "AccountAdministrationScriptsadd_currency_to_account".to_string(),
-            Box::new(decode_add_currency_to_account_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsadd_diem_id_domain".to_string(),
-            Box::new(decode_add_diem_id_domain_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsadd_recovery_rotation_capability".to_string(),
-            Box::new(decode_add_recovery_rotation_capability_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsadd_validator_and_reconfigure".to_string(),
-            Box::new(decode_add_validator_and_reconfigure_script_function),
-        );
-        map.insert(
-            "AutoPayScriptsautopay_create_instruction".to_string(),
-            Box::new(decode_autopay_create_instruction_script_function),
-        );
-        map.insert(
-            "AutoPayScriptsautopay_disable".to_string(),
-            Box::new(decode_autopay_disable_script_function),
-        );
-        map.insert(
-            "AutoPayScriptsautopay_enable".to_string(),
-            Box::new(decode_autopay_enable_script_function),
-        );
-        map.insert(
-            "TransferScriptsbalance_transfer".to_string(),
-            Box::new(decode_balance_transfer_script_function),
-        );
-        map.insert(
-            "TransferScriptsbalance_transfer_scaled".to_string(),
-            Box::new(decode_balance_transfer_scaled_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_close_transfer".to_string(),
-            Box::new(decode_bridge_close_transfer_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_create_escrow".to_string(),
-            Box::new(decode_bridge_create_escrow_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_deposit".to_string(),
-            Box::new(decode_bridge_deposit_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_deposit_funds".to_string(),
-            Box::new(decode_bridge_deposit_funds_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_withdraw".to_string(),
-            Box::new(decode_bridge_withdraw_script_function),
-        );
-        map.insert(
-            "BridgeScriptsbridge_withdraw_funds".to_string(),
-            Box::new(decode_bridge_withdraw_funds_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsburn_txn_fees".to_string(),
-            Box::new(decode_burn_txn_fees_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsburn_with_amount".to_string(),
-            Box::new(decode_burn_with_amount_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptscancel_burn_with_amount".to_string(),
-            Box::new(decode_cancel_burn_with_amount_script_function),
-        );
-        map.insert(
-            "AccountScriptsclaim_make_whole".to_string(),
-            Box::new(decode_claim_make_whole_script_function),
-        );
-        map.insert(
-            "TransferScriptscommunity_transfer".to_string(),
-            Box::new(decode_community_transfer_script_function),
-        );
-        map.insert(
-            "AccountScriptscreate_acc_user".to_string(),
-            Box::new(decode_create_acc_user_script_function),
-        );
-        map.insert(
-            "AccountScriptscreate_acc_val".to_string(),
-            Box::new(decode_create_acc_val_script_function),
-        );
-        map.insert(
-            "AccountCreationScriptscreate_child_vasp_account".to_string(),
-            Box::new(decode_create_child_vasp_account_script_function),
-        );
-        map.insert(
-            "AccountCreationScriptscreate_designated_dealer".to_string(),
-            Box::new(decode_create_designated_dealer_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptscreate_diem_id_domains".to_string(),
-            Box::new(decode_create_diem_id_domains_script_function),
-        );
-        map.insert(
-            "AccountCreationScriptscreate_parent_vasp_account".to_string(),
-            Box::new(decode_create_parent_vasp_account_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptscreate_recovery_address".to_string(),
-            Box::new(decode_create_recovery_address_script_function),
-        );
-        map.insert(
-            "AccountScriptscreate_user_by_coin_tx".to_string(),
-            Box::new(decode_create_user_by_coin_tx_script_function),
-        );
-        map.insert(
-            "AccountCreationScriptscreate_validator_account".to_string(),
-            Box::new(decode_create_validator_account_script_function),
-        );
-        map.insert(
-            "AccountCreationScriptscreate_validator_operator_account".to_string(),
-            Box::new(decode_create_validator_operator_account_script_function),
-        );
-        map.insert(
-            "DemoScriptsdemo_e2e".to_string(),
-            Box::new(decode_demo_e2e_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsfreeze_account".to_string(),
-            Box::new(decode_freeze_account_script_function),
-        );
-        map.insert(
-            "VouchScriptsinit_vouch".to_string(),
-            Box::new(decode_init_vouch_script_function),
-        );
-        map.insert(
-            "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
-            Box::new(decode_initialize_diem_consensus_config_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsjoin".to_string(),
-            Box::new(decode_join_script_function),
-        );
-        map.insert(
-            "TowerStateScriptsminerstate_commit".to_string(),
-            Box::new(decode_minerstate_commit_script_function),
-        );
-        map.insert(
-            "TowerStateScriptsminerstate_commit_by_operator".to_string(),
-            Box::new(decode_minerstate_commit_by_operator_script_function),
-        );
-        map.insert(
-            "TowerStateScriptsminerstate_helper".to_string(),
-            Box::new(decode_minerstate_helper_script_function),
-        );
-        map.insert(
-            "OracleScriptsol_delegate_vote".to_string(),
-            Box::new(decode_ol_delegate_vote_script_function),
-        );
-        map.insert(
-            "OracleScriptsol_enable_delegation".to_string(),
-            Box::new(decode_ol_enable_delegation_script_function),
-        );
-        map.insert(
-            "OracleScriptsol_oracle_tx".to_string(),
-            Box::new(decode_ol_oracle_tx_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsol_reconfig_bulk_update_setup".to_string(),
-            Box::new(decode_ol_reconfig_bulk_update_setup_script_function),
-        );
-        map.insert(
-            "OracleScriptsol_remove_delegation".to_string(),
-            Box::new(decode_ol_remove_delegation_script_function),
-        );
-        map.insert(
-            "PaymentScriptspeer_to_peer_with_metadata".to_string(),
-            Box::new(decode_peer_to_peer_with_metadata_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptspreburn".to_string(),
-            Box::new(decode_preburn_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptspublish_shared_ed25519_public_key".to_string(),
-            Box::new(decode_publish_shared_ed25519_public_key_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsregister_validator_config".to_string(),
-            Box::new(decode_register_validator_config_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsremove_diem_id_domain".to_string(),
-            Box::new(decode_remove_diem_id_domain_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsremove_validator_and_reconfigure".to_string(),
-            Box::new(decode_remove_validator_and_reconfigure_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_authentication_key".to_string(),
-            Box::new(decode_rotate_authentication_key_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_authentication_key_with_nonce".to_string(),
-            Box::new(decode_rotate_authentication_key_with_nonce_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_authentication_key_with_nonce_admin".to_string(),
-            Box::new(decode_rotate_authentication_key_with_nonce_admin_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_authentication_key_with_recovery_address"
-                .to_string(),
-            Box::new(decode_rotate_authentication_key_with_recovery_address_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_dual_attestation_info".to_string(),
-            Box::new(decode_rotate_dual_attestation_info_script_function),
-        );
-        map.insert(
-            "AccountAdministrationScriptsrotate_shared_ed25519_public_key".to_string(),
-            Box::new(decode_rotate_shared_ed25519_public_key_script_function),
-        );
-        map.insert(
-            "BurnScriptset_burn_pref".to_string(),
-            Box::new(decode_set_burn_pref_script_function),
-        );
-        map.insert(
-            "SystemAdministrationScriptsset_gas_constants".to_string(),
-            Box::new(decode_set_gas_constants_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsset_validator_config_and_reconfigure".to_string(),
-            Box::new(decode_set_validator_config_and_reconfigure_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsset_validator_operator".to_string(),
-            Box::new(decode_set_validator_operator_script_function),
-        );
-        map.insert(
-            "ValidatorAdministrationScriptsset_validator_operator_with_nonce_admin".to_string(),
-            Box::new(decode_set_validator_operator_with_nonce_admin_script_function),
-        );
-        map.insert(
-            "WalletScriptsset_wallet_type".to_string(),
-            Box::new(decode_set_wallet_type_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptstiered_mint".to_string(),
-            Box::new(decode_tiered_mint_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsunfreeze_account".to_string(),
-            Box::new(decode_unfreeze_account_script_function),
-        );
-        map.insert(
-            "SystemAdministrationScriptsupdate_diem_consensus_config".to_string(),
-            Box::new(decode_update_diem_consensus_config_script_function),
-        );
-        map.insert(
-            "SystemAdministrationScriptsupdate_diem_version".to_string(),
-            Box::new(decode_update_diem_version_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsupdate_dual_attestation_limit".to_string(),
-            Box::new(decode_update_dual_attestation_limit_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsupdate_exchange_rate".to_string(),
-            Box::new(decode_update_exchange_rate_script_function),
-        );
-        map.insert(
-            "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
-            Box::new(decode_update_minting_ability_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsval_add_self".to_string(),
-            Box::new(decode_val_add_self_script_function),
-        );
-        map.insert(
-            "VouchScriptsvouch_for".to_string(),
-            Box::new(decode_vouch_for_script_function),
-        );
-        map
-    });
+static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderMap> = once_cell::sync::Lazy::new(|| {
+    let mut map : ScriptFunctionDecoderMap = std::collections::HashMap::new();
+    map.insert("AccountAdministrationScriptsadd_currency_to_account".to_string(), Box::new(decode_add_currency_to_account_script_function));
+    map.insert("TreasuryComplianceScriptsadd_diem_id_domain".to_string(), Box::new(decode_add_diem_id_domain_script_function));
+    map.insert("AccountAdministrationScriptsadd_recovery_rotation_capability".to_string(), Box::new(decode_add_recovery_rotation_capability_script_function));
+    map.insert("ValidatorAdministrationScriptsadd_validator_and_reconfigure".to_string(), Box::new(decode_add_validator_and_reconfigure_script_function));
+    map.insert("AutoPayScriptsautopay_create_instruction".to_string(), Box::new(decode_autopay_create_instruction_script_function));
+    map.insert("AutoPayScriptsautopay_disable".to_string(), Box::new(decode_autopay_disable_script_function));
+    map.insert("AutoPayScriptsautopay_enable".to_string(), Box::new(decode_autopay_enable_script_function));
+    map.insert("TransferScriptsbalance_transfer".to_string(), Box::new(decode_balance_transfer_script_function));
+    map.insert("TransferScriptsbalance_transfer_scaled".to_string(), Box::new(decode_balance_transfer_scaled_script_function));
+    map.insert("BridgeScriptsbridge_close_transfer".to_string(), Box::new(decode_bridge_close_transfer_script_function));
+    map.insert("BridgeScriptsbridge_create_escrow".to_string(), Box::new(decode_bridge_create_escrow_script_function));
+    map.insert("BridgeScriptsbridge_deposit".to_string(), Box::new(decode_bridge_deposit_script_function));
+    map.insert("BridgeScriptsbridge_deposit_funds".to_string(), Box::new(decode_bridge_deposit_funds_script_function));
+    map.insert("BridgeScriptsbridge_withdraw".to_string(), Box::new(decode_bridge_withdraw_script_function));
+    map.insert("BridgeScriptsbridge_withdraw_funds".to_string(), Box::new(decode_bridge_withdraw_funds_script_function));
+    map.insert("TreasuryComplianceScriptsburn_txn_fees".to_string(), Box::new(decode_burn_txn_fees_script_function));
+    map.insert("TreasuryComplianceScriptsburn_with_amount".to_string(), Box::new(decode_burn_with_amount_script_function));
+    map.insert("TreasuryComplianceScriptscancel_burn_with_amount".to_string(), Box::new(decode_cancel_burn_with_amount_script_function));
+    map.insert("AccountScriptsclaim_make_whole".to_string(), Box::new(decode_claim_make_whole_script_function));
+    map.insert("TransferScriptscommunity_transfer".to_string(), Box::new(decode_community_transfer_script_function));
+    map.insert("AccountScriptscreate_acc_user".to_string(), Box::new(decode_create_acc_user_script_function));
+    map.insert("AccountScriptscreate_acc_val".to_string(), Box::new(decode_create_acc_val_script_function));
+    map.insert("AccountCreationScriptscreate_child_vasp_account".to_string(), Box::new(decode_create_child_vasp_account_script_function));
+    map.insert("AccountCreationScriptscreate_designated_dealer".to_string(), Box::new(decode_create_designated_dealer_script_function));
+    map.insert("AccountAdministrationScriptscreate_diem_id_domains".to_string(), Box::new(decode_create_diem_id_domains_script_function));
+    map.insert("AccountCreationScriptscreate_parent_vasp_account".to_string(), Box::new(decode_create_parent_vasp_account_script_function));
+    map.insert("AccountAdministrationScriptscreate_recovery_address".to_string(), Box::new(decode_create_recovery_address_script_function));
+    map.insert("AccountScriptscreate_user_by_coin_tx".to_string(), Box::new(decode_create_user_by_coin_tx_script_function));
+    map.insert("AccountCreationScriptscreate_validator_account".to_string(), Box::new(decode_create_validator_account_script_function));
+    map.insert("AccountCreationScriptscreate_validator_operator_account".to_string(), Box::new(decode_create_validator_operator_account_script_function));
+    map.insert("DemoScriptsdemo_e2e".to_string(), Box::new(decode_demo_e2e_script_function));
+    map.insert("TreasuryComplianceScriptsfreeze_account".to_string(), Box::new(decode_freeze_account_script_function));
+    map.insert("VouchScriptsinit_vouch".to_string(), Box::new(decode_init_vouch_script_function));
+    map.insert("SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(), Box::new(decode_initialize_diem_consensus_config_script_function));
+    map.insert("ValidatorScriptsjoin".to_string(), Box::new(decode_join_script_function));
+    map.insert("TowerStateScriptsminerstate_commit".to_string(), Box::new(decode_minerstate_commit_script_function));
+    map.insert("TowerStateScriptsminerstate_commit_by_operator".to_string(), Box::new(decode_minerstate_commit_by_operator_script_function));
+    map.insert("TowerStateScriptsminerstate_helper".to_string(), Box::new(decode_minerstate_helper_script_function));
+    map.insert("OracleScriptsol_delegate_vote".to_string(), Box::new(decode_ol_delegate_vote_script_function));
+    map.insert("OracleScriptsol_enable_delegation".to_string(), Box::new(decode_ol_enable_delegation_script_function));
+    map.insert("OracleScriptsol_oracle_tx".to_string(), Box::new(decode_ol_oracle_tx_script_function));
+    map.insert("ValidatorScriptsol_reconfig_bulk_update_setup".to_string(), Box::new(decode_ol_reconfig_bulk_update_setup_script_function));
+    map.insert("OracleScriptsol_remove_delegation".to_string(), Box::new(decode_ol_remove_delegation_script_function));
+    map.insert("PaymentScriptspeer_to_peer_with_metadata".to_string(), Box::new(decode_peer_to_peer_with_metadata_script_function));
+    map.insert("TreasuryComplianceScriptspreburn".to_string(), Box::new(decode_preburn_script_function));
+    map.insert("AccountAdministrationScriptspublish_shared_ed25519_public_key".to_string(), Box::new(decode_publish_shared_ed25519_public_key_script_function));
+    map.insert("ValidatorAdministrationScriptsregister_validator_config".to_string(), Box::new(decode_register_validator_config_script_function));
+    map.insert("TreasuryComplianceScriptsremove_diem_id_domain".to_string(), Box::new(decode_remove_diem_id_domain_script_function));
+    map.insert("ValidatorAdministrationScriptsremove_validator_and_reconfigure".to_string(), Box::new(decode_remove_validator_and_reconfigure_script_function));
+    map.insert("AccountAdministrationScriptsrotate_authentication_key".to_string(), Box::new(decode_rotate_authentication_key_script_function));
+    map.insert("AccountAdministrationScriptsrotate_authentication_key_with_nonce".to_string(), Box::new(decode_rotate_authentication_key_with_nonce_script_function));
+    map.insert("AccountAdministrationScriptsrotate_authentication_key_with_nonce_admin".to_string(), Box::new(decode_rotate_authentication_key_with_nonce_admin_script_function));
+    map.insert("AccountAdministrationScriptsrotate_authentication_key_with_recovery_address".to_string(), Box::new(decode_rotate_authentication_key_with_recovery_address_script_function));
+    map.insert("AccountAdministrationScriptsrotate_dual_attestation_info".to_string(), Box::new(decode_rotate_dual_attestation_info_script_function));
+    map.insert("AccountAdministrationScriptsrotate_shared_ed25519_public_key".to_string(), Box::new(decode_rotate_shared_ed25519_public_key_script_function));
+    map.insert("BurnScriptset_burn_pref".to_string(), Box::new(decode_set_burn_pref_script_function));
+    map.insert("SystemAdministrationScriptsset_gas_constants".to_string(), Box::new(decode_set_gas_constants_script_function));
+    map.insert("ValidatorAdministrationScriptsset_validator_config_and_reconfigure".to_string(), Box::new(decode_set_validator_config_and_reconfigure_script_function));
+    map.insert("ValidatorAdministrationScriptsset_validator_operator".to_string(), Box::new(decode_set_validator_operator_script_function));
+    map.insert("ValidatorAdministrationScriptsset_validator_operator_with_nonce_admin".to_string(), Box::new(decode_set_validator_operator_with_nonce_admin_script_function));
+    map.insert("WalletScriptsset_wallet_type".to_string(), Box::new(decode_set_wallet_type_script_function));
+    map.insert("TreasuryComplianceScriptstiered_mint".to_string(), Box::new(decode_tiered_mint_script_function));
+    map.insert("TreasuryComplianceScriptsunfreeze_account".to_string(), Box::new(decode_unfreeze_account_script_function));
+    map.insert("SystemAdministrationScriptsupdate_diem_consensus_config".to_string(), Box::new(decode_update_diem_consensus_config_script_function));
+    map.insert("SystemAdministrationScriptsupdate_diem_version".to_string(), Box::new(decode_update_diem_version_script_function));
+    map.insert("TreasuryComplianceScriptsupdate_dual_attestation_limit".to_string(), Box::new(decode_update_dual_attestation_limit_script_function));
+    map.insert("TreasuryComplianceScriptsupdate_exchange_rate".to_string(), Box::new(decode_update_exchange_rate_script_function));
+    map.insert("TreasuryComplianceScriptsupdate_minting_ability".to_string(), Box::new(decode_update_minting_ability_script_function));
+    map.insert("ValidatorScriptsval_add_self".to_string(), Box::new(decode_val_add_self_script_function));
+    map.insert("VouchScriptsvouch_for".to_string(), Box::new(decode_vouch_for_script_function));
+    map
+});
 
 fn decode_bool_argument(arg: TransactionArgument) -> Option<bool> {
     match arg {
@@ -9956,12 +8498,14 @@ fn decode_bool_argument(arg: TransactionArgument) -> Option<bool> {
     }
 }
 
+
 fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
     match arg {
         TransactionArgument::U8(value) => Some(value),
         _ => None,
     }
 }
+
 
 fn decode_u64_argument(arg: TransactionArgument) -> Option<u64> {
     match arg {
@@ -9970,12 +8514,14 @@ fn decode_u64_argument(arg: TransactionArgument) -> Option<u64> {
     }
 }
 
+
 fn decode_address_argument(arg: TransactionArgument) -> Option<AccountAddress> {
     match arg {
         TransactionArgument::Address(value) => Some(value),
         _ => None,
     }
 }
+
 
 fn decode_u8vector_argument(arg: TransactionArgument) -> Option<Vec<u8>> {
     match arg {
@@ -9984,350 +8530,69 @@ fn decode_u8vector_argument(arg: TransactionArgument) -> Option<Vec<u8>> {
     }
 }
 
-const ADD_CURRENCY_TO_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 25, 8, 42, 16, 0,
-    0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117,
-    110, 116, 12, 97, 100, 100, 95, 99, 117, 114, 114, 101, 110, 99, 121, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 3, 11, 0, 56, 0, 2,
-];
 
-const ADD_RECOVERY_ROTATION_CAPABILITY_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 10, 5, 18, 15, 7, 33, 106, 8, 139, 1,
-    16, 0, 0, 0, 1, 0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 1, 6, 12, 1, 8, 0, 2, 8, 0, 5, 0, 2,
-    6, 12, 5, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 15, 82, 101, 99, 111, 118,
-    101, 114, 121, 65, 100, 100, 114, 101, 115, 115, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105,
-    111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116,
-    95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105,
-    108, 105, 116, 121, 23, 97, 100, 100, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97,
-    112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 3,
-    5, 11, 0, 17, 0, 10, 1, 17, 1, 2,
-];
+const ADD_CURRENCY_TO_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 25, 8, 42, 16, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 97, 100, 100, 95, 99, 117, 114, 114, 101, 110, 99, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 3, 11, 0, 56, 0, 2];
 
-const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 24, 7, 45, 91, 8, 136, 1, 16, 0, 0,
-    0, 1, 0, 2, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6,
-    12, 5, 4, 6, 12, 3, 10, 2, 5, 2, 1, 3, 10, 68, 105, 101, 109, 83, 121, 115, 116, 101, 109, 12,
-    83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116,
-    111, 114, 67, 111, 110, 102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99,
-    101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110,
-    95, 110, 97, 109, 101, 13, 97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 18, 10, 0, 10, 1, 17, 0, 10, 3, 17, 1, 11,
-    2, 33, 12, 4, 11, 4, 3, 14, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 3, 17, 2, 2,
-];
+const ADD_RECOVERY_ROTATION_CAPABILITY_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 10, 5, 18, 15, 7, 33, 106, 8, 139, 1, 16, 0, 0, 0, 1, 0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 1, 6, 12, 1, 8, 0, 2, 8, 0, 5, 0, 2, 6, 12, 5, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 15, 82, 101, 99, 111, 118, 101, 114, 121, 65, 100, 100, 114, 101, 115, 115, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 23, 97, 100, 100, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 3, 5, 11, 0, 17, 0, 10, 1, 17, 1, 2];
 
-const BURN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 17, 7, 34, 45, 8, 79, 16,
-    0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 2, 6, 12, 5, 3, 6, 12, 3, 5,
-    1, 9, 0, 4, 68, 105, 101, 109, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21,
-    114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114,
-    116, 4, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 7, 10,
-    0, 10, 1, 17, 0, 11, 0, 10, 2, 56, 0, 2,
-];
+const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 24, 7, 45, 91, 8, 136, 1, 16, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6, 12, 5, 4, 6, 12, 3, 10, 2, 5, 2, 1, 3, 10, 68, 105, 101, 109, 83, 121, 115, 116, 101, 109, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 13, 97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 18, 10, 0, 10, 1, 17, 0, 10, 3, 17, 1, 11, 2, 33, 12, 4, 11, 4, 3, 14, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 3, 17, 2, 2];
 
-const BURN_TXN_FEES_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 25, 8, 42, 16, 0,
-    0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 14, 84, 114, 97, 110, 115, 97, 99, 116, 105,
-    111, 110, 70, 101, 101, 9, 98, 117, 114, 110, 95, 102, 101, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 3, 11, 0, 56, 0, 2,
-];
+const BURN_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 17, 7, 34, 45, 8, 79, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 2, 6, 12, 5, 3, 6, 12, 3, 5, 1, 9, 0, 4, 68, 105, 101, 109, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 4, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 7, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 56, 0, 2];
 
-const CANCEL_BURN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 8, 7, 18, 24, 8, 42, 16, 0,
-    0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 5, 0, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111,
-    117, 110, 116, 11, 99, 97, 110, 99, 101, 108, 95, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
-];
+const BURN_TXN_FEES_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 25, 8, 42, 16, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 14, 84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 70, 101, 101, 9, 98, 117, 114, 110, 95, 102, 101, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 3, 11, 0, 56, 0, 2];
 
-const CREATE_CHILD_VASP_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 8, 1, 0, 2, 2, 2, 4, 3, 6, 22, 4, 28, 4, 5, 32, 35, 7, 67, 122,
-    8, 189, 1, 16, 6, 205, 1, 4, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 1, 1, 0, 3, 2, 3, 0, 0, 4, 4, 1, 1,
-    1, 0, 5, 3, 1, 0, 0, 6, 2, 6, 4, 6, 12, 5, 10, 2, 1, 0, 1, 6, 12, 1, 8, 0, 5, 6, 8, 0, 5, 3,
-    10, 2, 10, 2, 5, 6, 12, 5, 10, 2, 1, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117,
-    110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105, 116,
-    121, 25, 99, 114, 101, 97, 116, 101, 95, 99, 104, 105, 108, 100, 95, 118, 97, 115, 112, 95, 97,
-    99, 99, 111, 117, 110, 116, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116, 104, 100,
-    114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 8, 112, 97, 121, 95, 102, 114,
-    111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95,
-    99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-    10, 2, 1, 0, 1, 1, 5, 3, 25, 10, 0, 10, 1, 11, 2, 10, 3, 56, 0, 10, 4, 6, 0, 0, 0, 0, 0, 0, 0,
-    0, 36, 3, 10, 5, 22, 11, 0, 17, 1, 12, 5, 14, 5, 10, 1, 10, 4, 7, 0, 7, 0, 56, 1, 11, 5, 17, 3,
-    5, 24, 11, 0, 1, 2,
-];
+const CANCEL_BURN_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 8, 7, 18, 24, 8, 42, 16, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 5, 0, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 11, 99, 97, 110, 99, 101, 108, 95, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2];
 
-const CREATE_DESIGNATED_DEALER_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 27, 7, 44, 72, 8, 116, 16,
-    0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 5, 6, 12, 5, 10, 2, 10, 2,
-    1, 6, 6, 12, 3, 5, 10, 2, 10, 2, 1, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110,
-    116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114,
-    100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 99, 114, 101, 97,
-    116, 101, 95, 100, 101, 115, 105, 103, 110, 97, 116, 101, 100, 95, 100, 101, 97, 108, 101, 114,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 10, 10, 0, 10, 1, 17, 0, 11, 0, 10,
-    2, 11, 3, 11, 4, 10, 5, 56, 0, 2,
-];
+const CREATE_CHILD_VASP_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 8, 1, 0, 2, 2, 2, 4, 3, 6, 22, 4, 28, 4, 5, 32, 35, 7, 67, 122, 8, 189, 1, 16, 6, 205, 1, 4, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 1, 1, 0, 3, 2, 3, 0, 0, 4, 4, 1, 1, 1, 0, 5, 3, 1, 0, 0, 6, 2, 6, 4, 6, 12, 5, 10, 2, 1, 0, 1, 6, 12, 1, 8, 0, 5, 6, 8, 0, 5, 3, 10, 2, 10, 2, 5, 6, 12, 5, 10, 2, 1, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 25, 99, 114, 101, 97, 116, 101, 95, 99, 104, 105, 108, 100, 95, 118, 97, 115, 112, 95, 97, 99, 99, 111, 117, 110, 116, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 8, 112, 97, 121, 95, 102, 114, 111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 10, 2, 1, 0, 1, 1, 5, 3, 25, 10, 0, 10, 1, 11, 2, 10, 3, 56, 0, 10, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36, 3, 10, 5, 22, 11, 0, 17, 1, 12, 5, 14, 5, 10, 1, 10, 4, 7, 0, 7, 0, 56, 1, 11, 5, 17, 3, 5, 24, 11, 0, 1, 2];
 
-const CREATE_PARENT_VASP_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 27, 7, 44, 74, 8, 118, 16,
-    0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 5, 6, 12, 5, 10, 2, 10, 2,
-    1, 6, 6, 12, 3, 5, 10, 2, 10, 2, 1, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110,
-    116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114,
-    100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 26, 99, 114, 101, 97,
-    116, 101, 95, 112, 97, 114, 101, 110, 116, 95, 118, 97, 115, 112, 95, 97, 99, 99, 111, 117,
-    110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 10, 10, 0, 10, 1, 17, 0,
-    11, 0, 10, 2, 11, 3, 11, 4, 10, 5, 56, 0, 2,
-];
+const CREATE_DESIGNATED_DEALER_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 27, 7, 44, 72, 8, 116, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 5, 6, 12, 5, 10, 2, 10, 2, 1, 6, 6, 12, 3, 5, 10, 2, 10, 2, 1, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 99, 114, 101, 97, 116, 101, 95, 100, 101, 115, 105, 103, 110, 97, 116, 101, 100, 95, 100, 101, 97, 108, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 10, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 11, 3, 11, 4, 10, 5, 56, 0, 2];
 
-const CREATE_RECOVERY_ADDRESS_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 10, 5, 18, 12, 7, 30, 90, 8, 120, 16,
-    0, 0, 0, 1, 0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 12, 8, 0, 0, 11,
-    68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 15, 82, 101, 99, 111, 118, 101, 114, 121,
-    65, 100, 100, 114, 101, 115, 115, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67,
-    97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101,
-    121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116,
-    121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-    3, 5, 10, 0, 11, 0, 17, 0, 17, 1, 2,
-];
+const CREATE_PARENT_VASP_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 27, 7, 44, 74, 8, 118, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 5, 6, 12, 5, 10, 2, 10, 2, 1, 6, 6, 12, 3, 5, 10, 2, 10, 2, 1, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 26, 99, 114, 101, 97, 116, 101, 95, 112, 97, 114, 101, 110, 116, 95, 118, 97, 115, 112, 95, 97, 99, 99, 111, 117, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 10, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 11, 3, 11, 4, 10, 5, 56, 0, 2];
 
-const CREATE_VALIDATOR_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 22, 7, 36, 72, 8, 108, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 2, 6, 12, 3, 0, 4, 6, 12, 5, 10, 2, 10, 2, 5, 6, 12, 3, 5, 10,
-    2, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105,
-    110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101,
-    95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105,
-    100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 0, 3, 1, 9, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 11, 3, 11, 4, 17, 1, 2,
-];
+const CREATE_RECOVERY_ADDRESS_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 10, 5, 18, 12, 7, 30, 90, 8, 120, 16, 0, 0, 0, 1, 0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 12, 8, 0, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 15, 82, 101, 99, 111, 118, 101, 114, 121, 65, 100, 100, 114, 101, 115, 115, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 5, 10, 0, 11, 0, 17, 0, 17, 1, 2];
 
-const CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 22, 7, 36, 81, 8, 117, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 2, 6, 12, 3, 0, 4, 6, 12, 5, 10, 2, 10, 2, 5, 6, 12, 3, 5, 10,
-    2, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105,
-    110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101,
-    95, 111, 114, 95, 97, 98, 111, 114, 116, 33, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105,
-    100, 97, 116, 111, 114, 95, 111, 112, 101, 114, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117,
-    110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 9, 10, 0, 10, 1, 17, 0, 11,
-    0, 10, 2, 11, 3, 11, 4, 17, 1, 2,
-];
+const CREATE_VALIDATOR_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 22, 7, 36, 72, 8, 108, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 2, 6, 12, 3, 0, 4, 6, 12, 5, 10, 2, 10, 2, 5, 6, 12, 3, 5, 10, 2, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 9, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 11, 3, 11, 4, 17, 1, 2];
 
-const FREEZE_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 66, 8, 94, 16, 0, 0, 0,
-    1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99,
-    111, 117, 110, 116, 70, 114, 101, 101, 122, 105, 110, 103, 12, 83, 108, 105, 100, 105, 110,
-    103, 78, 111, 110, 99, 101, 14, 102, 114, 101, 101, 122, 101, 95, 97, 99, 99, 111, 117, 110,
-    116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
-    111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1,
-    11, 0, 10, 2, 17, 0, 2,
-];
+const CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 22, 7, 36, 81, 8, 117, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 2, 6, 12, 3, 0, 4, 6, 12, 5, 10, 2, 10, 2, 5, 6, 12, 3, 5, 10, 2, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 33, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 111, 112, 101, 114, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 9, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 11, 3, 11, 4, 17, 1, 2];
 
-const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 2, 2, 4, 3, 6, 16, 4, 22, 2, 5, 24, 29, 7, 53, 96, 8,
-    149, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 1, 1, 0, 4, 1, 3, 0, 1, 5, 1, 6, 12,
-    1, 8, 0, 5, 6, 8, 0, 5, 3, 10, 2, 10, 2, 0, 5, 6, 12, 5, 3, 10, 2, 10, 2, 1, 9, 0, 11, 68, 105,
-    101, 109, 65, 99, 99, 111, 117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97,
-    112, 97, 98, 105, 108, 105, 116, 121, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116,
-    104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 8, 112, 97, 121, 95,
-    102, 114, 111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114,
-    97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 1, 1, 4, 1, 12, 11, 0, 17, 0, 12, 5, 14, 5, 10, 1, 10, 2, 11, 3, 11, 4, 56, 0, 11,
-    5, 17, 2, 2,
-];
+const FREEZE_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 66, 8, 94, 16, 0, 0, 0, 1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99, 111, 117, 110, 116, 70, 114, 101, 101, 122, 105, 110, 103, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 14, 102, 114, 101, 101, 122, 101, 95, 97, 99, 99, 111, 117, 110, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1, 11, 0, 10, 2, 17, 0, 2];
 
-const PREBURN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 2, 2, 4, 3, 6, 16, 4, 22, 2, 5, 24, 21, 7, 45, 95, 8,
-    140, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 1, 1, 0, 4, 1, 3, 0, 1, 5, 1, 6, 12,
-    1, 8, 0, 3, 6, 12, 6, 8, 0, 3, 0, 2, 6, 12, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111,
-    117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105,
-    116, 121, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95,
-    99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 7, 112, 114, 101, 98, 117, 114, 110, 27, 114,
-    101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97,
-    98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 4, 1, 10,
-    10, 0, 17, 0, 12, 2, 11, 0, 14, 2, 10, 1, 56, 0, 11, 2, 17, 2, 2,
-];
+const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 2, 2, 4, 3, 6, 16, 4, 22, 2, 5, 24, 29, 7, 53, 96, 8, 149, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 1, 1, 0, 4, 1, 3, 0, 1, 5, 1, 6, 12, 1, 8, 0, 5, 6, 8, 0, 5, 3, 10, 2, 10, 2, 0, 5, 6, 12, 5, 3, 10, 2, 10, 2, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 8, 112, 97, 121, 95, 102, 114, 111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 4, 1, 12, 11, 0, 17, 0, 12, 5, 14, 5, 10, 1, 10, 2, 11, 3, 11, 4, 56, 0, 11, 5, 17, 2, 2];
 
-const PUBLISH_SHARED_ED25519_PUBLIC_KEY_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 6, 7, 13, 31, 8, 44, 16, 0, 0, 0, 1,
-    0, 1, 0, 2, 6, 12, 10, 2, 0, 22, 83, 104, 97, 114, 101, 100, 69, 100, 50, 53, 53, 49, 57, 80,
-    117, 98, 108, 105, 99, 75, 101, 121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 4, 11, 0, 11, 1, 17, 0, 2,
-];
+const PREBURN_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 2, 2, 4, 3, 6, 16, 4, 22, 2, 5, 24, 21, 7, 45, 95, 8, 140, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 1, 1, 0, 4, 1, 3, 0, 1, 5, 1, 6, 12, 1, 8, 0, 3, 6, 12, 6, 8, 0, 3, 0, 2, 6, 12, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 7, 112, 114, 101, 98, 117, 114, 110, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 4, 1, 10, 10, 0, 17, 0, 12, 2, 11, 0, 14, 2, 10, 1, 56, 0, 11, 2, 17, 2, 2];
 
-const REGISTER_VALIDATOR_CONFIG_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 11, 7, 18, 27, 8, 45, 16, 0, 0, 0, 1,
-    0, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67,
-    111, 110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 7, 11, 0, 10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 2,
-];
+const PUBLISH_SHARED_ED25519_PUBLIC_KEY_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 6, 7, 13, 31, 8, 44, 16, 0, 0, 0, 1, 0, 1, 0, 2, 6, 12, 10, 2, 0, 22, 83, 104, 97, 114, 101, 100, 69, 100, 50, 53, 53, 49, 57, 80, 117, 98, 108, 105, 99, 75, 101, 121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 4, 11, 0, 11, 1, 17, 0, 2];
 
-const REMOVE_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 24, 7, 45, 94, 8, 139, 1, 16, 0, 0,
-    0, 1, 0, 2, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6,
-    12, 5, 4, 6, 12, 3, 10, 2, 5, 2, 1, 3, 10, 68, 105, 101, 109, 83, 121, 115, 116, 101, 109, 12,
-    83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116,
-    111, 114, 67, 111, 110, 102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99,
-    101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110,
-    95, 110, 97, 109, 101, 16, 114, 101, 109, 111, 118, 101, 95, 118, 97, 108, 105, 100, 97, 116,
-    111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 18, 10, 0, 10, 1, 17, 0, 10,
-    3, 17, 1, 11, 2, 33, 12, 4, 11, 4, 3, 14, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10,
-    3, 17, 2, 2,
-];
+const REGISTER_VALIDATOR_CONFIG_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 11, 7, 18, 27, 8, 45, 16, 0, 0, 0, 1, 0, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 7, 11, 0, 10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 2];
 
-const ROTATE_AUTHENTICATION_KEY_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 2, 2, 4, 3, 6, 15, 5, 21, 18, 7, 39, 124, 8, 163, 1,
-    16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 1, 2, 0, 0, 4, 3, 2, 0, 1, 6, 12, 1, 8, 0, 0, 2, 6,
-    8, 0, 10, 2, 2, 6, 12, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 21, 75,
-    101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121,
-    31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111,
-    110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101, 115, 116, 111, 114, 101,
-    95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105,
-    108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105,
-    99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-    0, 4, 1, 9, 11, 0, 17, 0, 12, 2, 14, 2, 11, 1, 17, 2, 11, 2, 17, 1, 2,
-];
+const REMOVE_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 24, 7, 45, 94, 8, 139, 1, 16, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6, 12, 5, 4, 6, 12, 3, 10, 2, 5, 2, 1, 3, 10, 68, 105, 101, 109, 83, 121, 115, 116, 101, 109, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 16, 114, 101, 109, 111, 118, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 18, 10, 0, 10, 1, 17, 0, 10, 3, 17, 1, 11, 2, 33, 12, 4, 11, 4, 3, 14, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 3, 17, 2, 2];
 
-const ROTATE_AUTHENTICATION_KEY_WITH_NONCE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 20, 5, 28, 23, 7, 51, 159, 1, 8, 210,
-    1, 16, 0, 0, 0, 1, 0, 3, 1, 0, 1, 2, 0, 1, 0, 0, 4, 2, 3, 0, 0, 5, 3, 1, 0, 0, 6, 4, 1, 0, 2,
-    6, 12, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 8, 0, 10, 2, 3, 6, 12, 3, 10, 2, 11, 68, 105, 101, 109,
-    65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101,
-    21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111,
-    114, 116, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105,
-    108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116,
-    97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101, 115,
-    116, 111, 114, 101, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97,
-    112, 97, 98, 105, 108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104,
-    101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 1, 0, 5, 3, 12, 10, 0, 10, 1, 17, 0, 11, 0, 17, 1, 12, 3, 14, 3, 11, 2, 17,
-    3, 11, 3, 17, 2, 2,
-];
+const ROTATE_AUTHENTICATION_KEY_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 2, 2, 4, 3, 6, 15, 5, 21, 18, 7, 39, 124, 8, 163, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 1, 2, 0, 0, 4, 3, 2, 0, 1, 6, 12, 1, 8, 0, 0, 2, 6, 8, 0, 10, 2, 2, 6, 12, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101, 115, 116, 111, 114, 101, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 1, 9, 11, 0, 17, 0, 12, 2, 14, 2, 11, 1, 17, 2, 11, 2, 17, 1, 2];
 
-const ROTATE_AUTHENTICATION_KEY_WITH_NONCE_ADMIN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 20, 5, 28, 25, 7, 53, 159, 1, 8, 212,
-    1, 16, 0, 0, 0, 1, 0, 3, 1, 0, 1, 2, 0, 1, 0, 0, 4, 2, 3, 0, 0, 5, 3, 1, 0, 0, 6, 4, 1, 0, 2,
-    6, 12, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 8, 0, 10, 2, 4, 6, 12, 6, 12, 3, 10, 2, 11, 68, 105, 101,
-    109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99,
-    101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
-    111, 114, 116, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98,
-    105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111,
-    116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101,
-    115, 116, 111, 114, 101, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99,
-    97, 112, 97, 98, 105, 108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116,
-    104, 101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 3, 12, 11, 0, 10, 2, 17, 0, 11, 1, 17, 1, 12, 4, 14, 4, 11, 3,
-    17, 3, 11, 4, 17, 2, 2,
-];
+const ROTATE_AUTHENTICATION_KEY_WITH_NONCE_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 20, 5, 28, 23, 7, 51, 159, 1, 8, 210, 1, 16, 0, 0, 0, 1, 0, 3, 1, 0, 1, 2, 0, 1, 0, 0, 4, 2, 3, 0, 0, 5, 3, 1, 0, 0, 6, 4, 1, 0, 2, 6, 12, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 8, 0, 10, 2, 3, 6, 12, 3, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101, 115, 116, 111, 114, 101, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 3, 12, 10, 0, 10, 1, 17, 0, 11, 0, 17, 1, 12, 3, 14, 3, 11, 2, 17, 3, 11, 3, 17, 2, 2];
 
-const ROTATE_AUTHENTICATION_KEY_WITH_RECOVERY_ADDRESS_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 8, 7, 15, 42, 8, 57, 16, 0, 0, 0, 1,
-    0, 1, 0, 4, 6, 12, 5, 5, 10, 2, 0, 15, 82, 101, 99, 111, 118, 101, 114, 121, 65, 100, 100, 114,
-    101, 115, 115, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105, 99,
-    97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-    0, 1, 6, 11, 0, 10, 1, 10, 2, 11, 3, 17, 0, 2,
-];
+const ROTATE_AUTHENTICATION_KEY_WITH_NONCE_ADMIN_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 20, 5, 28, 25, 7, 53, 159, 1, 8, 212, 1, 16, 0, 0, 0, 1, 0, 3, 1, 0, 1, 2, 0, 1, 0, 0, 4, 2, 3, 0, 0, 5, 3, 1, 0, 0, 6, 4, 1, 0, 2, 6, 12, 3, 0, 1, 6, 12, 1, 8, 0, 2, 6, 8, 0, 10, 2, 4, 6, 12, 6, 12, 3, 10, 2, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 21, 75, 101, 121, 82, 111, 116, 97, 116, 105, 111, 110, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 101, 120, 116, 114, 97, 99, 116, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 31, 114, 101, 115, 116, 111, 114, 101, 95, 107, 101, 121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 3, 12, 11, 0, 10, 2, 17, 0, 11, 1, 17, 1, 12, 4, 14, 4, 11, 3, 17, 3, 11, 4, 17, 2, 2];
 
-const ROTATE_DUAL_ATTESTATION_INFO_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 10, 5, 12, 13, 7, 25, 61, 8, 86, 16, 0, 0, 0,
-    1, 0, 1, 0, 0, 2, 0, 1, 0, 2, 6, 12, 10, 2, 0, 3, 6, 12, 10, 2, 10, 2, 15, 68, 117, 97, 108,
-    65, 116, 116, 101, 115, 116, 97, 116, 105, 111, 110, 15, 114, 111, 116, 97, 116, 101, 95, 98,
-    97, 115, 101, 95, 117, 114, 108, 28, 114, 111, 116, 97, 116, 101, 95, 99, 111, 109, 112, 108,
-    105, 97, 110, 99, 101, 95, 112, 117, 98, 108, 105, 99, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 11, 1, 17, 0, 11, 0, 11, 2, 17, 1, 2,
-];
+const ROTATE_AUTHENTICATION_KEY_WITH_RECOVERY_ADDRESS_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 8, 7, 15, 42, 8, 57, 16, 0, 0, 0, 1, 0, 1, 0, 4, 6, 12, 5, 5, 10, 2, 0, 15, 82, 101, 99, 111, 118, 101, 114, 121, 65, 100, 100, 114, 101, 115, 115, 25, 114, 111, 116, 97, 116, 101, 95, 97, 117, 116, 104, 101, 110, 116, 105, 99, 97, 116, 105, 111, 110, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 6, 11, 0, 10, 1, 10, 2, 11, 3, 17, 0, 2];
 
-const ROTATE_SHARED_ED25519_PUBLIC_KEY_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 6, 7, 13, 34, 8, 47, 16, 0, 0, 0, 1,
-    0, 1, 0, 2, 6, 12, 10, 2, 0, 22, 83, 104, 97, 114, 101, 100, 69, 100, 50, 53, 53, 49, 57, 80,
-    117, 98, 108, 105, 99, 75, 101, 121, 10, 114, 111, 116, 97, 116, 101, 95, 107, 101, 121, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 4, 11, 0, 11, 1, 17, 0, 2,
-];
+const ROTATE_DUAL_ATTESTATION_INFO_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 10, 5, 12, 13, 7, 25, 61, 8, 86, 16, 0, 0, 0, 1, 0, 1, 0, 0, 2, 0, 1, 0, 2, 6, 12, 10, 2, 0, 3, 6, 12, 10, 2, 10, 2, 15, 68, 117, 97, 108, 65, 116, 116, 101, 115, 116, 97, 116, 105, 111, 110, 15, 114, 111, 116, 97, 116, 101, 95, 98, 97, 115, 101, 95, 117, 114, 108, 28, 114, 111, 116, 97, 116, 101, 95, 99, 111, 109, 112, 108, 105, 97, 110, 99, 101, 95, 112, 117, 98, 108, 105, 99, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 11, 1, 17, 0, 11, 0, 11, 2, 17, 1, 2];
 
-const SET_VALIDATOR_CONFIG_AND_RECONFIGURE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 15, 7, 29, 68, 8, 97, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 2, 6, 12, 5, 10, 68, 105,
-    101, 109, 83, 121, 115, 116, 101, 109, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111,
-    110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 29, 117, 112, 100, 97,
-    116, 101, 95, 99, 111, 110, 102, 105, 103, 95, 97, 110, 100, 95, 114, 101, 99, 111, 110, 102,
-    105, 103, 117, 114, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 10, 10, 0,
-    10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 11, 0, 10, 1, 17, 1, 2,
-];
+const ROTATE_SHARED_ED25519_PUBLIC_KEY_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 6, 7, 13, 34, 8, 47, 16, 0, 0, 0, 1, 0, 1, 0, 2, 6, 12, 10, 2, 0, 22, 83, 104, 97, 114, 101, 100, 69, 100, 50, 53, 53, 49, 57, 80, 117, 98, 108, 105, 99, 75, 101, 121, 10, 114, 111, 116, 97, 116, 101, 95, 107, 101, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 4, 11, 0, 11, 1, 17, 0, 2];
 
-const SET_VALIDATOR_OPERATOR_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 19, 7, 33, 68, 8, 101, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 1, 5, 1, 10, 2, 2, 6, 12, 5, 0, 3, 6, 12, 10, 2, 5, 2, 1, 3,
-    15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 23, 86, 97, 108,
-    105, 100, 97, 116, 111, 114, 79, 112, 101, 114, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103,
-    14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 12, 115, 101, 116, 95,
-    111, 112, 101, 114, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5,
-    15, 10, 2, 17, 0, 11, 1, 33, 12, 3, 11, 3, 3, 11, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11,
-    0, 10, 2, 17, 1, 2,
-];
+const SET_VALIDATOR_CONFIG_AND_RECONFIGURE_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 15, 7, 29, 68, 8, 97, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 2, 6, 12, 5, 10, 68, 105, 101, 109, 83, 121, 115, 116, 101, 109, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 29, 117, 112, 100, 97, 116, 101, 95, 99, 111, 110, 102, 105, 103, 95, 97, 110, 100, 95, 114, 101, 99, 111, 110, 102, 105, 103, 117, 114, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 10, 10, 0, 10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 11, 0, 10, 1, 17, 1, 2];
 
-const SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 26, 7, 47, 103, 8, 150, 1, 16, 0, 0,
-    0, 1, 0, 2, 0, 3, 0, 1, 0, 2, 4, 2, 3, 0, 1, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6,
-    12, 5, 5, 6, 12, 6, 12, 3, 10, 2, 5, 2, 1, 3, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111,
-    110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 23,
-    86, 97, 108, 105, 100, 97, 116, 111, 114, 79, 112, 101, 114, 97, 116, 111, 114, 67, 111, 110,
-    102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95,
-    97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101,
-    12, 115, 101, 116, 95, 111, 112, 101, 114, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 1, 0, 5, 6, 18, 11, 0, 10, 2, 17, 0, 10, 4, 17, 1, 11, 3, 33, 12, 5, 11, 5, 3, 14,
-    11, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 1, 10, 4, 17, 2, 2,
-];
+const SET_VALIDATOR_OPERATOR_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 19, 7, 33, 68, 8, 101, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 1, 5, 1, 10, 2, 2, 6, 12, 5, 0, 3, 6, 12, 10, 2, 5, 2, 1, 3, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 23, 86, 97, 108, 105, 100, 97, 116, 111, 114, 79, 112, 101, 114, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 12, 115, 101, 116, 95, 111, 112, 101, 114, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 15, 10, 2, 17, 0, 11, 1, 33, 12, 3, 11, 3, 3, 11, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 2, 17, 1, 2];
 
-const TIERED_MINT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 21, 7, 38, 59, 8, 97, 16,
-    0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 4, 6, 12, 5, 3, 3, 5, 6, 12,
-    3, 5, 3, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105,
-    100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110,
-    99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 11, 116, 105, 101, 114, 101, 100, 95, 109,
-    105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 9, 10, 0, 10, 1, 17,
-    0, 11, 0, 10, 2, 10, 3, 10, 4, 56, 0, 2,
-];
+const SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 15, 5, 21, 26, 7, 47, 103, 8, 150, 1, 16, 0, 0, 0, 1, 0, 2, 0, 3, 0, 1, 0, 2, 4, 2, 3, 0, 1, 5, 4, 1, 0, 2, 6, 12, 3, 0, 1, 5, 1, 10, 2, 2, 6, 12, 5, 5, 6, 12, 6, 12, 3, 10, 2, 5, 2, 1, 3, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 23, 86, 97, 108, 105, 100, 97, 116, 111, 114, 79, 112, 101, 114, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 12, 115, 101, 116, 95, 111, 112, 101, 114, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 18, 11, 0, 10, 2, 17, 0, 10, 4, 17, 1, 11, 3, 33, 12, 5, 11, 5, 3, 14, 11, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 1, 10, 4, 17, 2, 2];
 
-const UNFREEZE_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 68, 8, 96, 16, 0, 0, 0,
-    1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99,
-    111, 117, 110, 116, 70, 114, 101, 101, 122, 105, 110, 103, 12, 83, 108, 105, 100, 105, 110,
-    103, 78, 111, 110, 99, 101, 16, 117, 110, 102, 114, 101, 101, 122, 101, 95, 97, 99, 99, 111,
-    117, 110, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95,
-    97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10,
-    1, 17, 1, 11, 0, 10, 2, 17, 0, 2,
-];
+const TIERED_MINT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 21, 7, 38, 59, 8, 97, 16, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 4, 6, 12, 5, 3, 3, 5, 6, 12, 3, 5, 3, 3, 1, 9, 0, 11, 68, 105, 101, 109, 65, 99, 99, 111, 117, 110, 116, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 11, 116, 105, 101, 114, 101, 100, 95, 109, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 9, 10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 10, 3, 10, 4, 56, 0, 2];
 
-const UPDATE_DIEM_VERSION_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 10, 7, 24, 51, 8, 75, 16, 0, 0, 0,
-    1, 0, 2, 0, 1, 0, 1, 3, 0, 1, 0, 2, 6, 12, 3, 0, 3, 6, 12, 3, 3, 11, 68, 105, 101, 109, 86,
-    101, 114, 115, 105, 111, 110, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 3,
-    115, 101, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95,
-    97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 10,
-    1, 17, 1, 11, 0, 10, 2, 17, 0, 2,
-];
+const UNFREEZE_ACCOUNT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 68, 8, 96, 16, 0, 0, 0, 1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99, 111, 117, 110, 116, 70, 114, 101, 101, 122, 105, 110, 103, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 16, 117, 110, 102, 114, 101, 101, 122, 101, 95, 97, 99, 99, 111, 117, 110, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1, 11, 0, 10, 2, 17, 0, 2];
 
-const UPDATE_DUAL_ATTESTATION_LIMIT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 10, 7, 24, 71, 8, 95, 16, 0, 0, 0,
-    1, 0, 2, 0, 1, 0, 1, 3, 0, 1, 0, 2, 6, 12, 3, 0, 3, 6, 12, 3, 3, 15, 68, 117, 97, 108, 65, 116,
-    116, 101, 115, 116, 97, 116, 105, 111, 110, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110,
-    99, 101, 19, 115, 101, 116, 95, 109, 105, 99, 114, 111, 100, 105, 101, 109, 95, 108, 105, 109,
-    105, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97,
-    98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 10, 1,
-    17, 1, 11, 0, 10, 2, 17, 0, 2,
-];
+const UPDATE_DIEM_VERSION_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 10, 7, 24, 51, 8, 75, 16, 0, 0, 0, 1, 0, 2, 0, 1, 0, 1, 3, 0, 1, 0, 2, 6, 12, 3, 0, 3, 6, 12, 3, 3, 11, 68, 105, 101, 109, 86, 101, 114, 115, 105, 111, 110, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 3, 115, 101, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 10, 1, 17, 1, 11, 0, 10, 2, 17, 0, 2];
 
-const UPDATE_EXCHANGE_RATE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 25, 7, 53, 99,
-    8, 152, 1, 16, 0, 0, 0, 1, 0, 2, 1, 1, 2, 0, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 3, 1, 1, 2,
-    6, 2, 3, 3, 1, 8, 0, 2, 6, 12, 3, 0, 2, 6, 12, 8, 0, 4, 6, 12, 3, 3, 3, 1, 9, 0, 4, 68, 105,
-    101, 109, 12, 70, 105, 120, 101, 100, 80, 111, 105, 110, 116, 51, 50, 12, 83, 108, 105, 100,
-    105, 110, 103, 78, 111, 110, 99, 101, 20, 99, 114, 101, 97, 116, 101, 95, 102, 114, 111, 109,
-    95, 114, 97, 116, 105, 111, 110, 97, 108, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110,
-    99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 117, 112, 100, 97, 116, 101, 95, 120,
-    100, 120, 95, 101, 120, 99, 104, 97, 110, 103, 101, 95, 114, 97, 116, 101, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 5, 1, 11, 10, 0, 10, 1, 17, 1, 10, 2, 10, 3, 17, 0, 12, 4, 11,
-    0, 11, 4, 56, 0, 2,
-];
+const UPDATE_DUAL_ATTESTATION_LIMIT_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 10, 7, 24, 71, 8, 95, 16, 0, 0, 0, 1, 0, 2, 0, 1, 0, 1, 3, 0, 1, 0, 2, 6, 12, 3, 0, 3, 6, 12, 3, 3, 15, 68, 117, 97, 108, 65, 116, 116, 101, 115, 116, 97, 116, 105, 111, 110, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 19, 115, 101, 116, 95, 109, 105, 99, 114, 111, 100, 105, 101, 109, 95, 108, 105, 109, 105, 116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 7, 10, 0, 10, 1, 17, 1, 11, 0, 10, 2, 17, 0, 2];
 
-const UPDATE_MINTING_ABILITY_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 8, 7, 18, 28, 8, 46, 16, 0,
-    0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 1, 0, 1, 9, 0, 4, 68, 105, 101, 109, 22, 117, 112, 100,
-    97, 116, 101, 95, 109, 105, 110, 116, 105, 110, 103, 95, 97, 98, 105, 108, 105, 116, 121, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
-];
+const UPDATE_EXCHANGE_RATE_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 25, 7, 53, 99, 8, 152, 1, 16, 0, 0, 0, 1, 0, 2, 1, 1, 2, 0, 1, 3, 0, 1, 0, 2, 4, 2, 3, 0, 0, 5, 4, 3, 1, 1, 2, 6, 2, 3, 3, 1, 8, 0, 2, 6, 12, 3, 0, 2, 6, 12, 8, 0, 4, 6, 12, 3, 3, 3, 1, 9, 0, 4, 68, 105, 101, 109, 12, 70, 105, 120, 101, 100, 80, 111, 105, 110, 116, 51, 50, 12, 83, 108, 105, 100, 105, 110, 103, 78, 111, 110, 99, 101, 20, 99, 114, 101, 97, 116, 101, 95, 102, 114, 111, 109, 95, 114, 97, 116, 105, 111, 110, 97, 108, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 24, 117, 112, 100, 97, 116, 101, 95, 120, 100, 120, 95, 101, 120, 99, 104, 97, 110, 103, 101, 95, 114, 97, 116, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 5, 1, 11, 10, 0, 10, 1, 17, 1, 10, 2, 10, 3, 17, 0, 12, 4, 11, 0, 11, 4, 56, 0, 2];
+
+const UPDATE_MINTING_ABILITY_CODE: &[u8] = &[161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 8, 7, 18, 28, 8, 46, 16, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 1, 0, 1, 9, 0, 4, 68, 105, 101, 109, 22, 117, 112, 100, 97, 116, 101, 95, 109, 105, 110, 116, 105, 110, 103, 95, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2];
