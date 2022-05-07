@@ -164,6 +164,8 @@ impl Agent {
 
         let transfer_id_str = hex::encode(locked_eth.transfer_id);
 
+        println!("INFO: Processing ETH transfer: {:?}", locked_ai);
+
         // Locked entry on ETH side is not closed
         // Check if corresponding unlocked exists on 0L chain.
         // this means that withdrawal to a recepient on 0L has been made already

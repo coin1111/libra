@@ -64,7 +64,9 @@ pub struct AccountInfo {
     pub balance: u64,
     pub transfer_id: [u8; 16],
     pub idx: ethers::prelude::U256,
-    pub is_closed: bool
+    pub is_closed: bool,
+    pub votes: Vec<H160>,
+    pub current_votes:ethers::prelude::U256,
 }
 pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> Result<[T; N], String> {
     v.try_into()
@@ -89,7 +91,14 @@ impl AccountInfo {
                     let sender_other = vec_to_array(sender_other.to_vec().clone())?;
                     let receiver_other = vec_to_array(receiver_other.to_vec().clone())?;
                     let transfer_id = vec_to_array(transfer_id.to_vec().clone())?;
-                    //let votes: Vec<H160> = *votes.try_into()?;
+                    println!("{:?}", votes.len());
+                    let mut votes_vec:Vec<H160> = Vec::new();
+                    for v in votes {
+                        match &v {
+                            Address(a) => votes_vec.push(a.clone()),
+                            _ =>  return Err(format!("Unexpected token {:?}", v)),
+                        };
+                    }
                     Ok(AccountInfo {
                         sender_this: *sender_this,
                         sender_other: sender_other,
@@ -99,6 +108,8 @@ impl AccountInfo {
                         transfer_id: transfer_id,
                         idx: *idx,
                         is_closed: *is_closed,
+                        votes: votes_vec,
+                        current_votes : *current_votes,
                     })
                 }
                 _ => Err(format!("Cannot match array {:?}", a)),
