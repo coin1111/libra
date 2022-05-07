@@ -5,6 +5,7 @@ use ethers::types::H160;
 use ethers_core::abi::Token::Bool;
 use std::convert::TryInto;
 use uuid::Uuid;
+use ethers::abi::Token::Array;
 
 /// Transfer id to track bridge transactions
 #[derive(Debug, Clone)]
@@ -63,7 +64,7 @@ pub struct AccountInfo {
     pub balance: u64,
     pub transfer_id: [u8; 16],
     pub idx: ethers::prelude::U256,
-    pub is_closed: bool,
+    pub is_closed: bool
 }
 pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> Result<[T; N], String> {
     v.try_into()
@@ -74,11 +75,21 @@ impl AccountInfo {
     pub fn from(tuple: ethers::abi::Token) -> Result<AccountInfo, String> {
         match tuple.clone() {
             ethers::abi::Token::Tuple(a) => match &a[..] {
-                [Address(sender_this), FixedBytes(sender_other), Address(receiver_this), FixedBytes(receiver_other), Uint(balance), FixedBytes(transfer_id), Uint(idx), Bool(is_closed)] =>
+                [Address(sender_this),
+                FixedBytes(sender_other),
+                Address(receiver_this),
+                FixedBytes(receiver_other),
+                Uint(balance),
+                FixedBytes(transfer_id),
+                Uint(idx),
+                Bool(is_closed),
+                Array(votes),
+                Uint(current_votes)] =>
                 {
                     let sender_other = vec_to_array(sender_other.to_vec().clone())?;
                     let receiver_other = vec_to_array(receiver_other.to_vec().clone())?;
                     let transfer_id = vec_to_array(transfer_id.to_vec().clone())?;
+                    //let votes: Vec<H160> = *votes.try_into()?;
                     Ok(AccountInfo {
                         sender_this: *sender_this,
                         sender_other: sender_other,

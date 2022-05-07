@@ -40,6 +40,46 @@ mod bridgeescrow_mod {
             let contract = Contract::new(address.into(), BRIDGEESCROW_ABI.clone(), client);
             Self(contract)
         }
+        #[doc = "Calls the contract's `getUnlockedAccountInfo` (0xc829f8e7) function"]
+        pub fn get_unlocked_account_info(
+            &self,
+            transfer_id: [u8; 16],
+        ) -> ContractCall<
+            'a,
+            P,
+            S,
+            Token,
+        > {
+            self.0
+                .method_hash([200, 41, 248, 231], (transfer_id,))
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `withdrawFromEscrow` (0xdb4d7e05) function"]
+        pub fn withdraw_from_escrow(
+            &self,
+            sender_other: [u8; 16],
+            receiver_this: Address,
+            balance: u64,
+            transfer_id: [u8; 16],
+        ) -> ContractCall<'a, P, S, H256> {
+            self.0
+                .method_hash(
+                    [219, 77, 126, 5],
+                    (sender_other, receiver_this, balance, transfer_id),
+                )
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `call` (0x6dbf2fa0) function"]
+        pub fn call(
+            &self,
+            to: Address,
+            value: U256,
+            data: Vec<u8>,
+        ) -> ContractCall<'a, P, S, H256> {
+            self.0
+                .method_hash([109, 191, 47, 160], (to, value, data))
+                .expect("method not found (this should never happen)")
+        }
         #[doc = "Calls the contract's `getLockedAccountInfo` (0x6ef902d8) function"]
         pub fn get_locked_account_info(
             &self,
@@ -63,44 +103,10 @@ mod bridgeescrow_mod {
                 .method_hash([115, 223, 99, 244], (transfer_id,))
                 .expect("method not found (this should never happen)")
         }
-        #[doc = "Calls the contract's `call` (0x6dbf2fa0) function"]
-        pub fn call(
-            &self,
-            to: Address,
-            value: U256,
-            data: Vec<u8>,
-        ) -> ContractCall<'a, P, S, H256> {
+        #[doc = "Calls the contract's `owner` (0x8da5cb5b) function"]
+        pub fn owner(&self) -> ContractCall<'a, P, S, Address> {
             self.0
-                .method_hash([109, 191, 47, 160], (to, value, data))
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `withdrawFromEscrow` (0xdb4d7e05) function"]
-        pub fn withdraw_from_escrow(
-            &self,
-            sender_other: [u8; 16],
-            receiver_this: Address,
-            balance: u64,
-            transfer_id: [u8; 16],
-        ) -> ContractCall<'a, P, S, H256> {
-            self.0
-                .method_hash(
-                    [219, 77, 126, 5],
-                    (sender_other, receiver_this, balance, transfer_id),
-                )
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `getUnlockedAccountInfo` (0xc829f8e7) function"]
-        pub fn get_unlocked_account_info(
-            &self,
-            transfer_id: [u8; 16],
-        ) -> ContractCall<
-            'a,
-            P,
-            S,
-            Token,
-        > {
-            self.0
-                .method_hash([200, 41, 248, 231], (transfer_id,))
+                .method_hash([141, 165, 203, 91], ())
                 .expect("method not found (this should never happen)")
         }
         #[doc = "Calls the contract's `getLockedLength` (0x1593d0f6) function"]
@@ -134,12 +140,6 @@ mod bridgeescrow_mod {
         ) -> ContractCall<'a, P, S, H256> {
             self.0
                 .method_hash([79, 65, 22, 112], (receiver_other, amount, transfer_id))
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `owner` (0x8da5cb5b) function"]
-        pub fn owner(&self) -> ContractCall<'a, P, S, Address> {
-            self.0
-                .method_hash([141, 165, 203, 91], ())
                 .expect("method not found (this should never happen)")
         }
     }

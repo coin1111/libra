@@ -2,7 +2,7 @@
 use crate::entrypoint::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
 use crate::{node::node::Node, node::query::QueryType};
-use bridge_eth::bridge_escrow_mod::BridgeEscrow as BridgeEscrowEth;
+use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrowEth;
 use bridge_eth::config::Config;
 use bridge_eth::util::AccountInfo as AccountInfoEth;
 use bridge_ol::contract::BridgeEscrow;

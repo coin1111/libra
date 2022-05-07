@@ -40,22 +40,50 @@ mod oltoken_mod {
             let contract = Contract::new(address.into(), OLTOKEN_ABI.clone(), client);
             Self(contract)
         }
-        #[doc = "Calls the contract's `transfer` (0xa9059cbb) function"]
-        pub fn transfer(&self, to: Address, amount: U256) -> ContractCall<'a, P, S, H256> {
+        #[doc = "Calls the contract's `increaseAllowance` (0x39509351) function"]
+        pub fn increase_allowance(
+            &self,
+            spender: Address,
+            added_value: U256,
+        ) -> ContractCall<'a, P, S, H256> {
             self.0
-                .method_hash([169, 5, 156, 187], (to, amount))
+                .method_hash([57, 80, 147, 81], (spender, added_value))
                 .expect("method not found (this should never happen)")
         }
-        #[doc = "Calls the contract's `decimals` (0x313ce567) function"]
-        pub fn decimals(&self) -> ContractCall<'a, P, S, u8> {
+        #[doc = "Calls the contract's `symbol` (0x95d89b41) function"]
+        pub fn symbol(&self) -> ContractCall<'a, P, S, String> {
             self.0
-                .method_hash([49, 60, 229, 103], ())
+                .method_hash([149, 216, 155, 65], ())
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `balanceOf` (0x70a08231) function"]
+        pub fn balance_of(&self, account: Address) -> ContractCall<'a, P, S, U256> {
+            self.0
+                .method_hash([112, 160, 130, 49], (account,))
                 .expect("method not found (this should never happen)")
         }
         #[doc = "Calls the contract's `name` (0x06fdde03) function"]
         pub fn name(&self) -> ContractCall<'a, P, S, String> {
             self.0
                 .method_hash([6, 253, 222, 3], ())
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `transfer` (0xa9059cbb) function"]
+        pub fn transfer(&self, to: Address, amount: U256) -> ContractCall<'a, P, S, H256> {
+            self.0
+                .method_hash([169, 5, 156, 187], (to, amount))
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `allowance` (0xdd62ed3e) function"]
+        pub fn allowance(&self, owner: Address, spender: Address) -> ContractCall<'a, P, S, U256> {
+            self.0
+                .method_hash([221, 98, 237, 62], (owner, spender))
+                .expect("method not found (this should never happen)")
+        }
+        #[doc = "Calls the contract's `decimals` (0x313ce567) function"]
+        pub fn decimals(&self) -> ContractCall<'a, P, S, u8> {
+            self.0
+                .method_hash([49, 60, 229, 103], ())
                 .expect("method not found (this should never happen)")
         }
         #[doc = "Calls the contract's `decreaseAllowance` (0xa457c2d7) function"]
@@ -74,38 +102,10 @@ mod oltoken_mod {
                 .method_hash([24, 22, 13, 221], ())
                 .expect("method not found (this should never happen)")
         }
-        #[doc = "Calls the contract's `increaseAllowance` (0x39509351) function"]
-        pub fn increase_allowance(
-            &self,
-            spender: Address,
-            added_value: U256,
-        ) -> ContractCall<'a, P, S, H256> {
-            self.0
-                .method_hash([57, 80, 147, 81], (spender, added_value))
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `balanceOf` (0x70a08231) function"]
-        pub fn balance_of(&self, account: Address) -> ContractCall<'a, P, S, U256> {
-            self.0
-                .method_hash([112, 160, 130, 49], (account,))
-                .expect("method not found (this should never happen)")
-        }
         #[doc = "Calls the contract's `approve` (0x095ea7b3) function"]
         pub fn approve(&self, spender: Address, amount: U256) -> ContractCall<'a, P, S, H256> {
             self.0
                 .method_hash([9, 94, 167, 179], (spender, amount))
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `allowance` (0xdd62ed3e) function"]
-        pub fn allowance(&self, owner: Address, spender: Address) -> ContractCall<'a, P, S, U256> {
-            self.0
-                .method_hash([221, 98, 237, 62], (owner, spender))
-                .expect("method not found (this should never happen)")
-        }
-        #[doc = "Calls the contract's `symbol` (0x95d89b41) function"]
-        pub fn symbol(&self) -> ContractCall<'a, P, S, String> {
-            self.0
-                .method_hash([149, 216, 155, 65], ())
                 .expect("method not found (this should never happen)")
         }
         #[doc = "Calls the contract's `transferFrom` (0x23b872dd) function"]

@@ -21,7 +21,8 @@ async fn test_transfer_eth_ol() {
     let (eth_ol_addr, eth_escrow_addr, eth_gas_price, eth_client_ol) = get_eth_client("pete");
     let eth_ol_token = bridge_eth::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
     let eth_ol_bridge =
-        bridge_eth::bridge_escrow_mod::BridgeEscrow::new(eth_escrow_addr, &eth_client_ol);
+        bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig::new(eth_escrow_addr,
+                                                                          &eth_client_ol);
 
     // 0L contract
     let escrow_addr = "708B1D23219EB737035CB29A68F0F3A8"
