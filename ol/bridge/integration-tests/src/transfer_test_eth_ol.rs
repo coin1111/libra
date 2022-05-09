@@ -20,9 +20,10 @@ async fn test_transfer_eth_ol() {
     // Eth contract
     let (eth_ol_addr, eth_escrow_addr, eth_gas_price, eth_client_ol) = get_eth_client("pete");
     let eth_ol_token = bridge_eth::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
-    let eth_ol_bridge =
-        bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig::new(eth_escrow_addr,
-                                                                          &eth_client_ol);
+    let eth_ol_bridge = bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig::new(
+        eth_escrow_addr,
+        &eth_client_ol,
+    );
 
     // 0L contract
     let escrow_addr = "708B1D23219EB737035CB29A68F0F3A8"
@@ -79,7 +80,7 @@ async fn test_transfer_eth_ol() {
         .unwrap();
     println!("pending_tx: {:?}", pending_tx);
     let mut tries = 0;
-    let max_tries = 100;
+    let max_tries = 300;
 
     // Wait until agents transfer funds to 0L
     while tries < max_tries {

@@ -56,7 +56,7 @@ async fn test_transfer_ol_eth() {
 
     // Wain until agent transfer funds to ETH chain
     let mut tries = 0;
-    let max_tries = 100;
+    let max_tries = 300;
     while tries < max_tries {
         let receiver_eth_balance_after = data
             .call()

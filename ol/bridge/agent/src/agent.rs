@@ -124,7 +124,7 @@ impl Agent {
     }
 
     /// Process outstanding transfers
-    pub async fn process_transfers_eth(& mut self) -> Result<(), String> {
+    pub async fn process_transfers_eth(&mut self) -> Result<(), String> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
         let start_idx = read_eth_checkpoint();
@@ -149,7 +149,7 @@ impl Agent {
     /// then make a withdrawal on 0L, which will create an entry in unlocked struct on 0L.
     /// 3. If locked entry is marked as closed on ETH chain then unlocked entry can be removed on 0L chain,
     /// this completes a transfer on both chains.
-    async fn process_transfer_eth(& mut self, locked_eth: EthLockedInfo) -> Result<(), String> {
+    async fn process_transfer_eth(&mut self, locked_eth: EthLockedInfo) -> Result<(), String> {
         println!(
             "INFO: processing transfer_id: {:?} on ETH chain",
             hex::encode(locked_eth.transfer_id)
@@ -331,7 +331,7 @@ impl Agent {
     }
 
     /// Process autstanding transfers
-    pub async fn process_transfers_ol(& mut self) -> Result<(), String> {
+    pub async fn process_transfers_ol(&mut self) -> Result<(), String> {
         println!("INFO: process 0L transfers");
         let ais = self.query_ol_locked()?;
 
@@ -349,7 +349,7 @@ impl Agent {
     // Transfer deposit from escrow to destination receiver
     // Ensure that unlocked doesn't have an entry for this transfer
     // This indicates that transfer has not been made, thus proceed with transfer
-    async fn process_transfer_ol(& mut self, ai: &AccountInfo) -> Result<(), String> {
+    async fn process_transfer_ol(&mut self, ai: &AccountInfo) -> Result<(), String> {
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
             return Err(format!("ERROR: Empty deposit id: {:?}", ai));
@@ -361,6 +361,7 @@ impl Agent {
         // Query unlocked on ETH
         let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
         if unlocked_eth.transfer_id == [0u8; 16] {
+            // Unlocked entry is not present on ETH chain, initiate transfer on ETH chain
             let sender_this =
                 AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
@@ -375,6 +376,18 @@ impl Agent {
                 .withdraw_eth(ai, sender_this, receiver_eth, transfer_id)
                 .await;
         } else {
+            // Unlocked entry exists on ETH chain
+            if !unlocked_eth.is_closed
+                && unlocked_eth
+                    .votes
+                    .iter()
+                    .find(|x| **x == self.agent_eth.client.address())
+                    .is_some()
+            {
+                // If it is still open, and current agent is coted, then ignore
+                println!("INFO: Already voted on {:?}", ai.transfer_id);
+                return Ok(());
+            }
             // Unlocked entry exists on ETH chain, can remove locked entry on 0L chain now
             println!(
                 "INFO: withdrawal for transfer_id {:?} has been made on ETH, remove unlocked entry on 0L",
@@ -411,10 +424,10 @@ impl Agent {
         }
     }
 
-    fn query_ol_locked(& mut self) -> Result<Vec<AccountInfo>, String> {
+    fn query_ol_locked(&mut self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("locked");
     }
-    fn query_ol_unlocked(& mut self) -> Result<Vec<AccountInfo>, String> {
+    fn query_ol_unlocked(&mut self) -> Result<Vec<AccountInfo>, String> {
         return self.query_account_info("unlocked");
     }
 
@@ -429,7 +442,7 @@ impl Agent {
     // "balance": 100,
     // "transfer_id": "1111",
     // }}},
-    fn query_account_info(& mut self, field_name: &str) -> Result<Vec<AccountInfo>, String> {
+    fn query_account_info(&mut self, field_name: &str) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
             account: self.bridge_escrow_ol.escrow.clone(),
             module_name: String::from("BridgeEscrow"),
