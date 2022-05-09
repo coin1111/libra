@@ -55,6 +55,11 @@ cd ~/libra/ol/bridge
 ```asm
 `git clone https://github.com/coin1111/eth-bridge`
 cd eth-bridge
+# use multisig branch
+git checkout -b multisig
+git pull origin multisig 
+
+# setup hardhat
 ./setup-hardhat.sh
 npx hardhat compile
 # run ETH node
