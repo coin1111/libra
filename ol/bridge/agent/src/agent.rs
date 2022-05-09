@@ -360,8 +360,16 @@ impl Agent {
 
         // Query unlocked on ETH
         let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
-        if unlocked_eth.transfer_id == [0u8; 16] {
-            // Unlocked entry is not present on ETH chain, initiate transfer on ETH chain
+        if unlocked_eth.transfer_id == [0u8; 16] ||
+            (!unlocked_eth.is_closed
+                && unlocked_eth
+                .votes
+                .iter()
+                .find(|x| **x == self.agent_eth.client.address())
+                .is_none())
+            {
+            // Unlocked entry is not present on ETH chain
+            // Or this agent is not voted yet on the transfer, invoke withdraw on ETH chain
             let sender_this =
                 AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
 
@@ -372,22 +380,11 @@ impl Agent {
                 .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
             // Transfer is not happened => transfer funds on ETH chain
+            println!("INFO: invoke withdraw_eth for transfer_idL {:?} by agent {:?}", transfer_id, self.agent_eth.client.address());
             return self
                 .withdraw_eth(ai, sender_this, receiver_eth, transfer_id)
                 .await;
         } else {
-            // Unlocked entry exists on ETH chain
-            if !unlocked_eth.is_closed
-                && unlocked_eth
-                    .votes
-                    .iter()
-                    .find(|x| **x == self.agent_eth.client.address())
-                    .is_some()
-            {
-                // If it is still open, and current agent is coted, then ignore
-                println!("INFO: Already voted on {:?}", ai.transfer_id);
-                return Ok(());
-            }
             // Unlocked entry exists on ETH chain, can remove locked entry on 0L chain now
             println!(
                 "INFO: withdrawal for transfer_id {:?} has been made on ETH, remove unlocked entry on 0L",

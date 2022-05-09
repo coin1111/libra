@@ -8,6 +8,7 @@ use std::env;
 use std::process::exit;
 use std::str::FromStr;
 use std::{thread, time::Duration};
+use rand::Rng;
 
 /// `agent` subcommand
 ///
@@ -93,13 +94,15 @@ impl Runnable for AgentCmd {
                 let _ = agent.process_transfers_eth().await.map_err(|err| {
                     println!("ERROR: failed to process eth deposits, error: {:?}", err)
                 });
-                thread::sleep(Duration::from_millis(10000));
+                let num = rand::thread_rng().gen_range(0..10000);
+                thread::sleep(Duration::from_millis(num));
 
                 // 0L->ETH
                 let _ = agent.process_transfers_ol().await.map_err(|err| {
                     println!("ERROR: failed to process 0L deposits, error: {:?}", err)
                 });
-                thread::sleep(Duration::from_millis(10000));
+                let num = rand::thread_rng().gen_range(0..10000);
+                thread::sleep(Duration::from_millis(num));
             }
         });
         match res {

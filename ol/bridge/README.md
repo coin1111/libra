@@ -1,4 +1,24 @@
-# OL to ETH Bridge
+# OL to ETH Bridge Multisig Version
+
+This version of an bridge uses multisig or voting approach.
+With this approach there are multiple trusted agents (e.g. alice, bob, carol),
+which vote on withdrawal and closing outstanding transfer accounts
+Smart contract keep tallis of votes and when cound reaches 
+2 out 3 votes required it will execute method. This bridge is symmetric,
+e.g. both 0L and ETH chains have the same wegith and agents vote on both chains.
+
+Example:
+User Pete deposits coins into bridge on 0L side by invoking
+createTransferAccount(eth_target_addr,amount,transfer_id), where
+- eth_target_addr - destination address o ETH
+- amount - amount to transfer
+- transfer_id - unique guid for the transfer
+- 
+Agent Alice detects the deposit and invokes withdraw(eth_target_addr, amount,transfer_id).
+At this time there is only 1 vote from Alice recorded on ETH.
+Agent Bob also detects the deposit and invokes withdraw(eth_target_addr, amount,transfer_id).
+At this time there are  2 vote from Alice and Bob recorded on ETH. It is above threshold of 2 out 3, 
+thus withdrawal is permitted and funds are transferred into eth_target_addr.
 
 ## Build Bridge
 ```
@@ -45,10 +65,16 @@ npx hardhat compile
 
 ## Test Bridge Agent
 ```
-# run agent
+# run agent under alice identity
 cd ~/libra/ol/bridge/
-./run-agent.sh
+./run-agent.sh alice
 
+# in separate terminal
+# run agent under bob identity
+cd ~/libra/ol/bridge/
+./run-agent.sh bob
+
+# in separate terminal
 # run integration tests
 # in another tempnial
 cd ~/libra/ol/bridge/integration-tests
