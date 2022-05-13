@@ -2,7 +2,7 @@
 
 This version of an bridge uses multisig or voting approach.
 With this approach there are multiple trusted agents (e.g. alice, bob, carol),
-which vote on withdrawal and closing outstanding transfer accounts
+which vote on withdrawal and close outstanding transfer accounts.
 Smart contract keep tallis of votes and when cound reaches 
 2 out 3 votes required it will execute method. This bridge is symmetric,
 e.g. both 0L and ETH chains have the same wegith and agents vote on both chains.
