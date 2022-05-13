@@ -49,6 +49,7 @@ module DiemAccount {
     use 0x1::Wallet;
     use 0x1::Receipts;
     friend 0x1::BridgeEscrow;
+    friend 0x1::BridgeEscrowMultisig;
     use 0x1::Ancestry;
     use 0x1::Vouch;
     use 0x1::Debug::print;
