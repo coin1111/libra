@@ -65,9 +65,12 @@ address 0x1 {
 
             // executors which are allowed to withdraw funds
             executors: vector<address>,
+
+            // minimum votes/signatures required for multisig
+             min_votes:u8,
         }
         // Creates en empty escrow account state
-        public fun initialize_escrow(escrow: &signer, executors: vector<address>, _min_votes:u8) {
+        public fun initialize_escrow(escrow: &signer, executors: vector<address>, min_votes:u8) {
             assert(Vector::length(&executors) < 256, ERROR_TOO_MANY_EXECUTORS);
             let escrow_addr = Signer::address_of(escrow);
             assert(!exists<EscrowState>(escrow_addr), ERROR_BRIDGE_STORE_EXISTS);
@@ -76,6 +79,7 @@ address 0x1 {
                 unlocked: Vector::empty<AccountInfo>(),
                 tokens: Diem::zero<GAS>(),
                 executors:executors,
+                min_votes:min_votes,
             });
         }
 

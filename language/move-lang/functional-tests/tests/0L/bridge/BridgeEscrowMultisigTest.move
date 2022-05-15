@@ -15,7 +15,7 @@ script {
     use 0x1::Vector;
 
     fun main(sender: signer){
-        let executors = Vector::empty<&address>();
+        let executors = Vector::empty<address>();
         Vector::push_back(&mut executors, @{{alice}});
         Vector::push_back(&mut executors, @{{bob}});
         Vector::push_back(&mut executors, @{{carol}});
