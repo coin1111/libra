@@ -201,7 +201,31 @@ address 0x1 {
 
             // check that transfer id is not present
             let idx_opt = find_unlocked_idx( escrow_address, &transfer_id);
-            assert(Option::is_none(&idx_opt), ERROR_TRANSFER_ID_EXISTS);
+            if (Option::is_none(&idx_opt)) {
+                // if this is the first call init transfer entry
+                let votes = Vector::empty<address>();
+                Vector::push_back(&mut votes, sender_address);
+                let ai = AccountInfo{
+                    sender_this: ZERO_ADDRESS,
+                    sender_other: sender_other,
+                    receiver_this: copy receiver_this,
+                    receiver_other: Vector::empty<u8>(),
+                    balance: balance,
+                    transfer_id: transfer_id,
+                    votes: votes,
+                    current_votes: 1,
+                };
+                // update escrow state
+                let state = borrow_global_mut<EscrowState>( escrow_address);
+                Vector::push_back<AccountInfo>(&mut state.unlocked, ai)
+            } else {
+                // add voter
+                let state = borrow_global_mut<EscrowState>( escrow_address);
+                let idx = Option::borrow(&idx_opt);
+                let ai = Vector::borrow_mut<AccountInfo>(&mut state.unlocked, *idx);
+                ai.current_votes = ai.current_votes + 1;
+                Vector::push_back<address>(&mut ai.votes, sender_address)
+            };
 
             // update escrow state
             let state = borrow_global_mut<EscrowState>( escrow_address);
@@ -211,19 +235,6 @@ address 0x1 {
 
             // withdraw tokens from escrow
             let tokens = Diem::withdraw(&mut state.tokens,balance);
-
-            // add entry to unlocked to indicate that funds were transferred
-            let ai = AccountInfo {
-                sender_this: ZERO_ADDRESS,
-                sender_other: sender_other,
-                receiver_this: copy receiver_this,
-                receiver_other: Vector::empty<u8>(),
-                balance: balance,
-                transfer_id: transfer_id,
-                votes: Vector::empty<address>(),
-                current_votes: 0,
-            };
-            Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
 
             // move funds from escrow to user account
             DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
