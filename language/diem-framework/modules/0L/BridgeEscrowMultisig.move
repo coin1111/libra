@@ -49,6 +49,9 @@ address 0x1 {
             balance: u64,
             // transfer id
             transfer_id: vector<u8>,
+            // multisig votes
+            votes: vector<address>,
+            current_votes: u8,
         }
 
         // State of escrow account
@@ -177,6 +180,8 @@ address 0x1 {
                 receiver_other: receiver_other,
                 balance: amount,
                 transfer_id: transfer_id,
+                votes: Vector::empty<address>(),
+                current_votes: 0,
             });
         }
 
@@ -215,6 +220,8 @@ address 0x1 {
                 receiver_other: Vector::empty<u8>(),
                 balance: balance,
                 transfer_id: transfer_id,
+                votes: Vector::empty<address>(),
+                current_votes: 0,
             };
             Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
 
