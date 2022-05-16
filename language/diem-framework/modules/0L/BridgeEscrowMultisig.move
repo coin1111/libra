@@ -26,6 +26,7 @@ address 0x1 {
         const ERROR_MUST_BE_VALIDATOR: u64 = 3311;
         const ERROR_NO_RECEIVER_ACCOUNT: u64 = 3312;
         const ERROR_TOO_MANY_EXECUTORS: u64 = 3313;
+        const ERROR_TOO_MANY_VOTES: u64 = 3314;
 
         const ZERO_ADDRESS: address = @0x0;
 
@@ -51,7 +52,7 @@ address 0x1 {
             transfer_id: vector<u8>,
             // multisig votes
             votes: vector<address>,
-            current_votes: u8,
+            current_votes: u64,
         }
 
         // State of escrow account
@@ -70,10 +71,10 @@ address 0x1 {
             executors: vector<address>,
 
             // minimum votes/signatures required for multisig
-             min_votes:u8,
+             min_votes:u64,
         }
         // Creates en empty escrow account state
-        public fun initialize_escrow(escrow: &signer, executors: vector<address>, min_votes:u8) {
+        public fun initialize_escrow(escrow: &signer, executors: vector<address>, min_votes:u64) {
             assert(Vector::length(&executors) < 256, ERROR_TOO_MANY_EXECUTORS);
             let escrow_addr = Signer::address_of(escrow);
             assert(!exists<EscrowState>(escrow_addr), ERROR_BRIDGE_STORE_EXISTS);
@@ -201,6 +202,7 @@ address 0x1 {
 
             // check that transfer id is not present
             let idx_opt = find_unlocked_idx( escrow_address, &transfer_id);
+            let state = borrow_global_mut<EscrowState>( escrow_address);
             if (Option::is_none(&idx_opt)) {
                 // if this is the first call init transfer entry
                 let votes = Vector::empty<address>();
@@ -216,13 +218,12 @@ address 0x1 {
                     current_votes: 1,
                 };
                 // update escrow state
-                let state = borrow_global_mut<EscrowState>( escrow_address);
                 Vector::push_back<AccountInfo>(&mut state.unlocked, ai)
             } else {
                 // add voter
-                let state = borrow_global_mut<EscrowState>( escrow_address);
                 let idx = Option::borrow(&idx_opt);
                 let ai = Vector::borrow_mut<AccountInfo>(&mut state.unlocked, *idx);
+                assert(ai.current_votes < state.min_votes, ERROR_TOO_MANY_VOTES);
                 ai.current_votes = ai.current_votes + 1;
                 Vector::push_back<address>(&mut ai.votes, sender_address)
             };
