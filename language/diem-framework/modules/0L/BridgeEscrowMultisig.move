@@ -26,7 +26,9 @@ address 0x1 {
         const ERROR_MUST_BE_VALIDATOR: u64 = 3311;
         const ERROR_NO_RECEIVER_ACCOUNT: u64 = 3312;
         const ERROR_TOO_MANY_EXECUTORS: u64 = 3313;
-        const ERROR_TOO_MANY_VOTES: u64 = 3314;
+        const ERROR_IS_CLOSED: u64 = 3314;
+        const ERROR_UNLOCKED_EMPTY: u64 = 3315;
+        const ERROR_ALREADY_VOTED: u64 = 3316;
 
         const ZERO_ADDRESS: address = @0x0;
 
@@ -53,6 +55,8 @@ address 0x1 {
             // multisig votes
             votes: vector<address>,
             current_votes: u64,
+            // transfer is closed
+            is_closed: bool,
         }
 
         // State of escrow account
@@ -183,6 +187,7 @@ address 0x1 {
                 transfer_id: transfer_id,
                 votes: Vector::empty<address>(),
                 current_votes: 0,
+                is_closed: false,
             });
         }
 
@@ -216,29 +221,42 @@ address 0x1 {
                     transfer_id: transfer_id,
                     votes: votes,
                     current_votes: 1,
+                    is_closed: false,
                 };
                 // update escrow state
-                Vector::push_back<AccountInfo>(&mut state.unlocked, ai)
+                Vector::push_back<AccountInfo>(&mut state.unlocked, ai);
+                return
             } else {
                 // add voter
                 let idx = Option::borrow(&idx_opt);
                 let ai = Vector::borrow_mut<AccountInfo>(&mut state.unlocked, *idx);
-                assert(ai.current_votes < state.min_votes, ERROR_TOO_MANY_VOTES);
+                // transfer must not be closed
+                assert(!ai.is_closed, ERROR_IS_CLOSED);
+                // make sure this votes didn't vote before
+                let vote_idx = find_vote_idx(&sender_address, &ai.votes);
+                assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
+
+                // update votes
                 ai.current_votes = ai.current_votes + 1;
-                Vector::push_back<address>(&mut ai.votes, sender_address)
+                Vector::push_back<address>(&mut ai.votes, sender_address);
+                if (ai.current_votes < state.min_votes) {
+                    // threshold of voters is not reached
+                    return
+                } else {
+                    // reached threshold
+                    ai.is_closed = true;
+
+                    // escrow has enough funds
+                    assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
+
+                    // withdraw tokens from escrow
+                    let tokens = Diem::withdraw(&mut state.tokens, balance);
+
+                    // move funds from escrow to user account
+                    DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"")
+                }
             };
 
-            // update escrow state
-            let state = borrow_global_mut<EscrowState>( escrow_address);
-
-            // escrow has enough funds
-            assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
-
-            // withdraw tokens from escrow
-            let tokens = Diem::withdraw(&mut state.tokens,balance);
-
-            // move funds from escrow to user account
-            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
         }
 
         // Remove transfer account when transfer is completed
@@ -305,6 +323,13 @@ address 0x1 {
             *ai
         }
 
+        public fun get_unlocked_at(escrow_address: address, index: u64): AccountInfo acquires EscrowState  {
+            assert(get_unlocked_length(escrow_address) > index, ERROR_UNLOCKED_EMPTY);
+            let state = borrow_global<EscrowState>(escrow_address);
+            let ai = Vector::borrow(&state.unlocked, index);
+            *ai
+        }
+
         public fun get_escrow_balance(escrow: address): u64 acquires EscrowState {
             let state = borrow_global<EscrowState>(escrow);
             Diem::value(&state.tokens)
@@ -334,6 +359,26 @@ address 0x1 {
 
         public fun get_transfer_id(ai: &AccountInfo): vector<u8> {
             *&ai.transfer_id
+        }
+
+        public fun get_current_votes(ai: &AccountInfo): u64 {
+            *&ai.current_votes
+        }
+
+        public fun get_votes(ai: &AccountInfo): vector<address> {
+            *&ai.votes
+        }
+
+        public fun find_vote_idx(vote: &address, votes: &vector<address>):
+            Option<u64>  {
+            let i = 0;
+            let n = Vector::length(votes);
+            while (i < n) {
+                let v = Vector::borrow(votes, i);
+                if (*v == *vote) return Option::some(i);
+                i = i + 1
+            };
+            Option::none()
         }
     }
 

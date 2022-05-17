@@ -5,6 +5,8 @@
 //! account: bob, 1, 0
 //! account: escrow, 1, 0
 //! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
 
 ///// Test 1: Init escrow account
 //! new-transaction
@@ -16,9 +18,9 @@ script {
 
     fun main(sender: signer){
         let executors = Vector::empty<address>();
-        Vector::push_back(&mut executors, @{{alice}});
-        Vector::push_back(&mut executors, @{{bob}});
         Vector::push_back(&mut executors, @{{carol}});
+        Vector::push_back(&mut executors, @{{dave}});
+        Vector::push_back(&mut executors, @{{eve}});
         BridgeEscrowMultisig::initialize_escrow(&sender, executors, 2);
     }
 }
@@ -80,6 +82,7 @@ use 0x1::Option;
 
 ///// Test 4: Assume that deposit was made on the other chain
 // transfer funds into local bob account
+// do first vote, transfer doesn't happen
 //! new-transaction
 //! sender: carol
 //! gas-currency: GAS
@@ -93,75 +96,102 @@ use 0x1::Option;
         let escrow_address: address = @{{escrow}};
         assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30001);
 
-        // find account by transfer_id t and make transfer to the "other" chain
-        // which is the same chain with account bob
-        let index = BridgeEscrowMultisig::find_locked_idx(escrow_address, &transfer_id);
-        assert(Option::is_some(&index),30002);
-        let idx = Option::borrow(&index);
-        assert(*idx == 0, 30003);
-
-        let ai = BridgeEscrowMultisig::get_locked_at(escrow_address,*idx);
         BridgeEscrowMultisig::withdraw_from_escrow(&sender, escrow_address,
-        sender_eth, // sender on eth chain
-        @{{bob}}, // receiver
-        BridgeEscrowMultisig::get_balance(&ai),
-        BridgeEscrowMultisig::get_transfer_id(&ai),
+            sender_eth, // sender on eth chain
+            @{{bob}}, // receiver
+            100,
+            copy transfer_id,
         );
-        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 0, 30004);
+        // not enough votes, transfer is not made
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30004);
 
-        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 30005);
-        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 30006);
+        // find unloked entry
+        let index_unlocked = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+        assert(Option::is_some(&index_unlocked),30005);
+        let idx_unlocked = Option::borrow(&index_unlocked);
+        assert(*idx_unlocked == 0, 30004);
+        let ai_unlocked = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx_unlocked);
+        let current_votes = BridgeEscrowMultisig::get_current_votes(&ai_unlocked);
+        assert(current_votes == 1, 30006);
+
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 30007);
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 30008);
     }
 }
-//! check: EXECUTED
+// check: EXECUTED
 
-///// Test 5: Delete alice escrow account
+///// Test 5: Assume that deposit was made on the other chain
+// transfer funds into local bob account
+// do  vote by the same account, nothing happens
 //! new-transaction
 //! sender: carol
 //! gas-currency: GAS
 script {
 use 0x1::BridgeEscrowMultisig;
-use 0x1::Option;
 
     fun main(sender: signer){
         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let sender_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
         let escrow_address: address = @{{escrow}};
-        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30001);
 
-        // find unlocked account using transfer_id and delete locked entry
-        let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
-        assert(Option::is_some(&index),40002);
-        let idx = Option::borrow(&index);
-        assert(*idx == 0, 4003);
-
-        BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
-        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 0, 40004);
+        BridgeEscrowMultisig::withdraw_from_escrow(&sender, escrow_address,
+            sender_eth, // sender on eth chain
+            @{{bob}}, // receiver
+            100,
+            copy transfer_id,
+        );
     }
 }
-//! check: EXECUTED
+// check: ABORTED
 
-///// Test 6: Delete unlocked entry
-//! new-transaction
-//! sender: carol
-//! gas-currency: GAS
-script {
-use 0x1::BridgeEscrowMultisig;
-use 0x1::Option;
-
-    fun main(sender: signer){
-        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
-        let escrow_address: address = @{{escrow}};
-        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50001);
-
-        // find unlocked account using transfer_id and delete locked entry
-        let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
-        assert(Option::is_some(&index),50002);
-        let idx = Option::borrow(&index);
-        assert(*idx == 0, 5003);
-
-        BridgeEscrowMultisig::delete_unlocked(&sender, escrow_address, &transfer_id);
-        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 0, 50004);
-    }
-}
-//! check: EXECUTED
-
+// ///// Test 5: Delete alice escrow account
+// //! new-transaction
+// //! sender: carol
+// //! gas-currency: GAS
+// script {
+// use 0x1::BridgeEscrowMultisig;
+// use 0x1::Option;
+//
+//     fun main(sender: signer){
+//         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+//         let escrow_address: address = @{{escrow}};
+//         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
+//
+//         // find unlocked account using transfer_id and delete locked entry
+//         let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+//         assert(Option::is_some(&index),40002);
+//         let idx = Option::borrow(&index);
+//         assert(*idx == 0, 4003);
+//
+//         BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
+//         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 0, 40004);
+//     }
+// }
+// //! check: EXECUTED
+//
+// ///// Test 6: Delete unlocked entry
+// //! new-transaction
+// //! sender: carol
+// //! gas-currency: GAS
+// script {
+// use 0x1::BridgeEscrowMultisig;
+// use 0x1::Option;
+//
+//     fun main(sender: signer){
+//         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+//         let escrow_address: address = @{{escrow}};
+//         assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50001);
+//
+//         // find unlocked account using transfer_id and delete locked entry
+//         let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+//         assert(Option::is_some(&index),50002);
+//         let idx = Option::borrow(&index);
+//         assert(*idx == 0, 5003);
+//
+//         BridgeEscrowMultisig::delete_unlocked(&sender, escrow_address, &transfer_id);
+//         assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 0, 50004);
+//     }
+// }
+// //! check: EXECUTED
+//
