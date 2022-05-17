@@ -369,6 +369,10 @@ address 0x1 {
             *&ai.votes
         }
 
+        public fun is_closed(ai: &AccountInfo): bool {
+            *&ai.is_closed
+        }
+
         public fun find_address_idx(target: &address, addresses: &vector<address>):
             Option<u64>  {
             let i = 0;

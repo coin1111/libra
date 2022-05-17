@@ -113,6 +113,7 @@ use 0x1::Option;
         let ai_unlocked = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx_unlocked);
         let current_votes = BridgeEscrowMultisig::get_current_votes(&ai_unlocked);
         assert(current_votes == 1, 30006);
+        assert(!BridgeEscrowMultisig::is_closed(&ai_unlocked), 30009);
 
         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 30007);
         assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 30008);
@@ -140,6 +141,71 @@ use 0x1::BridgeEscrowMultisig;
             @{{bob}}, // receiver
             100,
             copy transfer_id,
+        );
+    }
+}
+// check: ABORTED
+
+///// Test 6: Assume that deposit was made on the other chain
+// transfer funds into local bob account
+// do second vote, transfer happens
+//! new-transaction
+//! sender: dave
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+use 0x1::Option;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let sender_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30001);
+
+        BridgeEscrowMultisig::withdraw_from_escrow(&sender, escrow_address,
+        sender_eth, // sender on eth chain
+        @{{bob}}, // receiver
+        100,
+        copy transfer_id,
+        );
+        // transfer happened
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 0, 30004);
+
+        // find unlocked entry
+        let index_unlocked = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+        assert(Option::is_some(&index_unlocked),30005);
+        let idx_unlocked = Option::borrow(&index_unlocked);
+        assert(*idx_unlocked == 0, 30004);
+        let ai_unlocked = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx_unlocked);
+        let current_votes = BridgeEscrowMultisig::get_current_votes(&ai_unlocked);
+        assert(current_votes == 2, 30006);
+        assert(BridgeEscrowMultisig::is_closed(&ai_unlocked), 30009);
+
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 30007);
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 30008);
+    }
+}
+// check: EXECUTED
+
+///// Test 7: Assume that deposit was made on the other chain
+// cannot vote on closed AccountInfo
+//! new-transaction
+//! sender: eve
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let sender_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30001);
+
+        BridgeEscrowMultisig::withdraw_from_escrow(&sender, escrow_address,
+        sender_eth, // sender on eth chain
+        @{{bob}}, // receiver
+        100,
+        copy transfer_id,
         );
     }
 }
