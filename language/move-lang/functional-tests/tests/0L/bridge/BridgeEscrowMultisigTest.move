@@ -34,7 +34,7 @@ script {
     use 0x1::BridgeEscrowMultisig;
 
     fun main(sender: signer){
-        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let transfer_id: vector<u8> = x"11192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
         let receiver_eth: vector<u8> = x"15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         let amount: u64 = 100;
         BridgeEscrowMultisig::create_transfer_account(@{{escrow}}, &sender, receiver_eth, amount, transfer_id);
@@ -216,31 +216,24 @@ use 0x1::BridgeEscrowMultisig;
 }
 // check: ABORTED
 
-// ///// Test 5: Delete alice escrow account
-// //! new-transaction
-// //! sender: carol
-// //! gas-currency: GAS
-// script {
-// use 0x1::BridgeEscrowMultisig;
-// use 0x1::Option;
-//
-//     fun main(sender: signer){
-//         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
-//         let escrow_address: address = @{{escrow}};
-//         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
-//
-//         // find unlocked account using transfer_id and delete locked entry
-//         let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
-//         assert(Option::is_some(&index),40002);
-//         let idx = Option::borrow(&index);
-//         assert(*idx == 0, 4003);
-//
-//         BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
-//         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 0, 40004);
-//     }
-// }
-// //! check: EXECUTED
-//
+///// Test 8: Delete alice escrow account
+//! new-transaction
+//! sender: carol
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"11192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
+
+        BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 0, 40004);
+    }
+}
+//! check: EXECUTED
+
 // ///// Test 6: Delete unlocked entry
 // //! new-transaction
 // //! sender: carol
