@@ -29,6 +29,7 @@ address 0x1 {
         const ERROR_IS_CLOSED: u64 = 3314;
         const ERROR_UNLOCKED_EMPTY: u64 = 3315;
         const ERROR_ALREADY_VOTED: u64 = 3316;
+        const ERROR_MUST_BE_EXECUTOR: u64 = 3317;
 
         const ZERO_ADDRESS: address = @0x0;
 
@@ -202,8 +203,7 @@ address 0x1 {
                                         transfer_id: vector<u8>, // transfer_id
                                         ) acquires EscrowState  {
             let sender_address= Signer::address_of(sender);
-            assert(DiemSystem::is_validator(sender_address) == true ||
-                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
+            assert(is_executor(&escrow_address, &sender_address), ERROR_MUST_BE_EXECUTOR);
 
             // check that transfer id is not present
             let idx_opt = find_unlocked_idx( escrow_address, &transfer_id);
@@ -233,7 +233,7 @@ address 0x1 {
                 // transfer must not be closed
                 assert(!ai.is_closed, ERROR_IS_CLOSED);
                 // make sure this votes didn't vote before
-                let vote_idx = find_vote_idx(&sender_address, &ai.votes);
+                let vote_idx = find_address_idx(&sender_address, &ai.votes);
                 assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
 
                 // update votes
@@ -369,16 +369,22 @@ address 0x1 {
             *&ai.votes
         }
 
-        public fun find_vote_idx(vote: &address, votes: &vector<address>):
+        public fun find_address_idx(target: &address, addresses: &vector<address>):
             Option<u64>  {
             let i = 0;
-            let n = Vector::length(votes);
+            let n = Vector::length(addresses);
             while (i < n) {
-                let v = Vector::borrow(votes, i);
-                if (*v == *vote) return Option::some(i);
+                let v = Vector::borrow(addresses, i);
+                if (*v == *target) return Option::some(i);
                 i = i + 1
             };
             Option::none()
+        }
+
+        fun is_executor(escrow: &address, candidate: &address): bool acquires EscrowState {
+            let state = borrow_global<EscrowState>(*escrow);
+            let idx = find_address_idx(candidate, &state.executors);
+            Option::is_some(&idx)
         }
     }
 
