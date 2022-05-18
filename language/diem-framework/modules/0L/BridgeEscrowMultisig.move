@@ -309,7 +309,7 @@ address 0x1 {
             // add voter
             let ai = Vector::borrow_mut<AccountInfo>(&mut state.unlocked, *idx);
             assert(ai.is_closed, ERROR_UNLOCKED_MUST_BE_CLOSED);
-            
+
             // make sure this votes didn't vote before
             let vote_idx = find_address_idx(&sender_address, &ai.votes);
             assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
