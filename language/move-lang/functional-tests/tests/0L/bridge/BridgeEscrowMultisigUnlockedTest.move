@@ -129,7 +129,36 @@ use 0x1::BridgeEscrowMultisig;
 }
 // check: ABORTED
 
-///// Test 6:
+///// Test 7:
+// transfer funds into local bob account
+// do second vote, using invalid params, abort
+//! new-transaction
+//! sender: dave
+//! gas-currency: GAS
+script {
+    use 0x1::BridgeEscrowMultisig;
+    use 0x1::Option;
+    use 0x1::DiemAccount;
+    use 0x1::GAS::GAS;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let sender_eth: vector<u8> = x"90f79bf6eb2c4f870365e785982e1f101e93b906";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_escrow_balance(escrow_address) == 100, 30001);
+
+        let balance_before = DiemAccount::balance<GAS>(@{{bob}});
+        BridgeEscrowMultisig::withdraw_from_escrow(&sender, escrow_address,
+            sender_eth, // sender on eth chain
+            @{{bob}}, // receiver
+            101,
+            copy transfer_id,
+        );
+    }
+}
+// check: ABORTED
+
+///// Test 7:
 // transfer funds into local bob account
 // do second vote, transfer happens
 //! new-transaction
@@ -175,7 +204,7 @@ script {
 }
 // check: EXECUTED
 
-///// Test 7:
+///// Test 8:
 // cannot vote on closed AccountInfo
 //! new-transaction
 //! sender: eve
@@ -200,7 +229,7 @@ use 0x1::BridgeEscrowMultisig;
 // check: ABORTED
 
 
-///// Test 10: Delete unlocked entry
+///// Test 9: Delete unlocked entry
 //! new-transaction
 //! sender: carol
 //! gas-currency: GAS
@@ -235,7 +264,7 @@ use 0x1::Vector;
 }
 //! check: EXECUTED
 
-///// Test 11: Delete unlocked entry
+///// Test 10: Delete unlocked entry
 //! new-transaction
 //! sender: dave
 //! gas-currency: GAS

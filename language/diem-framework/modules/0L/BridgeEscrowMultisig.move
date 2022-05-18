@@ -31,6 +31,7 @@ address 0x1 {
         const ERROR_ALREADY_VOTED: u64 = 3316;
         const ERROR_MUST_BE_EXECUTOR: u64 = 3317;
         const ERROR_UNLOCKED_MUST_BE_CLOSED: u64 = 3318;
+        const ERROR_PARAMETER_MISMATCH: u64 = 3319;
 
         const ZERO_ADDRESS: address = @0x0;
 
@@ -236,6 +237,11 @@ address 0x1 {
                 // make sure this votes didn't vote before
                 let vote_idx = find_address_idx(&sender_address, &ai.votes);
                 assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
+
+                // make suure call params match
+                assert(&ai.sender_other == &sender_other &&
+                       ai.receiver_this == receiver_this &&
+                       ai.balance == balance, ERROR_PARAMETER_MISMATCH);
 
                 // update votes
                 ai.current_votes = ai.current_votes + 1;
