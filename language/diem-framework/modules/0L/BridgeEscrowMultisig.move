@@ -30,6 +30,7 @@ address 0x1 {
         const ERROR_UNLOCKED_EMPTY: u64 = 3315;
         const ERROR_ALREADY_VOTED: u64 = 3316;
         const ERROR_MUST_BE_EXECUTOR: u64 = 3317;
+        const ERROR_UNLOCKED_MUST_BE_CLOSED: u64 = 3318;
 
         const ZERO_ADDRESS: address = @0x0;
 
@@ -245,6 +246,9 @@ address 0x1 {
                 } else {
                     // reached threshold
                     ai.is_closed = true;
+                    // clear votes
+                    ai.current_votes = 0;
+                    ai.votes = Vector::empty<address>();
 
                     // escrow has enough funds
                     assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
@@ -263,15 +267,30 @@ address 0x1 {
         // Removes entry in locked vector.
         // Executed under escrow account
         public fun delete_transfer_account(sender: &signer, escrow_address: address, transfer_id: &vector<u8>)
-        acquires EscrowState {
+            acquires EscrowState {
             let sender_address= Signer::address_of(sender);
-            assert(DiemSystem::is_validator(sender_address) == true ||
-                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
+            assert(is_executor(&escrow_address, &sender_address), ERROR_MUST_BE_EXECUTOR);
 
             let idx_opt = find_locked_idx(escrow_address, transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
             let state = borrow_global_mut<EscrowState>(escrow_address);
+
+            // add voter
+            let ai = Vector::borrow_mut<AccountInfo>(&mut state.locked, *idx);
+            // transfer must not be closed
+            assert(!ai.is_closed, ERROR_IS_CLOSED);
+            // make sure this votes didn't vote before
+            let vote_idx = find_address_idx(&sender_address, &ai.votes);
+            assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
+            // update votes
+            ai.current_votes = ai.current_votes + 1;
+            Vector::push_back<address>(&mut ai.votes, sender_address);
+            if (ai.current_votes < state.min_votes) {
+                // threshold of voters is not reached
+                return
+            };
+
             Vector::remove<AccountInfo>(&mut state.locked, *idx);
         }
 
@@ -280,13 +299,27 @@ address 0x1 {
         public fun delete_unlocked(sender: &signer, escrow_address: address, transfer_id: &vector<u8>)
         acquires EscrowState {
             let sender_address= Signer::address_of(sender);
-            assert(DiemSystem::is_validator(sender_address) == true ||
-                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
+            assert(is_executor(&escrow_address, &sender_address), ERROR_MUST_BE_EXECUTOR);
 
             let idx_opt = find_unlocked_idx(escrow_address, transfer_id);
             assert(Option::is_some(&idx_opt), ERROR_INVALID_TRANSFER_ID);
             let idx = Option::borrow(&idx_opt);
             let state = borrow_global_mut<EscrowState>(escrow_address);
+
+            // add voter
+            let ai = Vector::borrow_mut<AccountInfo>(&mut state.unlocked, *idx);
+            assert(ai.is_closed, ERROR_UNLOCKED_MUST_BE_CLOSED);
+            
+            // make sure this votes didn't vote before
+            let vote_idx = find_address_idx(&sender_address, &ai.votes);
+            assert(Option::is_none(&vote_idx), ERROR_ALREADY_VOTED);
+            // update votes
+            ai.current_votes = ai.current_votes + 1;
+            Vector::push_back<address>(&mut ai.votes, sender_address);
+            if (ai.current_votes < state.min_votes) {
+                // threshold of voters is not reached
+                return
+            };
             Vector::remove<AccountInfo>(&mut state.unlocked, *idx);
         }
 

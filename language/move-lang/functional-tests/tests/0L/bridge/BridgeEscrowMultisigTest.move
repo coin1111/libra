@@ -183,7 +183,7 @@ script {
         assert(*idx_unlocked == 0, 30007);
         let ai_unlocked = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx_unlocked);
         let current_votes = BridgeEscrowMultisig::get_current_votes(&ai_unlocked);
-        assert(current_votes == 2, 30008);
+        assert(current_votes == 0, 30008);
         assert(BridgeEscrowMultisig::is_closed(&ai_unlocked), 30009);
 
         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 30010);
@@ -229,33 +229,98 @@ use 0x1::BridgeEscrowMultisig;
         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
 
         BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
+        // record is not removed
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40004);
+    }
+}
+//! check: EXECUTED
+
+///// Test 9: Delete alice escrow account
+//! new-transaction
+//! sender: eve
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"11192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 1, 40001);
+
+        BridgeEscrowMultisig::delete_transfer_account(&sender, escrow_address, &transfer_id);
+        // record is  removed
         assert(BridgeEscrowMultisig::get_locked_length(escrow_address) == 0, 40004);
     }
 }
 //! check: EXECUTED
 
-// ///// Test 6: Delete unlocked entry
-// //! new-transaction
-// //! sender: carol
-// //! gas-currency: GAS
-// script {
-// use 0x1::BridgeEscrowMultisig;
-// use 0x1::Option;
-//
-//     fun main(sender: signer){
-//         let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
-//         let escrow_address: address = @{{escrow}};
-//         assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50001);
-//
-//         // find unlocked account using transfer_id and delete locked entry
-//         let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
-//         assert(Option::is_some(&index),50002);
-//         let idx = Option::borrow(&index);
-//         assert(*idx == 0, 5003);
-//
-//         BridgeEscrowMultisig::delete_unlocked(&sender, escrow_address, &transfer_id);
-//         assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 0, 50004);
-//     }
-// }
-// //! check: EXECUTED
-//
+///// Test 10: Delete unlocked entry
+//! new-transaction
+//! sender: carol
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+use 0x1::Option;
+use 0x1::Vector;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50001);
+
+        // find unlocked account using transfer_id and delete locked entry
+        let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+        assert(Option::is_some(&index),50002);
+        let idx = Option::borrow(&index);
+        assert(*idx == 0, 5003);
+        let ai = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx);
+        // it must be closed, e.g. transfer happened
+        assert(BridgeEscrowMultisig::is_closed(&ai), 50002);
+        // with no votes
+        let current_votes = BridgeEscrowMultisig::get_current_votes(&ai);
+        assert(current_votes == 0, 50003);
+        let votes = BridgeEscrowMultisig::get_votes(&ai);
+        assert( Vector::length(&votes) == 0, 50003);
+
+        BridgeEscrowMultisig::delete_unlocked(&sender, escrow_address, &transfer_id);
+        // entry is still there
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50004);
+    }
+}
+//! check: EXECUTED
+
+///// Test 11: Delete unlocked entry
+//! new-transaction
+//! sender: dave
+//! gas-currency: GAS
+script {
+use 0x1::BridgeEscrowMultisig;
+use 0x1::Option;
+use 0x1::Vector;
+
+    fun main(sender: signer){
+        let transfer_id: vector<u8> = x"00192Fb10dF37c9FB26829eb2CC623cd1BF599E8";
+        let escrow_address: address = @{{escrow}};
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 1, 50001);
+
+        // find unlocked account using transfer_id and delete locked entry
+        let index = BridgeEscrowMultisig::find_unlocked_idx(escrow_address, &transfer_id);
+        assert(Option::is_some(&index),50002);
+        let idx = Option::borrow(&index);
+        assert(*idx == 0, 5003);
+        let ai = BridgeEscrowMultisig::get_unlocked_at(escrow_address, *idx);
+        // it must be closed, e.g. transfer happened
+        assert(BridgeEscrowMultisig::is_closed(&ai), 50002);
+        // with 1 vote
+        let current_votes = BridgeEscrowMultisig::get_current_votes(&ai);
+        assert(current_votes == 1, 50003);
+        let votes = BridgeEscrowMultisig::get_votes(&ai);
+        assert( Vector::length(&votes) == 1, 50004);
+
+        BridgeEscrowMultisig::delete_unlocked(&sender, escrow_address, &transfer_id);
+        // entry is removed
+        assert(BridgeEscrowMultisig::get_unlocked_length(escrow_address) == 0, 50005);
+    }
+}
+//! check: EXECUTED
+
