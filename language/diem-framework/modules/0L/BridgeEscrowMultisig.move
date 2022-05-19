@@ -10,7 +10,7 @@ address 0x1 {
         use 0x1::Signer;
         use 0x1::Diem;
         use 0x1::DiemAccount;
-        use 0x1::DiemSystem;
+        //use 0x1::DiemSystem;
         use 0x1::GAS::GAS;
         use 0x1::Vector;
         use 0x1::Option::{Self, Option};
@@ -119,28 +119,29 @@ address 0x1 {
             Diem::deposit(&mut state.tokens,tokens);
         }
 
-        // Withdraw funds from escrow
-        public fun withdraw_funds(sender: &signer,
-                                        escrow_address: address,
-                                        receiver_this:address, // receiver on this chain
-                                        balance: u64
-        ) acquires EscrowState  {
-            let sender_address= Signer::address_of(sender);
-            assert(DiemSystem::is_validator(sender_address) == true ||
-                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
-
-            // update escrow state
-            let state = borrow_global_mut<EscrowState>( escrow_address);
-
-            // escrow has enough funds
-            assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
-
-            // withdraw tokens from escrow
-            let tokens = Diem::withdraw(&mut state.tokens,balance);
-
-            // move funds from escrow to user account
-            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
-        }
+        // TODO: implement multisig version
+//        // Withdraw funds from escrow
+//        public fun withdraw_funds(sender: &signer,
+//                                        escrow_address: address,
+//                                        receiver_this:address, // receiver on this chain
+//                                        balance: u64
+//        ) acquires EscrowState  {
+//            let sender_address= Signer::address_of(sender);
+//            assert(DiemSystem::is_validator(sender_address) == true ||
+//                   sender_address == escrow_address , ERROR_MUST_BE_VALIDATOR);
+//
+//            // update escrow state
+//            let state = borrow_global_mut<EscrowState>( escrow_address);
+//
+//            // escrow has enough funds
+//            assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
+//
+//            // withdraw tokens from escrow
+//            let tokens = Diem::withdraw(&mut state.tokens,balance);
+//
+//            // move funds from escrow to user account
+//            DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"");
+//        }
 
 
         // Creates an account for transfer between 0L->eth accounts
