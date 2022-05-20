@@ -102,6 +102,8 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::BCS`](../../../../../../move-stdlib/docs/BCS.md#0x1_BCS)
 -  [`0x1::Bonding`](Demo_Bonding.md#0x1_Bonding)
 -  [`0x1::BridgeEscrow`](BridgeEscrow.md#0x1_BridgeEscrow)
+-  [`0x1::BridgeEscrowMultisig`](BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig)
+-  [`0x1::BridgeMultisigScripts`](ol_bridge_multisig.md#0x1_BridgeMultisigScripts)
 -  [`0x1::BridgeScripts`](ol_bridge.md#0x1_BridgeScripts)
 -  [`0x1::Burn`](Burn.md#0x1_Burn)
 -  [`0x1::BurnScript`](ol_burn_pref.md#0x1_BurnScript)

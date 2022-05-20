@@ -5260,6 +5260,7 @@ a reconfiguration of the system.
 -  [`0x1::Authenticator`](../../../../../releases/artifacts/current/docs/modules/Authenticator.md#0x1_Authenticator)
 -  [`0x1::AutoPay`](../../../../../releases/artifacts/current/docs/modules/AutoPay.md#0x1_AutoPay)
 -  [`0x1::BridgeEscrow`](../../../../../releases/artifacts/current/docs/modules/BridgeEscrow.md#0x1_BridgeEscrow)
+-  [`0x1::BridgeEscrowMultisig`](../../../../../releases/artifacts/current/docs/modules/BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig)
 -  [`0x1::Burn`](../../../../../releases/artifacts/current/docs/modules/Burn.md#0x1_Burn)
 -  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../../../../releases/artifacts/current/docs/modules/ChainId.md#0x1_ChainId)

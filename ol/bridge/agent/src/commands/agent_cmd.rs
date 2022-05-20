@@ -94,6 +94,7 @@ impl Runnable for AgentCmd {
                 let _ = agent.process_transfers_eth().await.map_err(|err| {
                     println!("ERROR: failed to process eth deposits, error: {:?}", err)
                 });
+                // add random delay not to interfere with other agents
                 let num = rand::thread_rng().gen_range(0..10000);
                 thread::sleep(Duration::from_millis(num));
 
@@ -101,6 +102,7 @@ impl Runnable for AgentCmd {
                 let _ = agent.process_transfers_ol().await.map_err(|err| {
                     println!("ERROR: failed to process 0L deposits, error: {:?}", err)
                 });
+                // add random delay not to interfere with other agents
                 let num = rand::thread_rng().gen_range(0..10000);
                 thread::sleep(Duration::from_millis(num));
             }

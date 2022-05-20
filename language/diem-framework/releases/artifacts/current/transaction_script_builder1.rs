@@ -1627,7 +1627,20 @@ pub enum ScriptFunctionCall {
         close_other: bool,
     },
 
+    BridgeCloseTransfer {
+        escrow: AccountAddress,
+        transfer_id: Bytes,
+        close_other: bool,
+    },
+
     BridgeCreateEscrow {},
+
+    BridgeDeposit {
+        escrow: AccountAddress,
+        receiver_other: Bytes,
+        value: u64,
+        transfer_id: Bytes,
+    },
 
     BridgeDeposit {
         escrow: AccountAddress,
@@ -1641,34 +1654,12 @@ pub enum ScriptFunctionCall {
         value: u64,
     },
 
-    BridgeMultisigCloseTransfer {
-        escrow: AccountAddress,
-        transfer_id: Bytes,
-        close_other: bool,
-    },
-
-    BridgeMultisigCreateEscrow {
-        executor1: AccountAddress,
-        executor2: AccountAddress,
-        executor3: AccountAddress,
-        executor4: AccountAddress,
-        executor5: AccountAddress,
-        min_votes: u64,
-    },
-
-    BridgeMultisigDeposit {
-        escrow: AccountAddress,
-        receiver_other: Bytes,
-        value: u64,
-        transfer_id: Bytes,
-    },
-
-    BridgeMultisigDepositFunds {
+    BridgeDepositFunds {
         escrow: AccountAddress,
         value: u64,
     },
 
-    BridgeMultisigWithdraw {
+    BridgeWithdraw {
         escrow: AccountAddress,
         sender_other: Bytes,
         receiver: AccountAddress,
@@ -3614,7 +3605,18 @@ impl ScriptFunctionCall {
                 transfer_id,
                 close_other,
             } => encode_bridge_close_transfer_script_function(escrow, transfer_id, close_other),
+            BridgeCloseTransfer {
+                escrow,
+                transfer_id,
+                close_other,
+            } => encode_bridge_close_transfer_script_function(escrow, transfer_id, close_other),
             BridgeCreateEscrow {} => encode_bridge_create_escrow_script_function(),
+            BridgeDeposit {
+                escrow,
+                receiver_other,
+                value,
+                transfer_id,
+            } => encode_bridge_deposit_script_function(escrow, receiver_other, value, transfer_id),
             BridgeDeposit {
                 escrow,
                 receiver_other,
@@ -3624,46 +3626,16 @@ impl ScriptFunctionCall {
             BridgeDepositFunds { escrow, value } => {
                 encode_bridge_deposit_funds_script_function(escrow, value)
             }
-            BridgeMultisigCloseTransfer {
-                escrow,
-                transfer_id,
-                close_other,
-            } => encode_bridge_multisig_close_transfer_script_function(
-                escrow,
-                transfer_id,
-                close_other,
-            ),
-            BridgeMultisigCreateEscrow {
-                executor1,
-                executor2,
-                executor3,
-                executor4,
-                executor5,
-                min_votes,
-            } => encode_bridge_multisig_create_escrow_script_function(
-                executor1, executor2, executor3, executor4, executor5, min_votes,
-            ),
-            BridgeMultisigDeposit {
-                escrow,
-                receiver_other,
-                value,
-                transfer_id,
-            } => encode_bridge_multisig_deposit_script_function(
-                escrow,
-                receiver_other,
-                value,
-                transfer_id,
-            ),
-            BridgeMultisigDepositFunds { escrow, value } => {
-                encode_bridge_multisig_deposit_funds_script_function(escrow, value)
+            BridgeDepositFunds { escrow, value } => {
+                encode_bridge_deposit_funds_script_function(escrow, value)
             }
-            BridgeMultisigWithdraw {
+            BridgeWithdraw {
                 escrow,
                 sender_other,
                 receiver,
                 balance,
                 transfer_id,
-            } => encode_bridge_multisig_withdraw_script_function(
+            } => encode_bridge_withdraw_script_function(
                 escrow,
                 sender_other,
                 receiver,
@@ -4361,6 +4333,26 @@ pub fn encode_bridge_close_transfer_script_function(
     ))
 }
 
+pub fn encode_bridge_close_transfer_script_function(
+    escrow: AccountAddress,
+    transfer_id: Vec<u8>,
+    close_other: bool,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeMultisigScripts").to_owned(),
+        ),
+        ident_str!("bridge_close_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&transfer_id).unwrap(),
+            bcs::to_bytes(&close_other).unwrap(),
+        ],
+    ))
+}
+
 pub fn encode_bridge_create_escrow_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4395,6 +4387,28 @@ pub fn encode_bridge_deposit_script_function(
     ))
 }
 
+pub fn encode_bridge_deposit_script_function(
+    escrow: AccountAddress,
+    receiver_other: Vec<u8>,
+    value: u64,
+    transfer_id: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BridgeMultisigScripts").to_owned(),
+        ),
+        ident_str!("bridge_deposit").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&escrow).unwrap(),
+            bcs::to_bytes(&receiver_other).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+            bcs::to_bytes(&transfer_id).unwrap(),
+        ],
+    ))
+}
+
 pub fn encode_bridge_deposit_funds_script_function(
     escrow: AccountAddress,
     value: u64,
@@ -4413,75 +4427,7 @@ pub fn encode_bridge_deposit_funds_script_function(
     ))
 }
 
-pub fn encode_bridge_multisig_close_transfer_script_function(
-    escrow: AccountAddress,
-    transfer_id: Vec<u8>,
-    close_other: bool,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeMultisigScripts").to_owned(),
-        ),
-        ident_str!("bridge_multisig_close_transfer").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&transfer_id).unwrap(),
-            bcs::to_bytes(&close_other).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_bridge_multisig_create_escrow_script_function(
-    executor1: AccountAddress,
-    executor2: AccountAddress,
-    executor3: AccountAddress,
-    executor4: AccountAddress,
-    executor5: AccountAddress,
-    min_votes: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeMultisigScripts").to_owned(),
-        ),
-        ident_str!("bridge_multisig_create_escrow").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&executor1).unwrap(),
-            bcs::to_bytes(&executor2).unwrap(),
-            bcs::to_bytes(&executor3).unwrap(),
-            bcs::to_bytes(&executor4).unwrap(),
-            bcs::to_bytes(&executor5).unwrap(),
-            bcs::to_bytes(&min_votes).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_bridge_multisig_deposit_script_function(
-    escrow: AccountAddress,
-    receiver_other: Vec<u8>,
-    value: u64,
-    transfer_id: Vec<u8>,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeMultisigScripts").to_owned(),
-        ),
-        ident_str!("bridge_multisig_deposit").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&escrow).unwrap(),
-            bcs::to_bytes(&receiver_other).unwrap(),
-            bcs::to_bytes(&value).unwrap(),
-            bcs::to_bytes(&transfer_id).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_bridge_multisig_deposit_funds_script_function(
+pub fn encode_bridge_deposit_funds_script_function(
     escrow: AccountAddress,
     value: u64,
 ) -> TransactionPayload {
@@ -4490,7 +4436,7 @@ pub fn encode_bridge_multisig_deposit_funds_script_function(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
             ident_str!("BridgeMultisigScripts").to_owned(),
         ),
-        ident_str!("bridge_multisig_deposit_funds").to_owned(),
+        ident_str!("bridge_deposit_funds").to_owned(),
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
@@ -4499,7 +4445,7 @@ pub fn encode_bridge_multisig_deposit_funds_script_function(
     ))
 }
 
-pub fn encode_bridge_multisig_withdraw_script_function(
+pub fn encode_bridge_withdraw_script_function(
     escrow: AccountAddress,
     sender_other: Vec<u8>,
     receiver: AccountAddress,
@@ -4509,9 +4455,9 @@ pub fn encode_bridge_multisig_withdraw_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeMultisigScripts").to_owned(),
+            ident_str!("BridgeScripts").to_owned(),
         ),
-        ident_str!("bridge_multisig_withdraw").to_owned(),
+        ident_str!("bridge_withdraw").to_owned(),
         vec![],
         vec![
             bcs::to_bytes(&escrow).unwrap(),
@@ -4533,7 +4479,7 @@ pub fn encode_bridge_withdraw_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("BridgeScripts").to_owned(),
+            ident_str!("BridgeMultisigScripts").to_owned(),
         ),
         ident_str!("bridge_withdraw").to_owned(),
         vec![],
@@ -8655,11 +8601,40 @@ fn decode_bridge_close_transfer_script_function(
     }
 }
 
+fn decode_bridge_close_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeCloseTransfer {
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
+            close_other: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_bridge_create_escrow_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::BridgeCreateEscrow {})
+    } else {
+        None
+    }
+}
+
+fn decode_bridge_deposit_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BridgeDeposit {
+            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
+            receiver_other: bcs::from_bytes(script.args().get(1)?).ok()?,
+            value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
     } else {
         None
     }
@@ -8693,57 +8668,11 @@ fn decode_bridge_deposit_funds_script_function(
     }
 }
 
-fn decode_bridge_multisig_close_transfer_script_function(
+fn decode_bridge_deposit_funds_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::BridgeMultisigCloseTransfer {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(1)?).ok()?,
-            close_other: bcs::from_bytes(script.args().get(2)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_bridge_multisig_create_escrow_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::BridgeMultisigCreateEscrow {
-            executor1: bcs::from_bytes(script.args().get(0)?).ok()?,
-            executor2: bcs::from_bytes(script.args().get(1)?).ok()?,
-            executor3: bcs::from_bytes(script.args().get(2)?).ok()?,
-            executor4: bcs::from_bytes(script.args().get(3)?).ok()?,
-            executor5: bcs::from_bytes(script.args().get(4)?).ok()?,
-            min_votes: bcs::from_bytes(script.args().get(5)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_bridge_multisig_deposit_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::BridgeMultisigDeposit {
-            escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
-            receiver_other: bcs::from_bytes(script.args().get(1)?).ok()?,
-            value: bcs::from_bytes(script.args().get(2)?).ok()?,
-            transfer_id: bcs::from_bytes(script.args().get(3)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_bridge_multisig_deposit_funds_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::BridgeMultisigDepositFunds {
+        Some(ScriptFunctionCall::BridgeDepositFunds {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
             value: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
@@ -8752,11 +8681,11 @@ fn decode_bridge_multisig_deposit_funds_script_function(
     }
 }
 
-fn decode_bridge_multisig_withdraw_script_function(
+fn decode_bridge_withdraw_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::BridgeMultisigWithdraw {
+        Some(ScriptFunctionCall::BridgeWithdraw {
             escrow: bcs::from_bytes(script.args().get(0)?).ok()?,
             sender_other: bcs::from_bytes(script.args().get(1)?).ok()?,
             receiver: bcs::from_bytes(script.args().get(2)?).ok()?,
@@ -9972,6 +9901,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_bridge_close_transfer_script_function),
         );
         map.insert(
+            "BridgeMultisigScriptsbridge_close_transfer".to_string(),
+            Box::new(decode_bridge_close_transfer_script_function),
+        );
+        map.insert(
             "BridgeScriptsbridge_create_escrow".to_string(),
             Box::new(decode_bridge_create_escrow_script_function),
         );
@@ -9980,31 +9913,23 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_bridge_deposit_script_function),
         );
         map.insert(
+            "BridgeMultisigScriptsbridge_deposit".to_string(),
+            Box::new(decode_bridge_deposit_script_function),
+        );
+        map.insert(
             "BridgeScriptsbridge_deposit_funds".to_string(),
             Box::new(decode_bridge_deposit_funds_script_function),
         );
         map.insert(
-            "BridgeMultisigScriptsbridge_multisig_close_transfer".to_string(),
-            Box::new(decode_bridge_multisig_close_transfer_script_function),
-        );
-        map.insert(
-            "BridgeMultisigScriptsbridge_multisig_create_escrow".to_string(),
-            Box::new(decode_bridge_multisig_create_escrow_script_function),
-        );
-        map.insert(
-            "BridgeMultisigScriptsbridge_multisig_deposit".to_string(),
-            Box::new(decode_bridge_multisig_deposit_script_function),
-        );
-        map.insert(
-            "BridgeMultisigScriptsbridge_multisig_deposit_funds".to_string(),
-            Box::new(decode_bridge_multisig_deposit_funds_script_function),
-        );
-        map.insert(
-            "BridgeMultisigScriptsbridge_multisig_withdraw".to_string(),
-            Box::new(decode_bridge_multisig_withdraw_script_function),
+            "BridgeMultisigScriptsbridge_deposit_funds".to_string(),
+            Box::new(decode_bridge_deposit_funds_script_function),
         );
         map.insert(
             "BridgeScriptsbridge_withdraw".to_string(),
+            Box::new(decode_bridge_withdraw_script_function),
+        );
+        map.insert(
+            "BridgeMultisigScriptsbridge_withdraw".to_string(),
             Box::new(decode_bridge_withdraw_script_function),
         );
         map.insert(
