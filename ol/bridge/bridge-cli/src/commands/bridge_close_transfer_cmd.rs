@@ -83,7 +83,7 @@ pub fn bridge_close_transfer(
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_close_transfer_script_function(
+    let script = transaction_builder::encode_bridge_multisig_close_transfer_script_function(
         escrow,
         transfer_id,
         close_other,

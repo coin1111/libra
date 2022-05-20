@@ -55,6 +55,6 @@ pub fn deposit_funds(
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_deposit_funds_script_function(escrow, coins);
+    let script = transaction_builder::encode_bridge_multisig_deposit_funds_script_function(escrow, coins);
     maybe_submit(script, &tx_params, save_path)
 }

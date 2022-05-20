@@ -119,7 +119,7 @@ pub fn bridge_withdraw(
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_withdraw_script_function(escrow,
+    let script = transaction_builder::encode_bridge_multisig_withdraw_script_function(escrow,
                                                                              sender_other, receiver, balance, transfer_id);
     maybe_submit(script, &tx_params, save_path)
 }

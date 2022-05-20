@@ -109,7 +109,7 @@ pub fn bridge_deposit(
 ) -> Result<TransactionView, TxError> {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     // coins are scaled
-    let script = transaction_builder::encode_bridge_deposit_script_function(
+    let script = transaction_builder::encode_bridge_multisig_deposit_script_function(
         escrow,
         receiver,
         coins,
