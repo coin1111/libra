@@ -6,17 +6,14 @@ use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrow
 use bridge_eth::config::Config;
 use bridge_eth::util::AccountInfo as AccountInfoEth;
 use bridge_ol::contract::BridgeEscrowMultisig;
-use ethers::prelude::Wallet as WalletEth;
-use ethers::prelude::{Client as ClientEth, Wallet, H160};
-use ethers::providers::{Http, Provider};
+use ethers::prelude::{ H160, Wallet};
 use ethers::types::{Address, U256};
 use move_core_types::account_address::AccountAddress;
 use ol_types::config::TxType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::convert::TryFrom;
-use std::fmt;
 use std::str::FromStr;
+use crate::transfer::agent_eth::{AgentEth, EthLockedInfo};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct AccountInfo {
@@ -31,8 +28,8 @@ struct AccountInfo {
     is_closed: bool,
 }
 
-/// Bridge agent struct
-pub struct Agent {
+/// Bridge processor struct
+pub struct Processor {
     /// Node to connect to blockchain
     pub node_ol: Node,
 
@@ -42,84 +39,18 @@ pub struct Agent {
     agent_eth: AgentEth,
 }
 
-struct AgentEth {
-    /// ETH Escrow Contract Address
-    escrow_addr: Address,
-
-    /// ETH client
-    client: ClientEth<Http, WalletEth>,
-
-    /// ETH gas price
-    gas_price: u64,
-}
-
-/// Contains current transfer_id to process and the next start element
-/// to start searching from for the next transfer_id to process
-#[derive(Debug, Copy, Clone)]
-pub struct EthLockedInfo {
-    /// Current transfer_id to process
-    pub transfer_id: [u8; 16],
-    ///  Index to start searching for the next transfer_id to process
-    pub next_start: U256,
-}
-
-impl fmt::Display for EthLockedInfo {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "transfer_id: {}, next_start: {}",
-            hex::encode(self.transfer_id),
-            self.next_start
-        )
-    }
-}
-
-impl AgentEth {
-    pub fn new(
-        config_eth: &Option<Config>,
-        agent_eth: &Option<Wallet>,
-    ) -> Result<AgentEth, String> {
-        let escrow_addr = match &config_eth {
-            Some(c) => c.get_escrow_contract_address(),
-            None => Err(String::from("cannot get eth config")),
-        }?;
-
-        let provider_eth = match &config_eth {
-            Some(c) => c.get_provider_url().and_then(|url| {
-                Provider::<Http>::try_from(url.as_str()).map_err(|e| e.to_string())
-            }),
-            None => Err(String::from("cannot get eth config")),
-        }?;
-
-        let gas_price = match &config_eth {
-            Some(c) => c.get_gas_price(),
-            None => Err(String::from("cannot get eth config")),
-        }?;
-
-        let client = match &agent_eth {
-            Some(w) => Ok(w.clone().connect(provider_eth.clone())),
-            _ => Err(format!("wallet is not provided")),
-        }?;
-        Ok(AgentEth {
-            escrow_addr,
-            client,
-            gas_price,
-        })
-    }
-}
-
-impl Agent {
+impl Processor {
     /// Create a new bridge agent
     pub fn new(
         ol_escrow: AccountAddress,
         node_ol: Node,
         config_eth: Option<Config>,
         agent_eth: Option<Wallet>,
-    ) -> Result<Agent, String> {
+    ) -> Result<Processor, String> {
         let agent_eth = AgentEth::new(&config_eth, &agent_eth)?;
         let tx_params = tx_params_wrapper(TxType::Mgmt).map_err(|err| err.to_string())?;
 
-        Ok(Agent {
+        Ok(Processor {
             node_ol,
             bridge_escrow_ol: BridgeEscrowMultisig::new(ol_escrow, tx_params).unwrap(),
             agent_eth,

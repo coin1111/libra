@@ -1,6 +1,5 @@
 //! `agent` subcommand
 
-use crate::agent::Agent;
 use crate::application::APPLICATION;
 use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
@@ -9,6 +8,7 @@ use std::process::exit;
 use std::str::FromStr;
 use std::{thread, time::Duration};
 use rand::Rng;
+use crate::transfer::processor::Processor;
 
 /// `agent` subcommand
 ///
@@ -78,7 +78,7 @@ impl Runnable for AgentCmd {
                 }
             };
 
-            let mut agent = Agent::new(
+            let mut agent = Processor::new(
                 ol_escrow,
                 Node::new(ol_client, &cfg, is_swarm),
                 config_eth.map_or_else(|_| None, |x| Some(x)),

@@ -1,6 +1,6 @@
 //! Various util function for agent
 use std::fs;
-use crate::agent::EthLockedInfo;
+use crate::transfer::agent_eth::EthLockedInfo;
 
 const ETH_AGENT_CHECKPOINT: &'static str = ".agent_checkpoint";
 
