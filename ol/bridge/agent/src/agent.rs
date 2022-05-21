@@ -5,7 +5,7 @@ use crate::{node::node::Node, node::query::QueryType};
 use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrowEth;
 use bridge_eth::config::Config;
 use bridge_eth::util::AccountInfo as AccountInfoEth;
-use bridge_ol::contract::BridgeEscrow;
+use bridge_ol::contract::BridgeEscrowMultisig;
 use ethers::prelude::Wallet as WalletEth;
 use ethers::prelude::{Client as ClientEth, Wallet, H160};
 use ethers::providers::{Http, Provider};
@@ -26,6 +26,9 @@ struct AccountInfo {
     receiver_other: String,
     balance: u64,
     transfer_id: String,
+    votes: Vec<String>,
+    current_votes: u64,
+    is_closed: bool,
 }
 
 /// Bridge agent struct
@@ -34,7 +37,7 @@ pub struct Agent {
     pub node_ol: Node,
 
     /// BridgeEscrow contract for 0L
-    pub bridge_escrow_ol: BridgeEscrow,
+    pub bridge_escrow_ol: BridgeEscrowMultisig,
 
     agent_eth: AgentEth,
 }
@@ -118,7 +121,7 @@ impl Agent {
 
         Ok(Agent {
             node_ol,
-            bridge_escrow_ol: BridgeEscrow::new(ol_escrow, tx_params).unwrap(),
+            bridge_escrow_ol: BridgeEscrowMultisig::new(ol_escrow, tx_params).unwrap(),
             agent_eth,
         })
     }
@@ -176,8 +179,18 @@ impl Agent {
                 .find(|ai| ai.transfer_id == transfer_id_str)
                 .and_then(|ai| Some(ai.clone())))
         })?;
-        if unlocked_ol_exists.is_some() {
-            // Unlocked entry already exists on 0L chain, which means that
+        let is_closed = match &unlocked_ol_exists {
+            Some(v) => v.is_closed,
+            _ => false,
+        };
+        if unlocked_ol_exists.is_some()  && is_closed {
+            if Self::is_voted_eth(&locked_ai, self.agent_eth.client.address()) {
+                // skip if this agent voted on ETH side already
+                return Ok(());
+            }
+            let unlocked_ol = &unlocked_ol_exists.unwrap();
+
+            // Unlocked entry already exists on 0L chain and is closed, which means that
             // withdrawal has been made already,
             // thus mark ETH side as completed
             println!(
@@ -190,8 +203,8 @@ impl Agent {
             // Query ETH locked account we just closed.
             // Note we don't rely on success or failure of close_eth_account()
             // instead we directly query ETH chain to ensure that account is indeed closed.
-            let ai = self.query_eth_locked(locked_eth.transfer_id).await?;
-            if !ai.is_closed {
+            let ai_eth = self.query_eth_locked(locked_eth.transfer_id).await?;
+            if !ai_eth.is_closed {
                 return Ok(());
             }
             // Now that ETH account is closed
@@ -200,71 +213,75 @@ impl Agent {
                 "INFO: ETH account is closed for transfer_id: {:?}",
                 hex::encode(locked_eth.transfer_id)
             );
-            // Check if 0L unlocked is prersent and remove it
-            self.query_ol_unlocked().and_then(|v| {
-                    v.iter().find(|ai| ai.transfer_id == transfer_id_str)
-                        .map_or_else(||Ok(()),|_|{
-                            println!("INFO: will close unlocked 0L account for transfer_id: {:?}",transfer_id_str);
-                            let res = self.bridge_escrow_ol.bridge_close_transfer(
-                                &locked_eth.transfer_id.to_vec(),
-                                true, // close_other=true => remove unlocked entry
-                                None,
-                            )
-                                .map_err(|err|format!("ERROR: failed to remove locked: {:?}", err))
-                                .map(|tx|{
-                                    println!("INFO: closed unlocked 0L account for transfer_id: {:?}, tx: {:?}",
-                                             transfer_id_str,tx)
-                                });
-                            res
-                        })
-                })?;
-            // Save checkpoint of the last transfer id processed to a file
-            // so that the next time we know where to start searching for unprocessed transfers
-            return save_eth_checkpoint(locked_eth);
+
+            return self.remove_unlocked_ol(&unlocked_ol, &locked_eth, transfer_id_str);
         } else {
-            // unlocked entry on 0L doesn't exist
-            // transfer fund on 0L
-            let receiver_this =
-                AccountAddress::from_bytes(locked_ai.receiver_other).map_err(|err| {
-                    format!(
-                        "cannot parse receiver_other: {:?}, error: {:?}",
-                        locked_ai.receiver_other, err
-                    )
-                })?;
-            // We can query ETH side and mark locked entry as closed right after,
-            // instead let the other iteration of this function to do that
-            return self.withdraw_ol(
-                locked_ai.sender_this.as_bytes().to_vec(),
-                receiver_this,
-                locked_ai.balance,
-                locked_ai.transfer_id,
-            );
+            return self.withdraw_ol(locked_ai, &unlocked_ol_exists);
         }
     }
 
-    /// Withdraw funds from 0L chain escrow to destination account
-    fn withdraw_ol(
-        &self,
-        sender_other: Vec<u8>,         // sender address on ETH chain
-        receiver_this: AccountAddress, // receiver of the funds
-        balance: u64,                  // amount to receive
-        transfer_id: [u8; 16],         // id of the transfer
-    ) -> Result<(), String> {
+    fn is_voted_eth(locked_ai: &AccountInfoEth, address_eth: Address) -> bool {
+        locked_ai.votes.iter().find(|x| **x == address_eth).is_some()
+    }
+
+    fn remove_unlocked_ol(&mut self, ai_ol: &AccountInfo, locked_eth: &EthLockedInfo, transfer_id_str: String) -> Result<(), String> {
+        // remove 0L unlocked entry
+        println!("INFO: will close unlocked 0L account for transfer_id: {:?}", transfer_id_str);
+        // if account voted, skip
+        if Self::is_voted_ol(ai_ol, self.node_ol.app_conf.profile.account) {
+            return Ok(());
+        }
+        self.bridge_escrow_ol.bridge_close_transfer(
+            &locked_eth.transfer_id.to_vec(),
+            true, // close_other=true => remove unlocked entry
+            None,
+        )
+            .map_err(|err| format!("ERROR: failed to remove locked: {:?}", err))
+            .map(|tx| {
+                println!("INFO: closed unlocked 0L account for transfer_id: {:?}, tx: {:?}",
+                         transfer_id_str, tx)
+            })?;
+
+        // Save checkpoint of the last transfer id processed to a file
+        // so that the next time we know where to start searching for unprocessed transfers
+        return save_eth_checkpoint(*locked_eth);
+    }
+
+    fn withdraw_ol(&mut self, locked_ai: AccountInfoEth, unlocked_ol_exists: &Option<AccountInfo>) -> Result<(), String>{
+        // unlocked entry on 0L doesn't exist or not yet closed
+        // if already voted then skip
+        if unlocked_ol_exists.as_ref().and_then(|ai| {
+            Some(Self::is_voted_ol(ai,
+                              self.node_ol.app_conf.profile.account))
+        }).is_some() {
+            return Ok(());
+        }
+
+        // transfer fund on 0L
+        let receiver_this =
+            AccountAddress::from_bytes(locked_ai.receiver_other).map_err(|err| {
+                format!(
+                    "cannot parse receiver_other: {:?}, error: {:?}",
+                    locked_ai.receiver_other, err
+                )
+            })?;
+
         println!("INFO: withdraw from bridge on 0L chain, transfer_id: {:?}, from: {:?}, to {:?}, amount: {:?}",
-                 transfer_id, hex::encode(sender_other.clone()), receiver_this, balance);
+                 locked_ai.transfer_id,
+                 hex::encode(locked_ai.sender_this.clone()), receiver_this, locked_ai.balance);
         self.bridge_escrow_ol
             .bridge_withdraw(
-                sender_other,
+                locked_ai.sender_this.as_bytes().to_vec(),
                 receiver_this,
-                balance,
-                transfer_id.to_vec(),
+                locked_ai.balance,
+                locked_ai.transfer_id.to_vec(),
                 None,
             )
             .map_err(|err| format!("ERROR: 0L chain bridge_withdraw, error: {:?}", err))
             .map(|tx| println!("INFO: 0L transaction: {:?}", tx))
     }
 
-    async fn withdraw_eth(
+    async fn withdraw_eth_aux(
         &self,
         ai: &AccountInfo,
         sender_this: AccountAddress,
@@ -360,30 +377,9 @@ impl Agent {
 
         // Query unlocked on ETH
         let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
-        if unlocked_eth.transfer_id == [0u8; 16] ||
-            (!unlocked_eth.is_closed
-                && unlocked_eth
-                .votes
-                .iter()
-                .find(|x| **x == self.agent_eth.client.address())
-                .is_none())
-            {
-            // Unlocked entry is not present on ETH chain
-            // Or this agent is not voted yet on the transfer, invoke withdraw on ETH chain
-            let sender_this =
-                AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
-
-            // try to parse receiver address on ETH chain
-            let receiver_eth = hex::decode(&ai.receiver_other)
-                .map_err(|err| err.to_string())
-                .and_then(|v| bridge_eth::util::vec_to_array::<u8, 20>(v))
-                .and_then(|a| Ok(ethers::types::Address::from(a)))?;
-
-            // Transfer is not happened => transfer funds on ETH chain
-            println!("INFO: invoke withdraw_eth for transfer_idL {:?} by agent {:?}", transfer_id, self.agent_eth.client.address());
-            return self
-                .withdraw_eth(ai, sender_this, receiver_eth, transfer_id)
-                .await;
+        // Withdraw funds on ETH if unlocked entry on ETH is not present
+        if unlocked_eth.transfer_id == [0u8; 16] || !unlocked_eth.is_closed {
+            return self.withdraw_eth(&ai, transfer_id, unlocked_eth).await;
         } else {
             // Unlocked entry exists on ETH chain, can remove locked entry on 0L chain now
             println!(
@@ -393,32 +389,83 @@ impl Agent {
             // Query locked entries on 0L chain
             let locked_ol_entries = self.query_ol_locked()?;
 
-            // Find entry for this tyransfer id
+            // Find entry for this transfer id
             let locked_ol = locked_ol_entries
                 .iter()
                 .find(|x| x.transfer_id == ai.transfer_id);
 
+            // if entry is removed, nothing to do
             if locked_ol.is_none() {
                 return Ok(());
             }
 
-            println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
-            return self
-                .bridge_escrow_ol
-                .bridge_close_transfer(
-                    &transfer_id.to_vec(),
-                    false, //close_other = false -> remove locked entry
-                    None,
-                )
-                .map_err(|err| format!("Failed to remove locked: {:?}", err))
-                .map(|tx| {
-                    println!(
-                        "INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
-                        hex::encode(transfer_id),
-                        tx
-                    )
-                });
+            return self.close_account_ol(&transfer_id, locked_ol);
         }
+    }
+
+    async fn withdraw_eth(&mut self, ai: &&AccountInfo, transfer_id: [u8; 16], unlocked_eth: AccountInfoEth) -> Result<(), String>{
+        // if voted already then skip
+        if unlocked_eth
+            .votes
+            .iter()
+            .find(|x| **x == self.agent_eth.client.address())
+            .is_none() {
+            return Ok(());
+        }
+
+        let sender_this =
+            AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
+
+        // try to parse receiver address on ETH chain
+        let receiver_eth = hex::decode(&ai.receiver_other)
+            .map_err(|err| err.to_string())
+            .and_then(|v| bridge_eth::util::vec_to_array::<u8, 20>(v))
+            .and_then(|a| Ok(ethers::types::Address::from(a)))?;
+
+        // Transfer is not happened => transfer funds on ETH chain
+        println!(
+            "INFO: invoke withdraw_eth for transfer_idL {:?} by agent {:?}",
+            transfer_id,
+            self.agent_eth.client.address()
+        );
+        return self
+            .withdraw_eth_aux(ai, sender_this, receiver_eth, transfer_id)
+            .await;
+    }
+
+    fn close_account_ol(&mut self, transfer_id: &[u8; 16], locked_ol: Option<&AccountInfo>) -> Result<(), String> {
+        println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
+        // if this agent voted, skip
+        if Self::is_voted_ol(locked_ol.unwrap(), self.node_ol.app_conf.profile.account) {
+            return Ok(());
+        }
+
+        // otherwise vote
+        return self
+            .bridge_escrow_ol
+            .bridge_close_transfer(
+                &transfer_id.to_vec(),
+                false, //close_other = false -> remove locked entry
+                None,
+            )
+            .map_err(|err| format!("Failed to remove locked: {:?}", err))
+            .map(|tx| {
+                println!(
+                    "INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
+                    hex::encode(transfer_id),
+                    tx
+                )
+            });
+    }
+
+    fn is_voted_ol(ai: &AccountInfo, agent_address: AccountAddress) -> bool {
+        ai.votes.iter().find(|x| {
+            match (**x).parse::<AccountAddress>()
+                .and_then(|v| Ok(v == agent_address)) {
+                Ok(a) => a,
+                _ => false,
+            }
+        }).is_some()
     }
 
     fn query_ol_locked(&mut self) -> Result<Vec<AccountInfo>, String> {
@@ -429,20 +476,25 @@ impl Agent {
     }
 
     // Example of account info
-    // {
-    // "modifiers":["copy","drop","store"],
-    // "struct":{"0x1::BridgeEscrow::AccountInfo":{
-    // "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
-    // "sender_other": "",
-    // "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
-    // "receiver_other": "",
-    // "balance": 100,
-    // "transfer_id": "1111",
-    // }}},
+    /*
+    {
+    "modifiers":["copy","drop","store"],
+    "struct":{"0x1::BridgeEscrowMultisig::AccountInfo":{
+    "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
+    "sender_other": "",
+    "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
+    "receiver_other": "",
+    "balance": 100,
+    "transfer_id": "1111",
+    "votes":[],
+    "current_votes":0,
+    "is_closed":false,
+    }}},
+    */
     fn query_account_info(&mut self, field_name: &str) -> Result<Vec<AccountInfo>, String> {
         let query_type = QueryType::MoveValue {
             account: self.bridge_escrow_ol.escrow.clone(),
-            module_name: String::from("BridgeEscrow"),
+            module_name: String::from("BridgeEscrowMultisig"),
             struct_name: String::from("EscrowState"),
             key_name: String::from(field_name),
         };
@@ -459,7 +511,7 @@ impl Agent {
                                 .get(i)
                                 .and_then(|o| o.as_object())
                                 .and_then(|o| o.get("struct"))
-                                .and_then(|o| o.get("0x1::BridgeEscrow::AccountInfo"))
+                                .and_then(|o| o.get("0x1::BridgeEscrowMultisig::AccountInfo"))
                                 .and_then(|o| {
                                     let ai: serde_json::Result<AccountInfo> =
                                         serde_json::from_value(o.clone());

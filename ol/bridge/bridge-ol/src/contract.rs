@@ -10,16 +10,16 @@ use diem_types::account_address::AccountAddress;
 use std::path::PathBuf;
 use anyhow::Error;
 
-pub struct BridgeEscrow {
+pub struct BridgeEscrowMultisig {
     /// Bridge escrow account
     pub escrow: AccountAddress,
 
     tx_params: TxParams,
 }
 
-impl BridgeEscrow {
-    pub fn new(escrow: AccountAddress,tx_params: TxParams) -> Result<BridgeEscrow, Error> {
-        Ok(BridgeEscrow { escrow, tx_params })
+impl BridgeEscrowMultisig {
+    pub fn new(escrow: AccountAddress,tx_params: TxParams) -> Result<BridgeEscrowMultisig, Error> {
+        Ok(BridgeEscrowMultisig { escrow, tx_params })
     }
 
     /// Deposit into escrow account
@@ -31,7 +31,7 @@ impl BridgeEscrow {
         save_path: Option<PathBuf>,
     ) -> Result<TransactionView, TxError> {
         // coins are scaled
-        let script = transaction_builder::encode_bridge_deposit_script_function(
+        let script = transaction_builder::encode_bridge_multisig_deposit_script_function(
             self.escrow,
             receiver,
             coins,
@@ -50,7 +50,7 @@ impl BridgeEscrow {
         save_path: Option<PathBuf>,
     ) -> Result<TransactionView, TxError> {
         // coins are scaled
-        let script = transaction_builder::encode_bridge_withdraw_script_function(
+        let script = transaction_builder::encode_bridge_multisig_withdraw_script_function(
             self.escrow,
             sender_other,
             receiver,
@@ -68,7 +68,7 @@ impl BridgeEscrow {
         save_path: Option<PathBuf>,
     ) -> Result<TransactionView, TxError> {
         // coins are scaled
-        let script = transaction_builder::encode_bridge_close_transfer_script_function(
+        let script = transaction_builder::encode_bridge_multisig_close_transfer_script_function(
             self.escrow,
             transfer_id.clone(),
             close_other,

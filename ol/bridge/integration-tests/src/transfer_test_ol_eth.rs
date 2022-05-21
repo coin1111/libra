@@ -41,7 +41,7 @@ async fn test_transfer_ol_eth() {
         .unwrap();
     let tx_params = tx_params_wrapper(TxType::Mgmt);
     assert!(tx_params.is_ok());
-    let contract = bridge_ol::contract::BridgeEscrow::new(escrow_addr, tx_params.unwrap());
+    let contract = bridge_ol::contract::BridgeEscrowMultisig::new(escrow_addr, tx_params.unwrap());
     assert!(contract.is_ok());
 
     // Deposit into 0L

@@ -32,7 +32,7 @@ async fn test_transfer_eth_ol() {
     let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
     let ol_waypoint = tx_params.waypoint.clone();
     let ol_url = tx_params.url.clone();
-    let contract = bridge_ol::contract::BridgeEscrow::new(escrow_addr, tx_params);
+    let contract = bridge_ol::contract::BridgeEscrowMultisig::new(escrow_addr, tx_params);
     assert!(contract.is_ok());
 
     let ol_client = DiemClient::new(ol_url, ol_waypoint)
