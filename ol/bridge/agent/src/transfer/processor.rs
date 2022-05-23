@@ -1,22 +1,20 @@
 //! Bridge agent
-use crate::entrypoint::tx_params_wrapper;
 use crate::util::{read_eth_checkpoint, save_eth_checkpoint};
-use crate::{node::node::Node, node::query::QueryType};
+use crate::{node::node::Node};
 use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrowEth;
 use bridge_eth::config::Config;
 use bridge_eth::util::AccountInfo as AccountInfoEth;
-use bridge_ol::contract::BridgeEscrowMultisig;
 use ethers::prelude::{ H160, Wallet};
 use ethers::types::{Address, U256};
 use move_core_types::account_address::AccountAddress;
-use ol_types::config::TxType;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::str::FromStr;
 use crate::transfer::agent_eth::{AgentEth, EthLockedInfo};
+use crate::transfer::agent_ol::Agent0L;
 
+/// Account data used in transfer
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct AccountInfo {
+pub struct AccountInfo {
     sender_this: String,
     sender_other: String,
     receiver_this: String,
@@ -30,12 +28,7 @@ struct AccountInfo {
 
 /// Bridge processor struct
 pub struct Processor {
-    /// Node to connect to blockchain
-    pub node_ol: Node,
-
-    /// BridgeEscrow contract for 0L
-    pub bridge_escrow_ol: BridgeEscrowMultisig,
-
+    agent_ol: Agent0L,
     agent_eth: AgentEth,
 }
 
@@ -48,11 +41,9 @@ impl Processor {
         agent_eth: Option<Wallet>,
     ) -> Result<Processor, String> {
         let agent_eth = AgentEth::new(&config_eth, &agent_eth)?;
-        let tx_params = tx_params_wrapper(TxType::Mgmt).map_err(|err| err.to_string())?;
-
+         let agent_ol = Agent0L::new(ol_escrow,node_ol)?;
         Ok(Processor {
-            node_ol,
-            bridge_escrow_ol: BridgeEscrowMultisig::new(ol_escrow, tx_params).unwrap(),
+            agent_ol,
             agent_eth,
         })
     }
@@ -105,7 +96,7 @@ impl Processor {
         // this means that withdrawal to a recepient on 0L has been made already
         // and we need to cleanup this transfer account on both chains - 1) close locked entry on ETH
         // and 2) remove unlocked entry on 0L strictly in this order
-        let unlocked_ol_exists = self.query_ol_unlocked().and_then(|v| {
+        let unlocked_ol_exists = self.agent_ol.query_ol_unlocked().and_then(|v| {
             Ok(v.iter()
                 .find(|ai| ai.transfer_id == transfer_id_str)
                 .and_then(|ai| Some(ai.clone())))
@@ -159,10 +150,10 @@ impl Processor {
         // remove 0L unlocked entry
         println!("INFO: will close unlocked 0L account for transfer_id: {:?}", transfer_id_str);
         // if account voted, skip
-        if Self::is_voted_ol(ai_ol, self.node_ol.app_conf.profile.account) {
+        if Self::is_voted_ol(ai_ol, self.agent_ol.node_ol.app_conf.profile.account) {
             return Ok(());
         }
-        self.bridge_escrow_ol.bridge_close_transfer(
+        self.agent_ol.bridge_escrow_ol.bridge_close_transfer(
             &locked_eth.transfer_id.to_vec(),
             true, // close_other=true => remove unlocked entry
             None,
@@ -183,7 +174,7 @@ impl Processor {
         // if already voted then skip
         if unlocked_ol_exists.as_ref().and_then(|ai| {
             Some(Self::is_voted_ol(ai,
-                              self.node_ol.app_conf.profile.account))
+                              self.agent_ol.node_ol.app_conf.profile.account))
         }).is_some() {
             return Ok(());
         }
@@ -200,7 +191,8 @@ impl Processor {
         println!("INFO: withdraw from bridge on 0L chain, transfer_id: {:?}, from: {:?}, to {:?}, amount: {:?}",
                  locked_ai.transfer_id,
                  hex::encode(locked_ai.sender_this.clone()), receiver_this, locked_ai.balance);
-        self.bridge_escrow_ol
+        self.agent_ol
+            .bridge_escrow_ol
             .bridge_withdraw(
                 locked_ai.sender_this.as_bytes().to_vec(),
                 receiver_this,
@@ -245,7 +237,7 @@ impl Processor {
     /// Process autstanding transfers
     pub async fn process_transfers_ol(&mut self) -> Result<(), String> {
         println!("INFO: process 0L transfers");
-        let ais = self.query_ol_locked()?;
+        let ais = self.agent_ol.query_ol_locked()?;
 
         // Process one entry at a time
         match ais.get(0) {
@@ -282,7 +274,7 @@ impl Processor {
                 ai.transfer_id
             );
             // Query locked entries on 0L chain
-            let locked_ol_entries = self.query_ol_locked()?;
+            let locked_ol_entries = self.agent_ol.query_ol_locked()?;
 
             // Find entry for this transfer id
             let locked_ol = locked_ol_entries
@@ -331,12 +323,13 @@ impl Processor {
     fn close_account_ol(&mut self, transfer_id: &[u8; 16], locked_ol: Option<&AccountInfo>) -> Result<(), String> {
         println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
         // if this agent voted, skip
-        if Self::is_voted_ol(locked_ol.unwrap(), self.node_ol.app_conf.profile.account) {
+        if Self::is_voted_ol(locked_ol.unwrap(), self.agent_ol.node_ol.app_conf.profile.account) {
             return Ok(());
         }
 
         // otherwise vote
         return self
+            .agent_ol
             .bridge_escrow_ol
             .bridge_close_transfer(
                 &transfer_id.to_vec(),
@@ -361,80 +354,6 @@ impl Processor {
                 _ => false,
             }
         }).is_some()
-    }
-
-    fn query_ol_locked(&mut self) -> Result<Vec<AccountInfo>, String> {
-        return self.query_account_info("locked");
-    }
-    fn query_ol_unlocked(&mut self) -> Result<Vec<AccountInfo>, String> {
-        return self.query_account_info("unlocked");
-    }
-
-    // Example of account info
-    /*
-    {
-    "modifiers":["copy","drop","store"],
-    "struct":{"0x1::BridgeEscrowMultisig::AccountInfo":{
-    "sender_this": "770b2c65843b25ca12ca48091fc33cd8",
-    "sender_other": "",
-    "receiver_this": "8671af7a44f80253f3e141123ff4a7d2",
-    "receiver_other": "",
-    "balance": 100,
-    "transfer_id": "1111",
-    "votes":[],
-    "current_votes":0,
-    "is_closed":false,
-    }}},
-    */
-    fn query_account_info(&mut self, field_name: &str) -> Result<Vec<AccountInfo>, String> {
-        let query_type = QueryType::MoveValue {
-            account: self.bridge_escrow_ol.escrow.clone(),
-            module_name: String::from("BridgeEscrowMultisig"),
-            struct_name: String::from("EscrowState"),
-            key_name: String::from(field_name),
-        };
-
-        match self.node_ol.query_locked(query_type) {
-            Ok(info) => {
-                let res: serde_json::Result<Value> = serde_json::from_str(info.as_str());
-                let mut ais: Vec<AccountInfo> = Vec::new();
-                match res {
-                    Ok(v) => {
-                        let mut i = 0;
-                        loop {
-                            let r = v
-                                .get(i)
-                                .and_then(|o| o.as_object())
-                                .and_then(|o| o.get("struct"))
-                                .and_then(|o| o.get("0x1::BridgeEscrowMultisig::AccountInfo"))
-                                .and_then(|o| {
-                                    let ai: serde_json::Result<AccountInfo> =
-                                        serde_json::from_value(o.clone());
-                                    match ai {
-                                        Ok(i) => ais.push(i),
-                                        _ => {}
-                                    }
-                                    Some({})
-                                });
-                            if r.is_none() {
-                                break;
-                            }
-                            i += 1;
-                        }
-                        return Ok(ais);
-                    }
-
-                    Err(e) => {
-                        println!("ERROR: {}", e);
-                        return Err(format!("parse error: {:?}", e));
-                    }
-                }
-            }
-            Err(e) => {
-                println!("ERROR: {}", e);
-                return Err(format!("query error: {:?}", e));
-            }
-        }
     }
 }
 
