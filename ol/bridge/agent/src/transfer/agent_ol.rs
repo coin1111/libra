@@ -30,13 +30,11 @@ impl Agent0L {
         })
     }
 
-    pub fn query_ol_locked(&mut self) -> Result<Vec<AccountInfo>, String> {
-        return self.query_account_info("locked")
-            .map_err(|e|e.to_string());
+    pub fn query_ol_locked(&mut self) -> Result<Vec<AccountInfo>, Error> {
+        return self.query_account_info("locked");
     }
-    pub fn query_ol_unlocked(&mut self) -> Result<Vec<AccountInfo>, String> {
-        return self.query_account_info("unlocked")
-            .map_err(|e|e.to_string());
+    pub fn query_ol_unlocked(&mut self) -> Result<Vec<AccountInfo>, Error> {
+        return self.query_account_info("unlocked");
     }
 
     // Example of account info

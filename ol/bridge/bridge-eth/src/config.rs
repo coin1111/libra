@@ -1,6 +1,7 @@
 use ethers::types::Address;
 use serde_json::{Map, Value};
 use std::fs;
+use anyhow::{Error,anyhow,bail};
 #[derive(Debug, Clone)]
 pub struct Config {
     obj: Map<String, Value>,
@@ -17,34 +18,34 @@ impl Config {
         })
     }
     /// Gets escrow contract address
-    pub fn get_escrow_contract_address(&self) -> Result<Address, String> {
+    pub fn get_escrow_contract_address(&self) -> Result<Address, Error> {
         let escrow_addr_str = self.obj.get("escrowContract").map_or_else(
-            || Err(format!("error escrowContract value is missing")),
+            || bail!("error escrowContract value is missing"),
             |x| Ok(x),
         )?;
         (escrow_addr_str.to_string().replace("\"", ""))[2..]
             .parse::<Address>()
-            .map_err(|e| format!("error parsing address: {:?}", e))
+            .map_err(|e| anyhow!("error parsing address: {:?}", e))
     }
 
-    pub fn get_ol_contract_address(&self) -> Result<Address, String> {
+    pub fn get_ol_contract_address(&self) -> Result<Address, Error> {
         let addr_str = self.obj.get("olTokenContract").map_or_else(
-            || Err(format!("error olTokenContract value is missing")),
+            || bail!("error olTokenContract value is missing"),
             |x| Ok(x),
         )?;
         (addr_str.to_string().replace("\"", ""))[2..]
             .parse::<Address>()
-            .map_err(|e| format!("error parsing address: {:?}", e))
+            .map_err(|e| anyhow!("error parsing address: {:?}", e))
     }
     /// Gets provider url
-    pub fn get_provider_url(&self) -> Result<String, String> {
+    pub fn get_provider_url(&self) -> Result<String, Error> {
         self.obj
             .get("url")
             .map_or_else(
-                || Err(format!("error url value is missing")),
+                || bail!("error url value is missing"),
                 |x| {
                     Ok(x.as_str().map_or_else(
-                        || Err(format!("error url value is invalid")),
+                        || bail!("error url value is invalid"),
                         |x| Ok(String::from(x)),
                     ))
                 },
@@ -52,14 +53,14 @@ impl Config {
             .and_then(|x| x)
     }
     /// Gets gas price
-    pub fn get_gas_price(&self) -> Result<u64, String> {
+    pub fn get_gas_price(&self) -> Result<u64, Error> {
         self.obj
             .get("gasPrice")
             .map_or_else(
-                || Err(format!("error gasPrice value is missing")),
+                || bail!("error gasPrice value is missing"),
                 |x| {
                     Ok(x.as_u64().map_or_else(
-                        || Err(format!("error gasPrice value is invalid")),
+                        || bail!("error gasPrice value is invalid"),
                         |x| Ok(x),
                     ))
                 },

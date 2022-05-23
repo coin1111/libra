@@ -6,6 +6,7 @@ use ethers_core::abi::Token::Bool;
 use std::convert::TryInto;
 use uuid::Uuid;
 use ethers::abi::Token::Array;
+use anyhow::{bail,Error,anyhow};
 
 /// Transfer id to track bridge transactions
 #[derive(Debug, Clone)]
@@ -68,13 +69,13 @@ pub struct AccountInfo {
     pub votes: Vec<H160>,
     pub current_votes:ethers::prelude::U256,
 }
-pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> Result<[T; N], String> {
+pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> Result<[T; N], Error> {
     v.try_into()
-        .map_err(|v: Vec<T>| format!("Expected a Vec of length {} but it was {}", N, v.len()))
+        .map_err(|v: Vec<T>| anyhow!("Expected a Vec of length {} but it was {}", N, v.len()))
 }
 
 impl AccountInfo {
-    pub fn from(tuple: ethers::abi::Token) -> Result<AccountInfo, String> {
+    pub fn from(tuple: ethers::abi::Token) -> Result<AccountInfo, Error> {
         match tuple.clone() {
             ethers::abi::Token::Tuple(a) => match &a[..] {
                 [Address(sender_this),
@@ -96,7 +97,7 @@ impl AccountInfo {
                     for v in votes {
                         match &v {
                             Address(a) => votes_vec.push(a.clone()),
-                            _ =>  return Err(format!("Unexpected token {:?}", v)),
+                            _ =>  bail!("Unexpected token {:?}", v),
                         };
                     }
                     Ok(AccountInfo {
@@ -112,9 +113,9 @@ impl AccountInfo {
                         current_votes : *current_votes,
                     })
                 }
-                _ => Err(format!("Cannot match array {:?}", a)),
+                _ => bail!("Cannot match array {:?}", a),
             },
-            _ => Err(format!("Cannot match tuple {:?}", tuple)),
+            _ => bail!("Cannot match tuple {:?}", tuple),
         }
     }
 }

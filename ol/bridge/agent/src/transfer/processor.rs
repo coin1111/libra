@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use crate::transfer::agent_eth::{AgentEth, EthLockedInfo};
 use crate::transfer::agent_ol::Agent0L;
-use anyhow::{Error,anyhow};
+use anyhow::{Error,anyhow,bail};
 
 /// Account data used in transfer
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,7 +51,7 @@ impl Processor {
     }
 
     /// Process outstanding transfers
-    pub async fn process_transfers_eth(&mut self) -> Result<(), String> {
+    pub async fn process_transfers_eth(&mut self) -> Result<(), Error> {
         println!("INFO: process deposits from ETH to 0L");
         // use checkpoint to get start element
         let start_idx = read_eth_checkpoint();
@@ -76,7 +76,7 @@ impl Processor {
     /// then make a withdrawal on 0L, which will create an entry in unlocked struct on 0L.
     /// 3. If locked entry is marked as closed on ETH chain then unlocked entry can be removed on 0L chain,
     /// this completes a transfer on both chains.
-    async fn process_transfer_eth(&mut self, locked_eth: EthLockedInfo) -> Result<(), String> {
+    async fn process_transfer_eth(&mut self, locked_eth: EthLockedInfo) -> Result<(), Error> {
         println!(
             "INFO: processing transfer_id: {:?} on ETH chain",
             hex::encode(locked_eth.transfer_id)
@@ -148,7 +148,7 @@ impl Processor {
         locked_ai.votes.iter().find(|x| **x == address_eth).is_some()
     }
 
-    fn remove_unlocked_ol(&mut self, ai_ol: &AccountInfo, locked_eth: &EthLockedInfo, transfer_id_str: String) -> Result<(), String> {
+    fn remove_unlocked_ol(&mut self, ai_ol: &AccountInfo, locked_eth: &EthLockedInfo, transfer_id_str: String) -> Result<(), Error> {
         // remove 0L unlocked entry
         println!("INFO: will close unlocked 0L account for transfer_id: {:?}", transfer_id_str);
         // if account voted, skip
@@ -160,7 +160,7 @@ impl Processor {
             true, // close_other=true => remove unlocked entry
             None,
         )
-            .map_err(|err| format!("ERROR: failed to remove locked: {:?}", err))
+            .map_err(|err| anyhow!("ERROR: failed to remove locked: {:?}", err))
             .map(|tx| {
                 println!("INFO: closed unlocked 0L account for transfer_id: {:?}, tx: {:?}",
                          transfer_id_str, tx)
@@ -171,7 +171,7 @@ impl Processor {
         return save_eth_checkpoint(*locked_eth);
     }
 
-    fn withdraw_ol(&mut self, locked_ai: AccountInfoEth, unlocked_ol_exists: &Option<AccountInfo>) -> Result<(), String>{
+    fn withdraw_ol(&mut self, locked_ai: AccountInfoEth, unlocked_ol_exists: &Option<AccountInfo>) -> Result<(), Error>{
         // unlocked entry on 0L doesn't exist or not yet closed
         // if already voted then skip
         if unlocked_ol_exists.as_ref().and_then(|ai| {
@@ -184,7 +184,7 @@ impl Processor {
         // transfer fund on 0L
         let receiver_this =
             AccountAddress::from_bytes(locked_ai.receiver_other).map_err(|err| {
-                format!(
+                anyhow!(
                     "cannot parse receiver_other: {:?}, error: {:?}",
                     locked_ai.receiver_other, err
                 )
@@ -202,7 +202,7 @@ impl Processor {
                 locked_ai.transfer_id.to_vec(),
                 None,
             )
-            .map_err(|err| format!("ERROR: 0L chain bridge_withdraw, error: {:?}", err))
+            .map_err(|err| anyhow!("ERROR: 0L chain bridge_withdraw, error: {:?}", err))
             .map(|tx| println!("INFO: 0L transaction: {:?}", tx))
     }
 
@@ -212,7 +212,7 @@ impl Processor {
         sender_this: AccountAddress,
         receiver_eth: H160,
         transfer_id: [u8; 16],
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         // transfer 0L -> ETH
         let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
         let data = contract
@@ -220,11 +220,11 @@ impl Processor {
             .gas_price(self.agent_eth.gas_price);
         data.send()
             .await
-            .map_err(|e| format!("failed withdraw from 0L: {:?}", e))
+            .map_err(|e| anyhow!("failed withdraw from 0L: {:?}", e))
             .map(|tx| println!("INFO: withdraw from 0L, tx: {:?}", tx))
     }
 
-    async fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), String> {
+    async fn close_eth_account(&self, transfer_id: [u8; 16]) -> Result<(), Error> {
         // close ETH transfer account
         let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
         let data = contract
@@ -232,12 +232,12 @@ impl Processor {
             .gas_price(self.agent_eth.gas_price);
         data.send()
             .await
-            .map_err(|e| format!("Error pending: {}", e))
+            .map_err(|e| anyhow!("Error pending: {}", e))
             .map(|tx| println!("INFO: transaction: {:?}", tx))
     }
 
     /// Process autstanding transfers
-    pub async fn process_transfers_ol(&mut self) -> Result<(), String> {
+    pub async fn process_transfers_ol(&mut self) -> Result<(), Error> {
         println!("INFO: process 0L transfers");
         let ais = self.agent_ol.query_ol_locked()?;
 
@@ -255,10 +255,10 @@ impl Processor {
     // Transfer deposit from escrow to destination receiver
     // Ensure that unlocked doesn't have an entry for this transfer
     // This indicates that transfer has not been made, thus proceed with transfer
-    async fn process_transfer_ol(&mut self, ai: &AccountInfo) -> Result<(), String> {
+    async fn process_transfer_ol(&mut self, ai: &AccountInfo) -> Result<(), Error> {
         println!("INFO: Processing deposit: {:?}", ai);
         if ai.transfer_id.is_empty() {
-            return Err(format!("ERROR: Empty deposit id: {:?}", ai));
+            return Err(anyhow!("ERROR: Empty deposit id: {:?}", ai));
         }
 
         let transfer_id = hex_to_bytes(&ai.transfer_id)
@@ -292,7 +292,7 @@ impl Processor {
         }
     }
 
-    async fn withdraw_eth(&mut self, ai: &&AccountInfo, transfer_id: [u8; 16], unlocked_eth: AccountInfoEth) -> Result<(), String>{
+    async fn withdraw_eth(&mut self, ai: &&AccountInfo, transfer_id: [u8; 16], unlocked_eth: AccountInfoEth) -> Result<(), Error>{
         // if voted already then skip
         if unlocked_eth
             .votes
@@ -303,11 +303,11 @@ impl Processor {
         }
 
         let sender_this =
-            AccountAddress::from_str(&ai.sender_this).map_err(|err| err.to_string())?;
+            AccountAddress::from_str(&ai.sender_this).map_err(|err| anyhow!(err.to_string()))?;
 
         // try to parse receiver address on ETH chain
         let receiver_eth = hex::decode(&ai.receiver_other)
-            .map_err(|err| err.to_string())
+            .map_err(|err| anyhow!(err.to_string()))
             .and_then(|v| bridge_eth::util::vec_to_array::<u8, 20>(v))
             .and_then(|a| Ok(ethers::types::Address::from(a)))?;
 
@@ -322,7 +322,8 @@ impl Processor {
             .await;
     }
 
-    fn close_account_ol(&mut self, transfer_id: &[u8; 16], locked_ol: Option<&AccountInfo>) -> Result<(), String> {
+    fn close_account_ol(&mut self, transfer_id: &[u8; 16], locked_ol: Option<&AccountInfo>)
+        -> Result<(), Error> {
         println!("INFO: remove locked on 0L: {:?}", locked_ol.unwrap());
         // if this agent voted, skip
         if Self::is_voted_ol(locked_ol.unwrap(), self.agent_ol.node_ol.app_conf.profile.account) {
@@ -338,7 +339,7 @@ impl Processor {
                 false, //close_other = false -> remove locked entry
                 None,
             )
-            .map_err(|err| format!("Failed to remove locked: {:?}", err))
+            .map_err(|err| anyhow!("Failed to remove locked: {:?}", err))
             .map(|tx| {
                 println!(
                     "INFO: removed unlocked entry on 0L chain for {:?}, tx: {:?}",
@@ -359,7 +360,7 @@ impl Processor {
     }
 }
 
-fn hex_to_bytes(s: &String) -> Result<Vec<u8>, String> {
+fn hex_to_bytes(s: &String) -> Result<Vec<u8>, Error> {
     if s.len() % 2 == 0 {
         match (0..s.len())
             .step_by(2)
@@ -370,9 +371,9 @@ fn hex_to_bytes(s: &String) -> Result<Vec<u8>, String> {
             .collect()
         {
             Some(r) => Ok(r),
-            _ => Err(format!("Cannot conver string {} to hex", s)),
+            _ => bail!("Cannot conver string {} to hex", s),
         }
     } else {
-        Err(format!("Can't conver string {:?} to hex", s))
+        bail!("Can't conver string {:?} to hex", s)
     }
 }

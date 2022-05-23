@@ -1,5 +1,6 @@
 //! Various util function for agent
 use std::fs;
+use anyhow::{anyhow,Error};
 use crate::transfer::agent_eth::EthLockedInfo;
 
 const ETH_AGENT_CHECKPOINT: &'static str = ".agent_checkpoint";
@@ -26,9 +27,9 @@ pub fn read_eth_checkpoint() -> i32 {
 }
 
 /// Save checkpoint to query ETH side of the bridge
-pub fn save_eth_checkpoint(locked: EthLockedInfo) -> Result<(),String>{
+pub fn save_eth_checkpoint(locked: EthLockedInfo) -> Result<(),Error>{
     let data = format!("{},{}", hex::encode(locked.transfer_id), locked.next_start);
     fs::write(ETH_AGENT_CHECKPOINT, data).map_err(|err| {
-        format!("Unable to write file {:?}, error: {:?}", ETH_AGENT_CHECKPOINT, err)
+        anyhow!("Unable to write file {:?}, error: {:?}", ETH_AGENT_CHECKPOINT, err)
     })
 }
