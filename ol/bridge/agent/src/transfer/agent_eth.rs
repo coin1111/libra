@@ -4,6 +4,8 @@ use bridge_eth::config::Config;
 use ethers::prelude::{Address, Client as ClientEth, Provider, Http, U256, Wallet, Wallet as WalletEth};
 use std::fmt;
 use std::convert::TryFrom;
+use bridge_eth::util::AccountInfo as AccountInfoEth;
+use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrowEth;
 
 /// ETH Agent
 pub struct AgentEth {
@@ -71,4 +73,43 @@ impl AgentEth {
             gas_price,
         })
     }
+    /// Query locked AccountInfo on ETH
+    pub async fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        let contract = BridgeEscrowEth::new(self.escrow_addr, &self.client);
+        let data = contract.get_locked_account_info(transfer_id);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|x| AccountInfoEth::from(x))
+    }
+
+    /// Query unlocked AccountInfo on ETH
+    pub async fn query_eth_unlocked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
+        let contract = BridgeEscrowEth::new(self.escrow_addr, &self.client);
+        let data = contract.get_unlocked_account_info(transfer_id);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|x| AccountInfoEth::from(x))
+    }
+
+    /// Get next unprocessed transfer id (locked AccountInfo) on ETH
+    pub async fn get_eth_next_locked_info(
+        &self,
+        start: U256,
+        len: U256,
+    ) -> Result<EthLockedInfo, String> {
+        let contract = BridgeEscrowEth::new(self.escrow_addr, &self.client);
+        let data = contract.get_next_transfer_id(start, len);
+        data.call()
+            .await
+            .map_err(|err| format!("ERROR: call: {:?}", err))
+            .and_then(|tuple| {
+                Ok(EthLockedInfo {
+                    transfer_id: tuple.0,
+                    next_start: tuple.1,
+                })
+            })
+    }
+
 }

@@ -66,7 +66,7 @@ impl Processor {
         // Query unlocked on ETH
         let start = U256::from(start_idx);
         let len: U256 = U256::from(10);
-        let locked_eth = self.get_eth_next_locked_info(start, len).await?;
+        let locked_eth = self.agent_eth.get_eth_next_locked_info(start, len).await?;
 
         println!("INFO: next locked on ETH chain : {}", locked_eth);
         if locked_eth.transfer_id == [0u8; 16] {
@@ -90,7 +90,7 @@ impl Processor {
         );
         // Check if this transfer is processed already,
         // e.g. locked entry on ETH chain is marked as closed
-        let locked_ai = self.query_eth_locked(locked_eth.transfer_id).await?;
+        let locked_ai = self.agent_eth.query_eth_locked(locked_eth.transfer_id).await?;
         if locked_ai.is_closed {
             println!("INFO: transfer is processed already: {:?}", locked_ai);
             return Ok(());
@@ -134,7 +134,7 @@ impl Processor {
             // Query ETH locked account we just closed.
             // Note we don't rely on success or failure of close_eth_account()
             // instead we directly query ETH chain to ensure that account is indeed closed.
-            let ai_eth = self.query_eth_locked(locked_eth.transfer_id).await?;
+            let ai_eth = self.agent_eth.query_eth_locked(locked_eth.transfer_id).await?;
             if !ai_eth.is_closed {
                 return Ok(());
             }
@@ -242,42 +242,6 @@ impl Processor {
             .map(|tx| println!("INFO: transaction: {:?}", tx))
     }
 
-    async fn query_eth_locked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-        let data = contract.get_locked_account_info(transfer_id);
-        data.call()
-            .await
-            .map_err(|err| format!("ERROR: call: {:?}", err))
-            .and_then(|x| AccountInfoEth::from(x))
-    }
-
-    async fn query_eth_unlocked(&self, transfer_id: [u8; 16]) -> Result<AccountInfoEth, String> {
-        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-        let data = contract.get_unlocked_account_info(transfer_id);
-        data.call()
-            .await
-            .map_err(|err| format!("ERROR: call: {:?}", err))
-            .and_then(|x| AccountInfoEth::from(x))
-    }
-
-    async fn get_eth_next_locked_info(
-        &self,
-        start: U256,
-        len: U256,
-    ) -> Result<EthLockedInfo, String> {
-        let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
-        let data = contract.get_next_transfer_id(start, len);
-        data.call()
-            .await
-            .map_err(|err| format!("ERROR: call: {:?}", err))
-            .and_then(|tuple| {
-                Ok(EthLockedInfo {
-                    transfer_id: tuple.0,
-                    next_start: tuple.1,
-                })
-            })
-    }
-
     /// Process autstanding transfers
     pub async fn process_transfers_ol(&mut self) -> Result<(), String> {
         println!("INFO: process 0L transfers");
@@ -307,7 +271,7 @@ impl Processor {
             .and_then(|v| bridge_eth::util::vec_to_array::<u8, 16>(v))?;
 
         // Query unlocked on ETH
-        let unlocked_eth: AccountInfoEth = self.query_eth_unlocked(transfer_id.clone()).await?;
+        let unlocked_eth: AccountInfoEth = self.agent_eth.query_eth_unlocked(transfer_id.clone()).await?;
         // Withdraw funds on ETH if unlocked entry on ETH is not present
         if unlocked_eth.transfer_id == [0u8; 16] || !unlocked_eth.is_closed {
             return self.withdraw_eth(&ai, transfer_id, unlocked_eth).await;
