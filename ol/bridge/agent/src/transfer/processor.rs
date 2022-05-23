@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use crate::transfer::agent_eth::{AgentEth, EthLockedInfo};
 use crate::transfer::agent_ol::Agent0L;
+use anyhow::{Error,anyhow};
 
 /// Account data used in transfer
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,8 +40,9 @@ impl Processor {
         node_ol: Node,
         config_eth: Option<Config>,
         agent_eth: Option<Wallet>,
-    ) -> Result<Processor, String> {
-        let agent_eth = AgentEth::new(&config_eth, &agent_eth)?;
+    ) -> Result<Processor, Error> {
+        let agent_eth = AgentEth::new(&config_eth, &agent_eth)
+            .map_err(|e|anyhow!("err: {:?}",e))?;
          let agent_ol = Agent0L::new(ol_escrow,node_ol)?;
         Ok(Processor {
             agent_ol,

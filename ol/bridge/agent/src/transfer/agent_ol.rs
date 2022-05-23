@@ -21,9 +21,9 @@ impl Agent0L {
     pub fn new(
         ol_escrow: AccountAddress,
         node_ol: Node,
-    ) -> Result<Agent0L, String> {
-        let tx_params = tx_params_wrapper(TxType::Mgmt).map_err(|err| err.to_string())?;
-        let bridge_escrow_ol = BridgeEscrowMultisig::new(ol_escrow, tx_params).map_err(|err| err.to_string())?;
+    ) -> Result<Agent0L, Error> {
+        let tx_params = tx_params_wrapper(TxType::Mgmt)?;
+        let bridge_escrow_ol = BridgeEscrowMultisig::new(ol_escrow, tx_params)?;
         Ok(Agent0L {
             node_ol,
             bridge_escrow_ol,
