@@ -214,7 +214,25 @@ address 0x1 {
             if (Option::is_none(&idx_opt)) {
                 // if this is the first call init transfer entry
                 let votes = Vector::empty<address>();
-                Vector::push_back(&mut votes, sender_address);
+                // special case of min_votes = 1
+                let is_closed = false;
+                let current_votes = 0;
+                if (state.min_votes == 1) {
+                    // insert AccountInfo entry in closed state,e .g. single voter already voted
+                    is_closed = true;
+                    // transfer funds
+                    // escrow has enough funds
+                    assert(Diem::get_value(&state.tokens) >= balance, ERROR_INSUFFICIENT_BALANCE);
+
+                    // withdraw tokens from escrow
+                    let tokens = Diem::withdraw(&mut state.tokens, balance);
+
+                    // move funds from escrow to user account
+                    DiemAccount::deposit_tokens<GAS>(sender, escrow_address, receiver_this, tokens, x"", x"")
+                } else {
+                    Vector::push_back(&mut votes, sender_address);
+                    current_votes = 1;
+                };
                 let ai = AccountInfo{
                     sender_this: ZERO_ADDRESS,
                     sender_other: sender_other,
@@ -223,8 +241,8 @@ address 0x1 {
                     balance: balance,
                     transfer_id: transfer_id,
                     votes: votes,
-                    current_votes: 1,
-                    is_closed: false,
+                    current_votes,
+                    is_closed,
                 };
                 // update escrow state
                 Vector::push_back<AccountInfo>(&mut state.unlocked, ai);

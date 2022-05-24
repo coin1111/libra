@@ -298,7 +298,7 @@ impl Processor {
             .votes
             .iter()
             .find(|x| **x == self.agent_eth.client.address())
-            .is_none() {
+            .is_some() {
             return Ok(());
         }
 
