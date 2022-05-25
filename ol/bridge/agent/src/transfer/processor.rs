@@ -110,6 +110,8 @@ impl Processor {
         if unlocked_ol_exists.is_some()  && is_closed {
             if Self::is_voted_eth(&locked_ai, self.agent_eth.client.address()) {
                 // skip if this agent voted on ETH side already
+                println!("INFO: close_eth_account: agent {:?} already voted on ETH for transfer {:?}",
+                         self.agent_eth.client.address(), transfer_id_str);
                 return Ok(());
             }
             let unlocked_ol = &unlocked_ol_exists.unwrap();
@@ -150,11 +152,15 @@ impl Processor {
 
     fn remove_unlocked_ol(&mut self, ai_ol: &AccountInfo, locked_eth: &EthLockedInfo, transfer_id_str: String) -> Result<(), Error> {
         // remove 0L unlocked entry
-        println!("INFO: will close unlocked 0L account for transfer_id: {:?}", transfer_id_str);
-        // if account voted, skip
+         // if account voted, skip
         if Self::is_voted_ol(ai_ol, self.agent_ol.node_ol.app_conf.profile.account) {
+            println!("INFO: remove_unlocked_ol: agent {:?} already voted 0L account for transfer_id: {:?}",
+                     self.agent_ol.node_ol.app_conf.profile.account,
+                     transfer_id_str);
             return Ok(());
         }
+        println!("INFO: remove_unlocked_ol: will close unlocked 0L account for transfer_id: {:?}", transfer_id_str);
+
         self.agent_ol.bridge_escrow_ol.bridge_close_transfer(
             &locked_eth.transfer_id.to_vec(),
             true, // close_other=true => remove unlocked entry
@@ -166,8 +172,22 @@ impl Processor {
                          transfer_id_str, tx)
             })?;
 
+        // check if entry is succesfully removed
+        // and update checkpoint
+        let unlocked_ol_exists = self.agent_ol.query_ol_unlocked().and_then(|v| {
+            Ok(v.iter()
+                .find(|ai| ai.transfer_id == transfer_id_str)
+                .and_then(|_| Some(true)).unwrap_or(false))
+        })?;
+
+        if unlocked_ol_exists {
+            return Ok(());
+        }
+
         // Save checkpoint of the last transfer id processed to a file
         // so that the next time we know where to start searching for unprocessed transfers
+        println!("INFO: update eth checkpoint {:?} for transfer_id: {:?}",
+                 transfer_id_str, *locked_eth);
         return save_eth_checkpoint(*locked_eth);
     }
 
@@ -177,7 +197,11 @@ impl Processor {
         if unlocked_ol_exists.as_ref().and_then(|ai| {
             Some(Self::is_voted_ol(ai,
                               self.agent_ol.node_ol.app_conf.profile.account))
-        }).is_some() {
+        }).unwrap_or(false) {
+            println!("INFO: withdraw_ol, agent {:?} already voted on transfer_id: {:?}, current_votes: {:?}",
+                     self.agent_ol.node_ol.app_conf.profile.account,
+                     unlocked_ol_exists.as_ref().unwrap().transfer_id.clone(),
+                     unlocked_ol_exists.as_ref().unwrap().current_votes);
             return Ok(());
         }
 
