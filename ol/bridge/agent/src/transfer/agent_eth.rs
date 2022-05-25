@@ -1,12 +1,13 @@
-
 //! Ethereum client
-use bridge_eth::config::Config;
-use ethers::prelude::{Address, Client as ClientEth, Provider, Http, U256, Wallet, Wallet as WalletEth};
-use std::fmt;
-use std::convert::TryFrom;
-use bridge_eth::util::AccountInfo as AccountInfoEth;
+use anyhow::{anyhow, bail, Error};
 use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig as BridgeEscrowEth;
-use anyhow::{Error,anyhow,bail};
+use bridge_eth::config::Config;
+use bridge_eth::util::AccountInfo as AccountInfoEth;
+use ethers::prelude::{
+    Address, Client as ClientEth, Http, Provider, Wallet, Wallet as WalletEth, U256,
+};
+use std::convert::TryFrom;
+use std::fmt;
 
 /// ETH Agent
 pub struct AgentEth {
@@ -43,21 +44,20 @@ impl fmt::Display for EthLockedInfo {
 
 impl AgentEth {
     /// Create new ETH agent
-    pub fn new(
-        config_eth: &Option<Config>,
-        agent_eth: &Option<Wallet>,
-    ) -> Result<AgentEth, Error> {
-        let config = config_eth.as_ref().ok_or(anyhow!("cannot get eth config"))?;
+    pub fn new(config_eth: &Option<Config>, agent_eth: &Option<Wallet>) -> Result<AgentEth, Error> {
+        let config = config_eth
+            .as_ref()
+            .ok_or(anyhow!("cannot get eth config"))?;
         let escrow_addr = config.get_escrow_contract_address()?;
-        let provider_eth:Provider<Http> = config.get_provider_url()
-            .and_then(|url|Provider::<Http>::try_from(url.as_str())
-                .map_err(|e|anyhow!("error parsing url: {:?}",e.to_string())))?;
+        let provider_eth: Provider<Http> = config.get_provider_url().and_then(|url| {
+            Provider::<Http>::try_from(url.as_str())
+                .map_err(|e| anyhow!("error parsing url: {:?}", e.to_string()))
+        })?;
 
         let gas_price = config.get_gas_price()?;
 
-        let client_r: Result<ClientEth<Http, WalletEth>,Error> = match &agent_eth {
-            Some(w) =>
-                Ok(w.clone().connect(provider_eth.clone())),
+        let client_r: Result<ClientEth<Http, WalletEth>, Error> = match &agent_eth {
+            Some(w) => Ok(w.clone().connect(provider_eth.clone())),
             _ => bail!("wallet is not provided"),
         };
         let client = client_r?;
@@ -105,5 +105,4 @@ impl AgentEth {
                 })
             })
     }
-
 }

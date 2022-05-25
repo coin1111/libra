@@ -517,7 +517,25 @@
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>(&idx_opt)) {
         // <b>if</b> this is the first call init transfer entry
         <b>let</b> votes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
-        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> votes, sender_address);
+        // special case of min_votes = 1
+        <b>let</b> is_closed = <b>false</b>;
+        <b>let</b> current_votes = 0;
+        <b>if</b> (state.min_votes == 1) {
+            // insert <a href="BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig_AccountInfo">AccountInfo</a> entry in closed state,e .g. single voter already voted
+            is_closed = <b>true</b>;
+            // transfer funds
+            // escrow has enough funds
+            <b>assert</b>(<a href="Diem.md#0x1_Diem_get_value">Diem::get_value</a>(&state.tokens) &gt;= balance, <a href="BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig_ERROR_INSUFFICIENT_BALANCE">ERROR_INSUFFICIENT_BALANCE</a>);
+
+            // withdraw tokens from escrow
+            <b>let</b> tokens = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> state.tokens, balance);
+
+            // <b>move</b> funds from escrow <b>to</b> user account
+            <a href="DiemAccount.md#0x1_DiemAccount_deposit_tokens">DiemAccount::deposit_tokens</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, escrow_address, receiver_this, tokens, x"", x"")
+        } <b>else</b> {
+            <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> votes, sender_address);
+            current_votes = 1;
+        };
         <b>let</b> ai = <a href="BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig_AccountInfo">AccountInfo</a>{
             sender_this: <a href="BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig_ZERO_ADDRESS">ZERO_ADDRESS</a>,
             sender_other: sender_other,
@@ -526,8 +544,8 @@
             balance: balance,
             transfer_id: transfer_id,
             votes: votes,
-            current_votes: 1,
-            is_closed: <b>false</b>,
+            current_votes,
+            is_closed,
         };
         // <b>update</b> escrow state
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="BridgeEscrowMultisig.md#0x1_BridgeEscrowMultisig_AccountInfo">AccountInfo</a>&gt;(&<b>mut</b> state.unlocked, ai);

@@ -1,12 +1,12 @@
 //! Agent for 0L
 use crate::entrypoint::tx_params_wrapper;
+use crate::transfer::processor::AccountInfo;
 use crate::{node::node::Node, node::query::QueryType};
+use anyhow::{anyhow, Error};
 use bridge_ol::contract::BridgeEscrowMultisig;
 use move_core_types::account_address::AccountAddress;
 use ol_types::config::TxType;
 use serde_json::Value;
-use crate::transfer::processor::AccountInfo;
-use anyhow::{anyhow,Error};
 
 pub struct Agent0L {
     /// Node to connect to blockchain
@@ -18,10 +18,7 @@ pub struct Agent0L {
 
 impl Agent0L {
     /// Create a new 0L agent
-    pub fn new(
-        ol_escrow: AccountAddress,
-        node_ol: Node,
-    ) -> Result<Agent0L, Error> {
+    pub fn new(ol_escrow: AccountAddress, node_ol: Node) -> Result<Agent0L, Error> {
         let tx_params = tx_params_wrapper(TxType::Mgmt)?;
         let bridge_escrow_ol = BridgeEscrowMultisig::new(ol_escrow, tx_params)?;
         Ok(Agent0L {
@@ -104,4 +101,3 @@ impl Agent0L {
         }
     }
 }
-

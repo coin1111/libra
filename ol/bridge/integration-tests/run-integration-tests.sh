@@ -6,5 +6,5 @@ export ETH_ACCOUNTS_PATH=$HOME/libra/ol/bridge/accounts-eth
 # 0L->ETH transfer test
 cargo test --package integration-tests --lib transfer_test_ol_eth::test_transfer_ol_eth -- --exact
 # ETH->0L transfer test
-#cargo test --package integration-tests --lib transfer_test_eth_ol::test_transfer_eth_ol -- --exact
+cargo test --package integration-tests --lib transfer_test_eth_ol::test_transfer_eth_ol -- --exact
 

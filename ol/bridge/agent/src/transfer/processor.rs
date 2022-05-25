@@ -285,6 +285,10 @@ impl Processor {
 
             // if entry is removed, nothing to do
             if locked_ol.is_none() {
+                println!(
+                    "INFO: withdrawal for transfer_id {:?} has been made on ETH,  locked entry has been removeed before for 0L",
+                    ai.transfer_id
+                );
                 return Ok(());
             }
 
@@ -293,12 +297,15 @@ impl Processor {
     }
 
     async fn withdraw_eth(&mut self, ai: &&AccountInfo, transfer_id: [u8; 16], unlocked_eth: AccountInfoEth) -> Result<(), Error>{
+        println!("INFO: Enter withdraw_eth for transfer_id: {:?}", hex::encode(transfer_id));
         // if voted already then skip
         if unlocked_eth
             .votes
             .iter()
             .find(|x| **x == self.agent_eth.client.address())
             .is_some() {
+            println!("INFO: withdraw_eth for transfer_id: {:?}. Agent is voted already {:?}",
+                hex::encode(transfer_id), self.agent_eth.client.address());
             return Ok(());
         }
 
@@ -313,7 +320,7 @@ impl Processor {
 
         // Transfer is not happened => transfer funds on ETH chain
         println!(
-            "INFO: invoke withdraw_eth for transfer_idL {:?} by agent {:?}",
+            "INFO: withdraw_eth withdraw for transfer_idL {:?} by agent {:?}",
             transfer_id,
             self.agent_eth.client.address()
         );
