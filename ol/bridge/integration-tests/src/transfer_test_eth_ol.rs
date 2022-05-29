@@ -4,19 +4,29 @@ use crate::util::get_eth_client;
 /// Agent must be running
 ///
 use anyhow::{anyhow, Error};
+use bridge_eth::bridge_escrow_multisig_mod::BridgeEscrowMultisig;
+use bridge_eth::util::AccountInfo as AccountInfoEth;
 use bridge_ol::submit_tx::tx_params_wrapper;
 use bridge_ol::submit_tx::TxError;
+use bridge_ol::util::vec_to_array;
 use cli::diem_client::DiemClient;
 use diem_types::account_address::AccountAddress;
+use ethers::prelude::{Http, Wallet};
 use ethers::types::U256;
 use ol_types::config::TxType;
 use std::convert::TryFrom;
 use std::{thread, time};
 use uuid::Uuid;
 
+// fn print_type_of<T>(_: &T) {
+//     println!("type: {}", std::any::type_name::<T>())
+// }
+
 #[tokio::main]
 #[test]
 async fn test_transfer_eth_ol() {
+    let transfer_id = Uuid::new_v4().as_bytes().to_vec();
+
     // Eth contract
     let (eth_ol_addr, eth_escrow_addr, eth_gas_price, eth_client_ol) = get_eth_client("pete");
     let eth_ol_token = bridge_eth::oltoken_mod::OLToken::new(eth_ol_addr, &eth_client_ol);
@@ -24,6 +34,7 @@ async fn test_transfer_eth_ol() {
         eth_escrow_addr,
         &eth_client_ol,
     );
+    //print_type_of(&eth_ol_bridge);
 
     // 0L contract
     let escrow_addr = "708B1D23219EB737035CB29A68F0F3A8"
@@ -65,7 +76,6 @@ async fn test_transfer_eth_ol() {
         .unwrap();
     println!("approve_tx: {:?}", approve_tx);
 
-    let transfer_id = Uuid::new_v4().as_bytes().to_vec();
     let deposit_data = eth_ol_bridge
         .create_transfer_account(
             *receiver_addr_ol,
@@ -96,6 +106,24 @@ async fn test_transfer_eth_ol() {
         thread::sleep(time::Duration::from_millis(1000));
     }
     assert!(tries < max_tries);
+
+    tries = 0;
+    while tries < max_tries {
+        let ai_locked_eth = query_eth_locked(
+            &eth_ol_bridge,
+            vec_to_array::<u8, 16>(transfer_id.clone()).unwrap(),
+        )
+        .await;
+        if ai_locked_eth.as_ref().unwrap().is_closed {
+            println!("{:?}", ai_locked_eth);
+            assert!(ai_locked_eth.as_ref().unwrap().is_closed);
+            assert!(ai_locked_eth.as_ref().unwrap().current_votes == U256::from(2));
+            break;
+        }
+        tries += 1;
+        thread::sleep(time::Duration::from_millis(1000));
+    }
+    assert!(tries < max_tries);
 }
 
 fn get_ol_balance(ol_client: &DiemClient, receiver_addr_ol: &AccountAddress) -> Result<f64, Error> {
@@ -111,4 +139,16 @@ fn get_ol_balance(ol_client: &DiemClient, receiver_addr_ol: &AccountAddress) -> 
             receiver_addr_ol
         )),
     }
+}
+
+/// Query unlocked AccountInfo on ETH
+pub async fn query_eth_locked<'a>(
+    contract: &BridgeEscrowMultisig<'_, Http, Wallet>,
+    transfer_id: [u8; 16],
+) -> Result<AccountInfoEth, Error> {
+    let data = contract.get_locked_account_info(transfer_id);
+    data.call()
+        .await
+        .map_err(|err| anyhow!("ERROR: call: {:?}", err))
+        .and_then(|x| AccountInfoEth::from(x))
 }
