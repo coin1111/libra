@@ -115,7 +115,6 @@ async fn test_transfer_eth_ol() {
 
     let diff = (balance_ol_after - balance_ol_before) as u64;
     assert!(diff == amount);
-
 }
 
 fn get_ol_balance(ol_client: &DiemClient, receiver_addr_ol: &AccountAddress) -> Result<f64, Error> {
@@ -144,7 +143,3 @@ pub async fn query_eth_locked<'a>(
         .map_err(|err| anyhow!("ERROR: call: {:?}", err))
         .and_then(|x| AccountInfoEth::from(x))
 }
-
-// pub async fn query_ol_unlocked(ol_client:&DiemClient)-> Result<AccountInfo, Error>  {
-//
-// }
