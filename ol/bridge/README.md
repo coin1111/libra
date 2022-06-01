@@ -48,7 +48,7 @@ cd ~/libra/ol/bridge
 ### Create 0L Test Account
 ```asm
 cd ~/libra/ol/bridge
-./create-accounts.sh
+./create-accounts.sh 2 # init bridge escrow with at least 2 signers for mutisig
 ```
 
 ## Launch ETH Hardhat Dev Network 
@@ -65,7 +65,7 @@ npx hardhat compile
 # run ETH node
 ./run-local-node.sh
 # deploy ETH bridge contracts
-./deploy-local.sh
+./deploy-local.sh # init bridge escrow with at least 2 signers for mutisig
 ```
 
 ## Test Bridge Agent
