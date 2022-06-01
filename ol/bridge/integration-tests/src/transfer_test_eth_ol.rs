@@ -92,22 +92,6 @@ async fn test_transfer_eth_ol() {
     let mut tries = 0;
     let max_tries = 300;
 
-    // Wait until agents transfer funds to 0L
-    while tries < max_tries {
-        // Balance after
-        let balance_ol_after = get_ol_balance(&ol_client, &receiver_addr_ol).unwrap();
-        println!("Balance after: {}", balance_ol_after);
-
-        let diff = (balance_ol_after - balance_ol_before) as u64;
-        if diff == amount {
-            break;
-        }
-        tries += 1;
-        thread::sleep(time::Duration::from_millis(1000));
-    }
-    assert!(tries < max_tries);
-
-    tries = 0;
     while tries < max_tries {
         let ai_locked_eth = query_eth_locked(
             &eth_ol_bridge,
@@ -124,6 +108,14 @@ async fn test_transfer_eth_ol() {
         thread::sleep(time::Duration::from_millis(1000));
     }
     assert!(tries < max_tries);
+
+    // Balance after
+    let balance_ol_after = get_ol_balance(&ol_client, &receiver_addr_ol).unwrap();
+    println!("Balance after: {}", balance_ol_after);
+
+    let diff = (balance_ol_after - balance_ol_before) as u64;
+    assert!(diff == amount);
+
 }
 
 fn get_ol_balance(ol_client: &DiemClient, receiver_addr_ol: &AccountAddress) -> Result<f64, Error> {
@@ -152,3 +144,7 @@ pub async fn query_eth_locked<'a>(
         .map_err(|err| anyhow!("ERROR: call: {:?}", err))
         .and_then(|x| AccountInfoEth::from(x))
 }
+
+// pub async fn query_ol_unlocked(ol_client:&DiemClient)-> Result<AccountInfo, Error>  {
+//
+// }
