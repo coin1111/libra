@@ -53,11 +53,8 @@ cd ~/libra/ol/bridge
 
 ## Launch ETH Hardhat Dev Network 
 ```asm
-`git clone https://github.com/coin1111/eth-bridge`
+git clone https://github.com/coin1111/eth-bridge`
 cd eth-bridge
-# use multisig branch
-git checkout -b multisig
-git pull origin multisig 
 
 # setup hardhat
 ./setup-hardhat.sh
@@ -65,7 +62,7 @@ npx hardhat compile
 # run ETH node
 ./run-local-node.sh
 # deploy ETH bridge contracts
-./deploy-local.sh # init bridge escrow with at least 2 signers for mutisig
+./deploy-local.sh 2 # init bridge escrow with at least 2 signers for mutisig
 ```
 
 ## Test Bridge Agent
