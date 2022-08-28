@@ -279,7 +279,8 @@ impl Processor {
         let contract = BridgeEscrowEth::new(self.agent_eth.escrow_addr, &self.agent_eth.client);
         let data = contract
             .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
-            .gas_price(self.agent_eth.gas_price);
+            .gas_price(self.agent_eth.gas_price)
+            .gas(200000);
         data.send()
             .await
             .map_err(|e| anyhow!("failed withdraw from 0L: {:?}", e))

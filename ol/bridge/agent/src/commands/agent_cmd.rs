@@ -69,6 +69,7 @@ impl Runnable for AgentCmd {
                 .and_then(|account_str| {
                     bridge_eth::signers::get_private_key(&account_str).and_then(|x| {
                         ethers::signers::Wallet::from_str(&x[2..]).map_err(|e| e.to_string())
+                            .and_then(|w|Ok(w.set_chain_id(43113u64)))
                     })
                 }) {
                 Ok(a) => Some(a),
