@@ -78,10 +78,12 @@ impl Processor {
         // Process ETH transfers
         // Query locked on ETH
         let start = U256::from(start_idx);
-        let len: U256 = U256::from(10);
+        let len: U256 = U256::from(1000);
         let locked_eth = self.agent_eth.get_eth_next_locked_info(start, len).await?;
+        let locked_eth_next = self.agent_eth.get_eth_next_locked_info(locked_eth.next_start+1, len).await?;
 
-        println!("INFO: next locked on ETH chain : {}", locked_eth);
+        println!("INFO: next locked on ETH chain : {}, start: {}", locked_eth, start);
+        println!("INFO: next locked  next : {}", locked_eth_next);
         if locked_eth.transfer_id == [0u8; 16] {
             // transfer_id is 0, nothing to do
             return Ok(());
@@ -280,7 +282,7 @@ impl Processor {
         let data = contract
             .withdraw_from_escrow(sender_this.to_u8(), receiver_eth, ai.balance, transfer_id)
             .gas_price(self.agent_eth.gas_price)
-            .gas(200000);
+            .gas(2000000);
         data.send()
             .await
             .map_err(|e| anyhow!("failed withdraw from 0L: {:?}", e))

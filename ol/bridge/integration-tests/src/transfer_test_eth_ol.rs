@@ -16,6 +16,7 @@ use ethers::types::U256;
 use ol_types::config::TxType;
 use std::convert::TryFrom;
 use std::{thread, time};
+use std::future::Future;
 use uuid::Uuid;
 
 // fn print_type_of<T>(_: &T) {
@@ -68,27 +69,43 @@ async fn test_transfer_eth_ol() {
     let amount = 10;
     let data_approve = eth_ol_token
         .approve(eth_escrow_addr, U256::from(amount))
-        .gas_price(eth_gas_price);
+        .gas_price(eth_gas_price).gas(2000000);
     let approve_tx = data_approve
         .send()
         .await
         .map_err(|e| println!("Error pending: {}", e))
         .unwrap();
-    println!("approve_tx: {:?}", approve_tx);
 
+    // transaction never completes
+    // let approve_receipt = approve_tx
+    //     .confirmations(1)
+    //     .await
+    //     .map_err(|e|
+    //         println!("Error getting approve receipt: {}", e))
+    //     .unwrap();
+    println!("approve_tx: {:?}", approve_tx);
+    ::std::thread::sleep(::std::time::Duration::from_secs(15));
     let deposit_data = eth_ol_bridge
         .create_transfer_account(
             *receiver_addr_ol,
             amount,
             <[u8; 16]>::try_from(transfer_id.clone()).unwrap(),
         )
-        .gas_price(eth_gas_price);
-    let pending_tx = deposit_data
+        .gas_price(eth_gas_price).gas(2000000);
+     let pending_tx = deposit_data
         .send()
         .await
         .map_err(|e| println!("Error pending: {}", e))
         .unwrap();
-    println!("pending_tx: {:?}", pending_tx);
+    ::std::thread::sleep(::std::time::Duration::from_secs(15));
+
+    // let receipt = pending_tx
+    //     .await
+    //     .map_err(|e| println!("Error getting receipt: {}", e))
+    //     .unwrap();
+    println!("succesfully deposited , pending_tx: {:?}", pending_tx);
+
+
     let mut tries = 0;
     let max_tries = 300;
 
@@ -98,11 +115,16 @@ async fn test_transfer_eth_ol() {
             vec_to_array::<u8, 16>(transfer_id.clone()).unwrap(),
         )
         .await;
-        if ai_locked_eth.as_ref().unwrap().is_closed {
-            println!("{:?}", ai_locked_eth);
-            assert!(ai_locked_eth.as_ref().unwrap().is_closed);
-            assert!(ai_locked_eth.as_ref().unwrap().current_votes == U256::from(2));
-            break;
+        if ai_locked_eth.as_ref().unwrap().transfer_id.clone() ==
+            vec_to_array::<u8, 16>(transfer_id.clone()).unwrap() {
+            if ai_locked_eth.as_ref().unwrap().is_closed {
+                println!("{:?}", ai_locked_eth);
+                assert!(ai_locked_eth.as_ref().unwrap().is_closed);
+                assert!(ai_locked_eth.as_ref().unwrap().current_votes == U256::from(2));
+                break;
+            } else {
+                println!("waiting for processing: {:?}", ai_locked_eth);
+            }
         }
         tries += 1;
         thread::sleep(time::Duration::from_millis(1000));
